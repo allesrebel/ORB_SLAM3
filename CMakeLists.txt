@@ -135,6 +135,8 @@ if(realsense2_FOUND)
     )
 endif()
 
+# Added Settings for Metrics Keeping
+add_definitions(-DREGISTER_TIMES)
 
 # Build examples
 
