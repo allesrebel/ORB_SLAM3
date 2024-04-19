@@ -186,7 +186,7 @@ void Tracking::LocalMapStats2File()
     ofstream f;
     f.open("LocalMapTimeStats.txt");
     f << fixed << setprecision(6);
-    f << "#Stereo rect[ms], MP culling[ms], MP creation[ms], LBA[ms], KF culling[ms], Total[ms]" << endl;
+    f << "#Stereo rect[ms],MP culling[ms],MP creation[ms],LBA[ms],KF culling[ms],Total[ms]" << endl;
     for(int i=0; i<mpLocalMapper->vdLMTotal_ms.size(); ++i)
     {
         f << mpLocalMapper->vdKFInsert_ms[i] << "," << mpLocalMapper->vdMPCulling_ms[i] << ","
@@ -198,7 +198,7 @@ void Tracking::LocalMapStats2File()
 
     f.open("LBA_Stats.txt");
     f << fixed << setprecision(6);
-    f << "#LBA time[ms], KF opt[#], KF fixed[#], MP[#], Edges[#]" << endl;
+    f << "#LBA time[ms],KF opt[#],KF fixed[#],MP[#],Edges[#]" << endl;
     for(int i=0; i<mpLocalMapper->vdLBASync_ms.size(); ++i)
     {
         f << mpLocalMapper->vdLBASync_ms[i] << "," << mpLocalMapper->vnLBA_KFopt[i] << ","
@@ -225,7 +225,7 @@ void Tracking::TrackStats2File()
     f.open("TrackingTimeStats.txt");
     f << fixed << setprecision(6);
 
-    f << "#Image Rect[ms], Image Resize[ms], ORB ext[ms], Stereo match[ms], IMU preint[ms], Pose pred[ms], LM track[ms], KF dec[ms], Total[ms]" << endl;
+    f << "#Image Rect[ms],Image Resize[ms],ORB ext[ms],Stereo match[ms],IMU preint[ms],Pose pred[ms],LM track[ms],KF dec[ms],Total[ms]" << endl;
 
     for(int i=0; i<vdTrackTotal_ms.size(); ++i)
     {

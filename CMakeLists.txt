@@ -7,10 +7,17 @@ ENDIF()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -Os")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Os")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+
+# Added Settings for Metrics Keeping
+add_definitions(-DREGISTER_TIMES)
+
+# To clean up the build
+# TODO: uncomment one at a time, and fix these!!!
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wno-conversion-null -Wno-deprecated -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-reorder -Wno-unused-but-set-variable -Wno-dangling-else -Wno-maybe-uninitialized -Wno-aggressive-loop-optimizations -Wno-class-memaccess -Wno-unused-local-typedefs")
 
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)
@@ -134,9 +141,6 @@ if(realsense2_FOUND)
     ${realsense2_LIBRARY}
     )
 endif()
-
-# Added Settings for Metrics Keeping
-add_definitions(-DREGISTER_TIMES)
 
 # Build examples
 
