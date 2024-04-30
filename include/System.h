@@ -30,13 +30,11 @@
 
 #include "Tracking.h"
 #include "FrameDrawer.h"
-#include "MapDrawer.h"
 #include "Atlas.h"
 #include "LocalMapping.h"
 #include "LoopClosing.h"
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
-#include "Viewer.h"
 #include "ImuTypes.h"
 #include "Settings.h"
 
@@ -71,9 +69,6 @@ public:
     }
 };
 
-class Viewer;
-class FrameDrawer;
-class MapDrawer;
 class Atlas;
 class Tracking;
 class LocalMapping;
@@ -101,8 +96,8 @@ public:
 
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
-    System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
+    // Initialize the SLAM system. It launches the Local Mapping, Loop Closing threads.
+    System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = false, const int initFr = 0, const string &strSequence = std::string());
 
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
@@ -224,17 +219,10 @@ private:
     // a pose graph optimization and full bundle adjustment (in a new thread) afterwards.
     LoopClosing* mpLoopCloser;
 
-    // The viewer draws the map and the current camera pose. It uses Pangolin.
-    Viewer* mpViewer;
-
-    FrameDrawer* mpFrameDrawer;
-    MapDrawer* mpMapDrawer;
-
-    // System threads: Local Mapping, Loop Closing, Viewer.
+    // System threads: Local Mapping, Loop Closing.
     // The Tracking thread "lives" in the main execution thread that creates the System object.
     std::thread* mptLocalMapping;
     std::thread* mptLoopClosing;
-    std::thread* mptViewer;
 
     // Reset flag
     std::mutex mMutexReset;

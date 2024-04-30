@@ -10,17 +10,17 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # Set compiler specific settings (FixMe: Should not cmake do this for us automatically?)
 IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
    SET(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g")
    SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra  -Wno-deprecated-register -Qunused-arguments -fcolor-diagnostics")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wextra  -Wno-deprecated-register -Qunused-arguments -fcolor-diagnostics")
 ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
    SET(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g")
    SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra -std=c++11 -Wno-deprecated-declarations -ftemplate-backtrace-limit=0")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wextra -std=c++11 -Wno-deprecated-declarations -ftemplate-backtrace-limit=0")
    SET(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_DEBUG} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline")
    SET(CMAKE_EXE_LINKER_FLAGS_COVERAGE "${CMAKE_EXE_LINKER_FLAGS_DEBUG} --coverage")
    SET(CMAKE_SHARED_LINKER_FLAGS_COVERAGE "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} --coverage")
@@ -32,7 +32,7 @@ ENDIF()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 
 # Find Eigen 3 (dependency)
-find_package(Eigen3 3.3.0 REQUIRED)
+find_package(Eigen3 3.4.0 REQUIRED)
 
 # Define interface library target
 add_library(sophus INTERFACE)
@@ -92,22 +92,6 @@ target_compile_features (sophus INTERFACE
   cxx_variadic_macros
   cxx_variadic_templates
 )
-
-# Add sources as custom target so that they are shown in IDE's
-add_custom_target(other SOURCES ${SOPHUS_OTHER_FILES})
-
-# Create 'test' make target using ctest
-option(BUILD_TESTS "Build tests." ON)
-if(BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(test)
-endif()
-
-# Create examples make targets using ctest
-option(BUILD_EXAMPLES "Build examples." ON)
-if(BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif()
 
 # Export package for use from the build tree
 set(SOPHUS_CMAKE_EXPORT_DIR ${CMAKE_INSTALL_DATADIR}/sophus/cmake)
