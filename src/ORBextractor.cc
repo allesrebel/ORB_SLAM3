@@ -61,6 +61,66 @@
 
 #include "ORBextractor.h"
 
+#ifdef CUDA
+#include <cuda_runtime.h>
+#include <iostream>
+
+__global__ void gaussianBlur
+(
+	const unsigned char* input, 
+	unsigned char* output, 
+	int width, 
+	int height, 
+	const float* kernel, 
+	int kernelSize
+) 
+{
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int halfKernel = kernelSize / 2;
+    
+    if (col < width && row < height)
+    {
+        float sum = 0.0;
+        float weightSum = 0.0;
+        for (int y = -halfKernel; y <= halfKernel; y++)
+	{
+            for (int x = -halfKernel; x <= halfKernel; x++)
+	    {
+                int curRow = row + y;
+                int curCol = col + x;
+                if (curRow >= 0 && curRow < height && curCol >= 0 && curCol < width)
+		{
+                    float weight = kernel[(y + halfKernel) * kernelSize + (x + halfKernel)];
+                    sum += input[curRow * width + curCol] * weight;
+                    weightSum += weight;
+                }
+            }
+        }
+        output[row * width + col] = static_cast<unsigned char>(sum / weightSum);
+    }
+}
+
+void createGaussianKernel(float* kernel, int size, float sigma)
+{
+    float sum = 0.0;
+    int halfSize = size / 2;
+    float factor = 1.0 / (2.0 * M_PI * sigma * sigma);
+    for (int y = -halfSize; y <= halfSize; y++)
+    {
+        for (int x = -halfSize; x <= halfSize; x++)
+	{
+            kernel[(y + halfSize) * size + (x + halfSize)] = factor * exp(-(x*x + y*y) / (2 * sigma * sigma));
+            sum += kernel[(y + halfSize) * size + (x + halfSize)];
+        }
+    }
+    // Normalize the kernel
+    for (int i = 0; i < size * size; i++)
+    {
+        kernel[i] /= sum;
+    }
+}
+#endif
 
 using namespace cv;
 using namespace std;
@@ -1130,7 +1190,33 @@ namespace ORB_SLAM3
 
             // preprocess the resized image
             Mat workingMat = mvImagePyramid[level].clone();
+#ifdef CUDA
+		unsigned char* inputImage;
+		unsigned char* outputImage;
+		float* kernel;
+		const int kernelSize = 7;
+		const float sigma = 2.0;
+
+		// Allocate unified memory accessible by GPU and CPU
+		cudaMallocManaged(&inputImage, workingMat.total());
+		cudaMallocManaged(&outputImage, workingMat.total());
+		cudaMallocManaged(&kernel, kernelSize * kernelSize);
+		// Copy image data to the managed memory
+		memcpy(inputImage, workingMat.data, workingMat.total());  
+		createGaussianKernel(kernel, kernelSize, sigma);
+		dim3 threadsPerBlock(16, 16);
+		dim3 numBlocks
+		(
+			(workingMat.cols + threadsPerBlock.x - 1) / threadsPerBlock.x,
+                  	(workingMat.rows + threadsPerBlock.y - 1) / threadsPerBlock.y
+		);
+		// launch kernel
+		gaussianBlur<<<numBlocks, threadsPerBlock>>>(inputImage, outputImage, workingMat.cols, workingMat.rows, kernel, kernelSize);
+
+		cudaDeviceSynchronize();
+#else
             GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
+#endif
 
             // Compute the descriptors
             //Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);

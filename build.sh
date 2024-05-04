@@ -37,5 +37,6 @@ echo "Configuring and building ORB_SLAM3 ..."
 
 mkdir -p build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=Release -DEigen3_DIR=$HOME/eigen-v3.4.0/share/eigen3/cmake
 make -j
+cd ..
