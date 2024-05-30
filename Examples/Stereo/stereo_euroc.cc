@@ -21,6 +21,7 @@
 #include<fstream>
 #include<iomanip>
 #include<chrono>
+#include<ctime>
 
 #include<opencv2/core/core.hpp>
 
@@ -39,6 +40,15 @@ int main(int argc, char **argv)
 
         return 1;
     }
+
+    #ifdef REGISTER_TIMES
+    {
+        auto now = std::chrono::system_clock::now();
+        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+        std::cout << "Start, system time: " << std::ctime(&currentTime);
+    }
+    #endif
+
 
     const int num_seq = (argc-3)/2;
     cout << "num_seq = " << num_seq << endl;
@@ -75,6 +85,13 @@ int main(int argc, char **argv)
 
         LoadImages(pathCam0, pathCam1, pathTimeStamps, vstrImageLeft[seq], vstrImageRight[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
+        #ifdef REGISTER_TIMES
+        {
+            auto now = std::chrono::system_clock::now();
+            std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+            std::cout << "loaded images, system time: " << std::ctime(&currentTime);
+        }
+        #endif
 
         nImages[seq] = vstrImageLeft[seq].size();
         tot_images += nImages[seq];
@@ -89,6 +106,14 @@ int main(int argc, char **argv)
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::STEREO, false);
+
+    #ifdef REGISTER_TIMES
+    {
+        auto now = std::chrono::system_clock::now();
+        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+        std::cout << "slam loaded, starting at : " << std::ctime(&currentTime);
+    }
+    #endif
 
     cv::Mat imLeft, imRight;
     for (seq = 0; seq<num_seq; seq++)
@@ -152,6 +177,14 @@ int main(int argc, char **argv)
         if(seq < num_seq - 1)
         {
             cout << "Changing the dataset" << endl;
+
+            #ifdef REGISTER_TIMES
+            {
+                auto now = std::chrono::system_clock::now();
+                std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+                std::cout << "changing dataset at : " << std::ctime(&currentTime);
+            }
+            #endif
 
             SLAM.ChangeDataset();
         }
