@@ -122,11 +122,37 @@ int main(int argc, char **argv)
         // Seq loop
         double t_resize = 0;
         double t_rect = 0;
-        double t_track = 0;
+        double t_track, ttrack= 0;
         int num_rect = 0;
         int proccIm = 0;
+        bool skip_next = false;
         for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
         {
+            if (skip_next)
+            {
+                // Ensure ni > 0 before accessing vTimestampsCam[seq][ni - 1]
+                double t_previous = (ni > 0) ? vTimestampsCam[seq][ni - 1] : 0; // Timestamp of previous frame
+                double tframe = vTimestampsCam[seq][ni]; // Timestamp of current frame
+                double T = 0;
+                skip_next = false; // to prevent next image from skipping
+                cerr << endl << "Skipped image " << string(vstrImageLeft[seq][ni]) << endl;
+
+                // Calculate T based on the position of ni
+                if (ni < nImages[seq] - 1)
+                    T = vTimestampsCam[seq][ni + 1] - tframe;
+                else if (ni > 0)
+                    T = tframe - vTimestampsCam[seq][ni - 1];
+
+                // Ensure ni > 0 before calculating ttrack
+                double ttrack = (ni > 0) ? tframe - t_previous : 0;
+
+                // Sleep if necessary
+                if (ttrack < T)
+                    usleep((T - ttrack) * 1e6); // 1e6
+
+                continue; // the actual skip
+            }
+
             // Read left and right images from file
             imLeft = cv::imread(vstrImageLeft[seq][ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
             imRight = cv::imread(vstrImageRight[seq][ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
@@ -159,7 +185,7 @@ int main(int argc, char **argv)
             SLAM.InsertTrackTime(t_track);
 #endif
 
-            double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
+            ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
 
             vTimesTrack[ni]=ttrack;
 
@@ -172,6 +198,21 @@ int main(int argc, char **argv)
 
             if(ttrack<T)
                 usleep((T-ttrack)*1e6); // 1e6
+
+        // At this point, if the frame was early, we
+        // have waited until the next timestamp
+
+        // First we'll check if the current frame took
+        // too long to process (IE, should we drop the
+        // next frame?)
+        if( ttrack > 0.05 )
+        {
+            // This means we've exceeded the timestamp
+            // of the next frame, set a marker
+            // to keep track of this!
+            skip_next = true;
+        }
+
         }
 
         if(seq < num_seq - 1)
