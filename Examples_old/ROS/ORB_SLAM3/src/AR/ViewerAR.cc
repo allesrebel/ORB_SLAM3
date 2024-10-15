@@ -17,7 +17,7 @@
 */
 
 #include "ViewerAR.h"
-
+#ifdef GUI
 #include <opencv2/highgui/highgui.hpp>
 
 #include <mutex>
@@ -638,3 +638,4 @@ Plane::Plane(const float &nx, const float &ny, const float &nz, const float &ox,
 }
 
 }
+#endif // GUI

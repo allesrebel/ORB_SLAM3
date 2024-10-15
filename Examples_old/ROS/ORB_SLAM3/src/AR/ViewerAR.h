@@ -20,6 +20,8 @@
 #ifndef VIEWERAR_H
 #define VIEWERAR_H
 
+#ifdef GUI
+
 #include <mutex>
 #include <opencv2/core/core.hpp>
 #include <pangolin/pangolin.h>
@@ -112,7 +114,5 @@ private:
 
 }
 
-
+#endif // GUI
 #endif // VIEWERAR_H
-	
-

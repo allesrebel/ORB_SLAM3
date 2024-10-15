@@ -18,8 +18,8 @@
 
 
 #include "Viewer.h"
+#ifdef GUI
 #include <pangolin/pangolin.h>
-
 #include <mutex>
 
 namespace ORB_SLAM3
@@ -450,3 +450,4 @@ void Viewer::Release()
 }*/
 
 }
+#endif // GUI

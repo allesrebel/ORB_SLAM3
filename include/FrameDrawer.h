@@ -20,6 +20,8 @@
 #ifndef FRAMEDRAWER_H
 #define FRAMEDRAWER_H
 
+#ifdef GUI
+
 #include "Tracking.h"
 #include "MapPoint.h"
 #include "Atlas.h"
@@ -88,4 +90,5 @@ protected:
 
 } //namespace ORB_SLAM
 
+#endif // GUI
 #endif // FRAMEDRAWER_H

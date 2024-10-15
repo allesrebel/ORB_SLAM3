@@ -40,6 +40,37 @@
 #include "ImuTypes.h"
 #include "Settings.h"
 
+#ifndef GUI
+// Dummy Viewer, FrameDrawer and MapDrawer
+#include "Thirdparty/Sophus/sophus/se3.hpp"
+namespace ORB_SLAM3
+{
+class Viewer
+{
+public:
+    Viewer(...){};
+    void Run(){};
+    bool both = false;
+    void RequestFinish(){};
+    void RequestStop(){};
+    bool isStopped(){return true;};
+    bool isFinished(){return true;};
+    void SetFinish(){};
+    void Release(){};
+};
+class FrameDrawer
+{
+public:
+    bool both = false;
+    void Update(void*){};
+};
+class MapDrawer
+{
+public:
+    void SetCurrentCameraPose(Sophus::SE3f){};
+};
+} // namespace ORB_SLAM3
+#endif
 
 namespace ORB_SLAM3
 {
@@ -102,7 +133,7 @@ public:
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
-    System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
+    System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = false, const int initFr = 0, const string &strSequence = std::string());
 
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
