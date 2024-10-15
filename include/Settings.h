@@ -122,6 +122,9 @@ namespace ORB_SLAM3 {
         cv::Mat M1r() {return M1r_;}
         cv::Mat M2r() {return M2r_;}
 
+        // TODO: Enable for more research, need to expand with other stats
+        bool enableDeadlines = false;
+
     private:
         template<typename T>
         T readParameter(cv::FileStorage& fSettings, const std::string& name, bool& found,const bool required = true){

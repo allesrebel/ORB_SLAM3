@@ -253,6 +253,22 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
         exit(-1);
     }
 
+    // Drop frames if the system is past deadline or the last frame is still being processed
+    if
+    (
+        settings_ 
+        && settings_->enableDeadlines 
+        && 
+        (
+            mpTracker->vdTrackTotal_ms.size() <= mpTracker->mLastFrame.mnId 
+            || timestamp - (mpTracker->mLastFrame.mTimeStamp + mpTracker->vdTrackTotal_ms[mpTracker->mLastFrame.mnId]) < 0.0f
+        )
+    )
+    {
+        cout << "Dropping frame " << timestamp << " because we missed deadline or the last frame is still being processed" << endl;
+        return Sophus::SE3f();  // return empty, since we won't be processing frame
+    }
+
     cv::Mat imLeftToFeed, imRightToFeed;
     if(settings_ && settings_->needToRectify()){
         cv::Mat M1l = settings_->M1l();
@@ -337,6 +353,22 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
         exit(-1);
     }
 
+    // Drop frames if the system is past deadline or the last frame is still being processed
+    if
+    (
+        settings_ 
+        && settings_->enableDeadlines 
+        && 
+        (
+            mpTracker->vdTrackTotal_ms.size() <= mpTracker->mLastFrame.mnId 
+            || timestamp - (mpTracker->mLastFrame.mTimeStamp + mpTracker->vdTrackTotal_ms[mpTracker->mLastFrame.mnId]) < 0.0f
+        )
+    )
+    {
+        cout << "Dropping frame " << timestamp << " because we missed deadline or the last frame is still being processed" << endl;
+        return Sophus::SE3f();  // return empty, since we won't be processing frame
+    }
+
     cv::Mat imToFeed = im.clone();
     cv::Mat imDepthToFeed = depthmap.clone();
     if(settings_ && settings_->needToResize()){
@@ -413,6 +445,22 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
     {
         cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular nor Monocular-Inertial." << endl;
         exit(-1);
+    }
+
+    // Drop frames if the system is past deadline or the last frame is still being processed
+    if
+    (
+        settings_ 
+        && settings_->enableDeadlines 
+        && 
+        (
+            mpTracker->vdTrackTotal_ms.size() <= mpTracker->mLastFrame.mnId 
+            || timestamp - (mpTracker->mLastFrame.mTimeStamp + mpTracker->vdTrackTotal_ms[mpTracker->mLastFrame.mnId]) < 0.0f
+        )
+    )
+    {
+        cout << "Dropping frame " << timestamp << " because we missed deadline or the last frame is still being processed" << endl;
+        return Sophus::SE3f();  // return empty, since we won't be processing frame
     }
 
     cv::Mat imToFeed = im.clone();

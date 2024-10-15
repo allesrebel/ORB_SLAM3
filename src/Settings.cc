@@ -480,6 +480,7 @@ namespace ORB_SLAM3 {
         bool found;
 
         thFarPoints_ = readParameter<float>(fSettings,"System.thFarPoints",found,false);
+        enableDeadlines = (bool)readParameter<int>(fSettings,"System.enableDeadlines",found,false);
     }
 
     void Settings::precomputeRectificationMaps() {
