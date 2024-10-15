@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
+#ifdef GUI
 #include "MapDrawer.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
@@ -465,3 +465,5 @@ void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M, pangolin
     MOw.m[14] = Twc(2,3);
 }
 } //namespace ORB_SLAM
+
+#endif // GUI

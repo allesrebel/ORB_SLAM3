@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
+#ifdef GUI
 #include "FrameDrawer.h"
 #include "Tracking.h"
 
@@ -437,3 +437,5 @@ void FrameDrawer::Update(Tracking *pTracker)
 }
 
 } //namespace ORB_SLAM
+
+#endif //GUI

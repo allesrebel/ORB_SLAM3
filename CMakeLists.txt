@@ -7,6 +7,10 @@ ENDIF()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
+# To clean up the build
+# TODO: uncomment one at a time, and fix these!!!
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wno-conversion-null -Wno-deprecated -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-reorder -Wno-unused-but-set-variable -Wno-dangling-else -Wno-maybe-uninitialized -Wno-aggressive-loop-optimizations -Wno-class-memaccess -Wno-unused-local-typedefs")
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
@@ -39,7 +43,12 @@ MESSAGE("OPENCV VERSION:")
 MESSAGE(${OpenCV_VERSION})
 
 find_package(Eigen3 3.1.0 REQUIRED)
-find_package(Pangolin REQUIRED)
+option(GUI "Enable GUI support" OFF)
+if(GUI)
+        find_package(Pangolin REQUIRED)
+        add_definitions(-DGUI)
+        include_directories(${Pangolin_INCLUDE_DIRS})
+endif()
 find_package(realsense2)
 
 include_directories(
@@ -48,7 +57,6 @@ ${PROJECT_SOURCE_DIR}/include
 ${PROJECT_SOURCE_DIR}/include/CameraModels
 ${PROJECT_SOURCE_DIR}/Thirdparty/Sophus
 ${EIGEN3_INCLUDE_DIR}
-${Pangolin_INCLUDE_DIRS}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)

@@ -20,6 +20,8 @@
 #ifndef VIEWER_H
 #define VIEWER_H
 
+#ifdef GUI
+
 #include "FrameDrawer.h"
 #include "MapDrawer.h"
 #include "Tracking.h"
@@ -98,7 +100,5 @@ private:
 
 }
 
-
+#endif // GUI
 #endif // VIEWER_H
-	
-

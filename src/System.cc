@@ -21,7 +21,9 @@
 #include "System.h"
 #include "Converter.h"
 #include <thread>
+#ifdef GUI
 #include <pangolin/pangolin.h>
+#endif
 #include <iomanip>
 #include <openssl/md5.h>
 #include <boost/serialization/base_object.hpp>
@@ -181,9 +183,11 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     if (mSensor==IMU_STEREO || mSensor==IMU_MONOCULAR || mSensor==IMU_RGBD)
         mpAtlas->SetInertialSensor();
 
+    #ifdef GUI
     //Create Drawers. These are used by the Viewer
     mpFrameDrawer = new FrameDrawer(mpAtlas);
     mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
+    #endif // GUI
 
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
@@ -550,10 +554,10 @@ void System::Shutdown()
         Verbose::PrintMess("Atlas saving to file " + mStrSaveAtlasToFile, Verbose::VERBOSITY_NORMAL);
         SaveAtlas(FileType::BINARY_FILE);
     }
-
+#ifdef GUI
     /*if(mpViewer)
         pangolin::BindToContext("ORB-SLAM2: Map Viewer");*/
-
+#endif //GUI
 #ifdef REGISTER_TIMES
     mpTracker->PrintTimeStats();
 #endif

@@ -24,7 +24,11 @@
 #include "KeyFrame.h"
 
 #include <set>
+#ifdef GUI
 #include <pangolin/pangolin.h>
+#else
+#include <GL/gl.h>
+#endif
 #include <mutex>
 
 #include <boost/serialization/base_object.hpp>
