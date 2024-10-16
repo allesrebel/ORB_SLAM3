@@ -9,12 +9,25 @@ MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
 # To clean up the build
 # TODO: uncomment one at a time, and fix these!!!
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wno-conversion-null -Wno-deprecated -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-reorder -Wno-unused-but-set-variable -Wno-dangling-else -Wno-maybe-uninitialized -Wno-aggressive-loop-optimizations -Wno-class-memaccess -Wno-unused-local-typedefs")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-conversion-null -Wno-deprecated -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-reorder -Wno-unused-but-set-variable -Wno-dangling-else -Wno-maybe-uninitialized -Wno-aggressive-loop-optimizations -Wno-class-memaccess -Wno-unused-local-typedefs")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+# Set C++ flags based on the build type
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og -g")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og -g")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall   -O3")
+elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O2 -g")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g")
+elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -Os")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os")
+endif()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)
@@ -36,7 +49,7 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 find_package(OpenCV 4.4)
    if(NOT OpenCV_FOUND)
-      message(FATAL_ERROR "OpenCV > 4.4 not found.")
+        message(FATAL_ERROR "OpenCV > 4.4 not found.")
    endif()
 
 MESSAGE("OPENCV VERSION:")
@@ -45,9 +58,9 @@ MESSAGE(${OpenCV_VERSION})
 find_package(Eigen3 3.1.0 REQUIRED)
 option(GUI "Enable GUI support" OFF)
 if(GUI)
-        find_package(Pangolin REQUIRED)
-        add_definitions(-DGUI)
-        include_directories(${Pangolin_INCLUDE_DIRS})
+    find_package(Pangolin REQUIRED)
+    add_definitions(-DGUI)
+    include_directories(${Pangolin_INCLUDE_DIRS})
 endif()
 find_package(realsense2)
 
@@ -126,12 +139,15 @@ add_subdirectory(Thirdparty/g2o)
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
 ${EIGEN3_LIBS}
-${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 -lboost_serialization
 -lcrypto
 )
+
+if(GUI)
+    target_link_libraries(${PROJECT_NAME} ${Pangolin_LIBRARIES})
+endif()
 
 # If RealSense SDK is found the library is added and its examples compiled
 if(realsense2_FOUND)
