@@ -245,6 +245,21 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
 }
 
+bool System::ShouldDropFrame(const double &timestamp) const
+{
+    return settings_
+        && settings_->enableDeadlines // Deadline consideration is enabled
+        && mpTracker->mLastFrame.mnId > 0   // We have a valid last frame
+        && mpTracker->mLastFrame.mTimeStamp < timestamp // We are processing a newer frame
+        &&
+        (
+            // Is the last frame still processing? (less than expected size)
+            mpTracker->vdTrackTotal_ms.size() < (mpTracker->mLastFrame.mnId + 1)
+            // Did we miss the deadline? (convert ms to s, do all operations in s)
+            || timestamp - (mpTracker->mLastFrame.mTimeStamp + mpTracker->vdTrackTotal_ms[mpTracker->mLastFrame.mnId] / 1000.0 ) < 0.0f
+        );
+}
+
 Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
@@ -254,18 +269,9 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     }
 
     // Drop frames if the system is past deadline or the last frame is still being processed
-    if
-    (
-        settings_ 
-        && settings_->enableDeadlines 
-        && 
-        (
-            mpTracker->vdTrackTotal_ms.size() <= mpTracker->mLastFrame.mnId 
-            || timestamp - (mpTracker->mLastFrame.mTimeStamp + mpTracker->vdTrackTotal_ms[mpTracker->mLastFrame.mnId]) < 0.0f
-        )
-    )
+    if( ShouldDropFrame(timestamp) )
     {
-        cout << "Dropping frame " << timestamp << " because we missed deadline or the last frame is still being processed" << endl;
+        cout << "Dropping frame " << timestamp << endl;
         return Sophus::SE3f();  // return empty, since we won't be processing frame
     }
 
@@ -354,18 +360,9 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
     }
 
     // Drop frames if the system is past deadline or the last frame is still being processed
-    if
-    (
-        settings_ 
-        && settings_->enableDeadlines 
-        && 
-        (
-            mpTracker->vdTrackTotal_ms.size() <= mpTracker->mLastFrame.mnId 
-            || timestamp - (mpTracker->mLastFrame.mTimeStamp + mpTracker->vdTrackTotal_ms[mpTracker->mLastFrame.mnId]) < 0.0f
-        )
-    )
+    if( ShouldDropFrame(timestamp) )
     {
-        cout << "Dropping frame " << timestamp << " because we missed deadline or the last frame is still being processed" << endl;
+        cout << "Dropping frame " << timestamp << endl;
         return Sophus::SE3f();  // return empty, since we won't be processing frame
     }
 
@@ -448,18 +445,9 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
     }
 
     // Drop frames if the system is past deadline or the last frame is still being processed
-    if
-    (
-        settings_ 
-        && settings_->enableDeadlines 
-        && 
-        (
-            mpTracker->vdTrackTotal_ms.size() <= mpTracker->mLastFrame.mnId 
-            || timestamp - (mpTracker->mLastFrame.mTimeStamp + mpTracker->vdTrackTotal_ms[mpTracker->mLastFrame.mnId]) < 0.0f
-        )
-    )
+    if( ShouldDropFrame(timestamp) )
     {
-        cout << "Dropping frame " << timestamp << " because we missed deadline or the last frame is still being processed" << endl;
+        cout << "Dropping frame " << timestamp << endl;
         return Sophus::SE3f();  // return empty, since we won't be processing frame
     }
 

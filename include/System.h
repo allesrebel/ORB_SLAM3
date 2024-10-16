@@ -213,6 +213,9 @@ public:
     bool isLost();
     bool isFinished();
 
+    // Deadline configuration
+    bool ShouldDropFrame(const double &timestamp) const;
+
     void ChangeDataset();
 
     float GetImageScale();
