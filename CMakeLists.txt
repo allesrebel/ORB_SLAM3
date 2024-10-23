@@ -9,7 +9,7 @@ MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
 # To clean up the build
 # TODO: uncomment one at a time, and fix these!!!
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-conversion-null -Wno-deprecated -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-reorder -Wno-unused-but-set-variable -Wno-dangling-else -Wno-maybe-uninitialized -Wno-aggressive-loop-optimizations -Wno-class-memaccess -Wno-unused-local-typedefs")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-conversion-null -Wno-deprecated -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-reorder -Wno-unused-but-set-variable -Wno-dangling-else -Wno-uninitialized -Wno-maybe-uninitialized -Wno-aggressive-loop-optimizations -Wno-class-memaccess -Wno-unused-local-typedefs -Wno-overloaded-virtual -Wno-error=array-bounds")
 
 # Set C++ flags based on the build type
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -47,6 +47,19 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
+# Check for OS type and request user to install libopencv-dev if not installed
+if(UNIX AND NOT APPLE)
+    execute_process(
+        COMMAND dpkg -s libopencv-dev
+        RESULT_VARIABLE opencv_installed
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if(NOT opencv_installed EQUAL 0)
+        message(FATAL_ERROR "libopencv-dev is not installed. Please run 'sudo apt install libopencv-dev' to install it.")
+    endif()
+endif()
+
 find_package(OpenCV 4.4)
    if(NOT OpenCV_FOUND)
         message(FATAL_ERROR "OpenCV > 4.4 not found.")
@@ -55,7 +68,21 @@ find_package(OpenCV 4.4)
 MESSAGE("OPENCV VERSION:")
 MESSAGE(${OpenCV_VERSION})
 
+# Check for OS type and request user to install libeigen3-dev if not installed
+if(UNIX AND NOT APPLE)
+    execute_process(
+        COMMAND dpkg -s libeigen3-dev
+        RESULT_VARIABLE eigen_installed
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if(NOT eigen_installed EQUAL 0)
+        message(FATAL_ERROR "libeigen3-dev is not installed. Please run 'sudo apt install libeigen3-dev' to install it.")
+    endif()
+endif()
+
 find_package(Eigen3 3.1.0 REQUIRED)
+
 option(GUI "Enable GUI support" OFF)
 if(GUI)
     find_package(Pangolin REQUIRED)
