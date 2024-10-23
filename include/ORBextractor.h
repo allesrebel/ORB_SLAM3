@@ -47,7 +47,7 @@ public:
     enum {HARRIS_SCORE=0, FAST_SCORE=1 };
 
     ORBextractor(int nfeatures, float scaleFactor, int nlevels,
-                 int iniThFAST, int minThFAST);
+                 int iniThFAST, int minThFAST,     bool enableFOV);
 
     ~ORBextractor(){}
 
@@ -106,6 +106,8 @@ protected:
     std::vector<float> mvInvScaleFactor;    
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
+
+    bool enableFOV = false;
 };
 
 } //namespace ORB_SLAM

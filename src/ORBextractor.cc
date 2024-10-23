@@ -407,9 +407,9 @@ namespace ORB_SLAM3
             };
 
     ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
-                               int _iniThFAST, int _minThFAST):
+                               int _iniThFAST, int _minThFAST, bool enableFOV):
             nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
-            iniThFAST(_iniThFAST), minThFAST(_minThFAST)
+            iniThFAST(_iniThFAST), minThFAST(_minThFAST),     enableFOV(enableFOV)
     {
         mvScaleFactor.resize(nlevels);
         mvLevelSigma2.resize(nlevels);
@@ -802,8 +802,25 @@ namespace ORB_SLAM3
             const int wCell = ceil(width/nCols);
             const int hCell = ceil(height/nRows);
 
+            // Calculations for FOV
+            int center_x = nCols / 2;
+            int center_y = nRows / 2;
+
+            const int FOV_SIZE = 6; // 6x6 FOV
+
+            int start_x = center_x - FOV_SIZE/2;
+            int start_y = center_y - FOV_SIZE/2;
+
             for(int i=0; i<nRows; i++)
             {
+
+                if(enableFOV)
+                {
+                    if(i < start_y || i > start_y + FOV_SIZE*2){
+                        continue;
+                    }
+                }
+
                 const float iniY =minBorderY+i*hCell;
                 float maxY = iniY+hCell+6;
 
@@ -814,6 +831,13 @@ namespace ORB_SLAM3
 
                 for(int j=0; j<nCols; j++)
                 {
+                    if(enableFOV)
+                    {
+                        if(j < start_x || j > start_x + FOV_SIZE*2){
+                            continue;
+                        }
+                    }
+
                     const float iniX =minBorderX+j*wCell;
                     float maxX = iniX+wCell+6;
                     if(iniX>=maxBorderX-6)
