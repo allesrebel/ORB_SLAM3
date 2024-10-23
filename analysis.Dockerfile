@@ -23,4 +23,4 @@ COPY ./evaluation/Ground_truth /app/Ground_truth
 CMD ["bash"]
 
 # example!
-# python2 evaluate_ate_scale Ground_truth/EuRoC_left_cam/MH05_GT.txt /data/f_dataset-MH05_stereo.txt --verbose > /data/ATE_MH05.txt
+# python evaluate_ate_scale Ground_truth/EuRoC_left_cam/MH05_GT.txt /data/f_dataset-MH05_stereo.txt --verbose
