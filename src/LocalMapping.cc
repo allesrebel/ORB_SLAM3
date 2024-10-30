@@ -707,6 +707,10 @@ void LocalMapping::CreateNewMapPoints()
 
             mpAtlas->AddMapPoint(pMP);
             mlpRecentAddedMapPoints.push_back(pMP);
+
+            // Dump mappoint if setting is configured
+            mpSystem->AppendMapPointsToCSV(mpCurrentKeyFrame->mnId, x3D, "map_points.csv");
+            mpSystem->AppendMapPointsToCSV(pKF2->mnId, x3D, "map_points.csv");
         }
     }    
 }

@@ -107,6 +107,9 @@ public:
     void SaveSubTrajectory(string strNameFile_frames, string strNameFile_kf, string strFolder="");
     void SaveSubTrajectory(string strNameFile_frames, string strNameFile_kf, Map* pMap);
 
+    // MapPoint Dumping
+    void AppendMapPointsToCSV(const long unsigned int& keyFrame_id, const Eigen::Vector3f& x3D, const std::string& filename);
+
     float GetImageScale();
 
 #ifdef REGISTER_LOOP
@@ -176,6 +179,8 @@ public:
     vector<MapPoint*> GetLocalMapMPS();
 
     bool mbWriteStats;
+
+    bool mbDumpMapPoints;
 
 #ifdef REGISTER_TIMES
     void LocalMapStats2File();

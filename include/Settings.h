@@ -125,6 +125,7 @@ namespace ORB_SLAM3 {
         // TODO: Enable for more research, need to expand with other stats
         bool enableDeadlines = false;
         bool enableFOV = false;
+        bool dumpMapPoints = false;
 
     private:
         template<typename T>

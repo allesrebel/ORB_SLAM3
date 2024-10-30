@@ -592,6 +592,7 @@ void Tracking::newParameterLoader(Settings *settings) {
     int fMinThFAST = settings->minThFAST();
     float fScaleFactor = settings->scaleFactor();
     bool bEnableFOV = settings->enableFOV;
+    mbDumpMapPoints = settings->dumpMapPoints;
 
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV);
 
@@ -615,6 +616,27 @@ void Tracking::newParameterLoader(Settings *settings) {
     mpImuCalib = new IMU::Calib(Tbc,Ng*sf,Na*sf,Ngw/sf,Naw/sf);
 
     mpImuPreintegratedFromLastKF = new IMU::Preintegrated(IMU::Bias(),*mpImuCalib);
+}
+
+void Tracking::AppendMapPointsToCSV(const long unsigned int& keyFrame_id, const Eigen::Vector3f& x3D, const std::string& filename)
+{
+    // Early Exit, if we aren't dumping map points to disk
+    if( !mbDumpMapPoints )
+        return;
+
+    std::ofstream file;
+    file.open(filename, std::ios_base::app); // Open in append mode
+
+    if (!file.is_open())
+    {
+        std::cerr << "Error opening file " << filename << std::endl;
+        return;
+    }
+
+    // write map point
+    file << keyFrame_id << "," << x3D.x() << "," << x3D.y() << "," << x3D.z() << "\n";
+
+    file.close();
 }
 
 bool Tracking::ParseCamParamFile(cv::FileStorage &fSettings)
@@ -2399,6 +2421,9 @@ void Tracking::StereoInitialization()
                     pNewMP->UpdateNormalAndDepth();
                     mpAtlas->AddMapPoint(pNewMP);
 
+                    // dump the initial map points to disk
+                    AppendMapPointsToCSV(pKFini->mnId, x3D, "map_points.csv");
+
                     mCurrentFrame.mvpMapPoints[i]=pNewMP;
                 }
             }
@@ -2420,6 +2445,9 @@ void Tracking::StereoInitialization()
                     pNewMP->UpdateNormalAndDepth();
                     mpAtlas->AddMapPoint(pNewMP);
 
+                    // dump the initial map points to disk
+                    AppendMapPointsToCSV(pKFini->mnId, x3D, "map_points.csv");
+
                     mCurrentFrame.mvpMapPoints[i]=pNewMP;
                     mCurrentFrame.mvpMapPoints[rightIndex + mCurrentFrame.Nleft]=pNewMP;
                 }
@@ -2428,7 +2456,7 @@ void Tracking::StereoInitialization()
 
         Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points", Verbose::VERBOSITY_QUIET);
 
-        //cout << "Active map: " << mpAtlas->GetCurrentMap()->GetId() << endl;
+        cout << "Active map: " << mpAtlas->GetCurrentMap()->GetId() << endl;
 
         mpLocalMapper->InsertKeyFrame(pKFini);
 
@@ -2566,6 +2594,10 @@ void Tracking::CreateInitialMapMonocular()
 
         pMP->ComputeDistinctiveDescriptors();
         pMP->UpdateNormalAndDepth();
+
+        // dump the initial map points to disk
+        AppendMapPointsToCSV(pKFini->mnId, worldPos, "map_points.csv");
+        AppendMapPointsToCSV(pKFcur->mnId, worldPos, "map_points.csv");
 
         //Fill Current Frame structure
         mCurrentFrame.mvpMapPoints[mvIniMatches[i]] = pMP;
@@ -2844,6 +2876,9 @@ void Tracking::UpdateLastFrame()
 
             MapPoint* pNewMP = new MapPoint(x3D,mpAtlas->GetCurrentMap(),&mLastFrame,i);
             mLastFrame.mvpMapPoints[i]=pNewMP;
+
+            // add info for these new map points to disk
+            AppendMapPointsToCSV(mLastFrame.mnId, x3D, "map_points.csv");
 
             mlpTemporalPoints.push_back(pNewMP);
             nPoints++;
@@ -3321,6 +3356,9 @@ void Tracking::CreateNewKeyFrame()
                     pNewMP->ComputeDistinctiveDescriptors();
                     pNewMP->UpdateNormalAndDepth();
                     mpAtlas->AddMapPoint(pNewMP);
+
+                    // Append the map point to the CSV file
+                    AppendMapPointsToCSV(pKF->mnId, x3D, "map_points.csv");
 
                     mCurrentFrame.mvpMapPoints[i]=pNewMP;
                     nPoints++;

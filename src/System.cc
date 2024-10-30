@@ -260,6 +260,27 @@ bool System::ShouldDropFrame(const double &timestamp) const
         );
 }
 
+void System::AppendMapPointsToCSV(const long unsigned int& keyFrame_id, const Eigen::Vector3f& x3D, const std::string& filename)
+{
+    // Early Exit if we don't need to do dumping
+    if(!settings_->dumpMapPoints)
+        return;
+
+    std::ofstream file;
+    file.open(filename, std::ios_base::app); // Open in append mode
+
+    if (!file.is_open())
+    {
+        std::cerr << "Error opening file " << filename << std::endl;
+        return;
+    }
+
+    // write map point
+    file << keyFrame_id << "," << x3D.x() << "," << x3D.y() << "," << x3D.z() << "\n";
+
+    file.close();
+}
+
 Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
