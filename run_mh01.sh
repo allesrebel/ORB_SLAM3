@@ -21,9 +21,9 @@ run_orbslam() {
   mkdir -p $result_folder
   mv LocalMapTimeStats.txt ExecMean.txt f_dataset-MH01_stereo_imu.txt SessionInfo.txt kf_dataset-MH01_stereo_imu.txt LBA_Stats.txt TrackingTimeStats.txt $log_file $result_folder
 
-  # Move mappoints.csv if it exists
-  if [ -f mappoints.csv ]; then
-    mv mappoints.csv $result_folder
+  # Move map_points.csv if it exists
+  if [ -f map_points.csv ]; then
+    mv map_points.csv $result_folder
   fi
 
   echo "Results saved in $result_folder"
