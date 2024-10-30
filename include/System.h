@@ -216,6 +216,9 @@ public:
     // Deadline configuration
     bool ShouldDropFrame(const double &timestamp) const;
 
+    // Dump MapPoints? 
+    void AppendMapPointsToCSV(const long unsigned int& keyFrame_id, const Eigen::Vector3f& x3D, const std::string& filename);
+
     void ChangeDataset();
 
     float GetImageScale();

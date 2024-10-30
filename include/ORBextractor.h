@@ -108,6 +108,7 @@ protected:
     std::vector<float> mvInvLevelSigma2;
 
     bool enableFOV = false;
+    bool dumpMapPoints = false;
 };
 
 } //namespace ORB_SLAM
