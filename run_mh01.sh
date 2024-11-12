@@ -14,7 +14,7 @@ run_orbslam() {
   local log_file="cout_${result_folder_prefix}_${run_number}_${DATE}.log"
 
   echo "Starting ORBSLAM3 run #${run_number} with configuration: $config_file"
-  ./Examples/Stereo-Inertial/stereo_inertial_euroc ./Vocabulary/ORBvoc.txt $config_file ~/Datasets/EuRoc/MH01 ./Examples/Stereo-Inertial/EuRoC_TimeStamps/MH01.txt dataset-MH01_stereo_imu 2>&1 | tee $log_file
+  ./Examples/Stereo-Inertial/stereo_inertial_euroc ./Vocabulary/ORBvoc.txt $config_file ./Datasets/EuRoc/MH01 ./Examples/Stereo-Inertial/EuRoC_TimeStamps/MH01.txt dataset-MH01_stereo_imu 2>&1 | tee $log_file
 
   echo "Saving results..."
   local result_folder="${result_folder_prefix}_${DATE}_run_${run_number}"
@@ -30,11 +30,16 @@ run_orbslam() {
 }
 
 # Number of runs for each configuration
-NUM_RUNS=50
+NUM_RUNS=100
 
-# Normal Run
+# Deadline Run
 for ((i=1; i<=NUM_RUNS; i++)); do
-  run_orbslam ./Examples/Stereo-Inertial/EuRoC.yaml "result_mh01_stereo_inertial_normal" $i
+  run_orbslam ./Examples/Stereo-Inertial/EuRoC_deadlines.yaml "result_mh01_stereo_inertial_deadlines" $i
+done
+
+# Deadline + FOV Run
+for ((i=1; i<=NUM_RUNS; i++)); do
+  run_orbslam ./Examples/Stereo-Inertial/EuRoC_fov_deadlines.yaml "result_mh01_stereo_inertial_fov_deadlines" $i
 done
 
 # Field of View (FOV) Run
@@ -42,12 +47,8 @@ for ((i=1; i<=NUM_RUNS; i++)); do
   run_orbslam ./Examples/Stereo-Inertial/EuRoC_fov.yaml "result_mh01_stereo_inertial_fov" $i
 done
 
-# # Deadline Run
-# for ((i=1; i<=NUM_RUNS; i++)); do
-#   run_orbslam ./Examples/Stereo-Inertial/EuRoC_deadlines.yaml "result_mh01_stereo_inertial_deadlines" $i
-# done
+# Normal Run
+for ((i=1; i<=NUM_RUNS; i++)); do
+  run_orbslam ./Examples/Stereo-Inertial/EuRoC.yaml "result_mh01_stereo_inertial_normal" $i
+done
 
-# # Deadline + FOV Run
-# for ((i=1; i<=NUM_RUNS; i++)); do
-#   run_orbslam ./Examples/Stereo-Inertial/EuRoC_fov_deadlines.yaml "result_mh01_stereo_inertial_fov_deadlines" $i
-# done

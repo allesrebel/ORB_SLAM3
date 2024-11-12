@@ -7,6 +7,61 @@ ENDIF()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
+# Add an option to download the dataset
+option(DOWNLOAD_DATASET "Download the EuRoc dataset" OFF)
+
+if(DOWNLOAD_DATASET)
+    message(STATUS "Downloading EuRoc dataset...")
+
+    # Define dataset URLs and target directories
+    set(DATASET_DIR "${PROJECT_SOURCE_DIR}/Datasets/EuRoc")
+    file(MAKE_DIRECTORY ${DATASET_DIR})
+
+    set(DATASETS
+        "MH_01_easy|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_01_easy/MH_01_easy.zip"
+        "MH_02_easy|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_02_easy/MH_02_easy.zip"
+        "MH_03_medium|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_03_medium/MH_03_medium.zip"
+        "MH_04_difficult|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_04_difficult/MH_04_difficult.zip"
+        "MH_05_difficult|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_05_difficult/MH_05_difficult.zip"
+    )
+
+    foreach(dataset ${DATASETS})
+        string(REPLACE "|" ";" DATASET_INFO ${dataset})
+        list(GET DATASET_INFO 0 DATASET_NAME)
+        list(GET DATASET_INFO 1 DATASET_URL)
+
+        set(DATASET_PATH "${DATASET_DIR}/${DATASET_NAME}")
+        file(MAKE_DIRECTORY ${DATASET_PATH})
+
+        set(ZIP_FILE "${DATASET_PATH}/${DATASET_NAME}.zip")
+
+        # Download the dataset
+        execute_process(
+            COMMAND wget -O ${ZIP_FILE} ${DATASET_URL}
+            RESULT_VARIABLE WGET_RESULT
+        )
+
+        if(NOT WGET_RESULT EQUAL 0)
+            message(FATAL_ERROR "Failed to download dataset ${DATASET_NAME} from ${DATASET_URL}. Please check your internet connection or the URL.")
+        endif()
+
+        # Unzip the dataset
+        execute_process(
+            COMMAND unzip -o ${ZIP_FILE} -d ${DATASET_PATH}
+            RESULT_VARIABLE UNZIP_RESULT
+        )
+
+        if(NOT UNZIP_RESULT EQUAL 0)
+            message(FATAL_ERROR "Failed to unzip dataset ${DATASET_NAME}. Please make sure 'unzip' is installed and try again.")
+        endif()
+
+        # Remove the zip file after extraction
+        file(REMOVE ${ZIP_FILE})
+    endforeach()
+
+    message(STATUS "EuRoc dataset downloaded successfully.")
+endif()
+
 # To clean up the build
 # TODO: uncomment one at a time, and fix these!!!
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-conversion-null -Wno-deprecated -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-reorder -Wno-unused-but-set-variable -Wno-dangling-else -Wno-uninitialized -Wno-maybe-uninitialized -Wno-aggressive-loop-optimizations -Wno-class-memaccess -Wno-unused-local-typedefs -Wno-overloaded-virtual -Wno-error=array-bounds")
