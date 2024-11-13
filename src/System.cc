@@ -243,6 +243,10 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     // Fix verbosity
     Verbose::SetTh(Verbose::VERBOSITY_QUIET);
 
+    cout << "SLAM Started at System Time: " 
+        << std::setprecision(15) 
+        << std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count() 
+        << endl;
 }
 
 bool System::ShouldDropFrame(const double &timestamp) const

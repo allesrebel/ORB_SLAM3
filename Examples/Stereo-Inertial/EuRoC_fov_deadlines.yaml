@@ -16,6 +16,8 @@
 System.enableDeadlines: 1
 
 System.enableFOV: 1
+System.maskHeight: 6
+System.maskWidth: 6
 
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!

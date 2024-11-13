@@ -592,15 +592,17 @@ void Tracking::newParameterLoader(Settings *settings) {
     int fMinThFAST = settings->minThFAST();
     float fScaleFactor = settings->scaleFactor();
     bool bEnableFOV = settings->enableFOV;
+    int maskHeight = settings->maskHeight;
+    int maskWidth = settings->maskWidth;
     mbDumpMapPoints = settings->dumpMapPoints;
 
-    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV);
+    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV,maskHeight,maskWidth);
 
     if(mSensor==System::STEREO || mSensor==System::IMU_STEREO)
-        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV);
+        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV,maskHeight,maskWidth);
 
     if(mSensor==System::MONOCULAR || mSensor==System::IMU_MONOCULAR)
-        mpIniORBextractor = new ORBextractor(5*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV);
+        mpIniORBextractor = new ORBextractor(5*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV,maskHeight,maskWidth);
 
     //IMU parameters
     Sophus::SE3f Tbc = settings->Tbc();
@@ -1310,13 +1312,26 @@ bool Tracking::ParseORBParamFile(cv::FileStorage &fSettings)
         bEnableFOV = (bool) node.operator int();
     }
 
-    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV);
+    int maskHeight = 0;
+    int maskWidth = 0;
+    node = fSettings["System.maskHeight"];
+    if(!node.empty() && node.isInt())
+    {
+        maskHeight = node.operator int();
+    }
+
+    node = fSettings["System.maskWidth"];
+    if(!node.empty() && node.isInt())
+    {
+        maskWidth = node.operator int();
+    }
+    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV,maskHeight,maskWidth);
 
     if(mSensor==System::STEREO || mSensor==System::IMU_STEREO)
-        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV);
+        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV,maskHeight,maskWidth);
 
     if(mSensor==System::MONOCULAR || mSensor==System::IMU_MONOCULAR)
-        mpIniORBextractor = new ORBextractor(5*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV);
+        mpIniORBextractor = new ORBextractor(5*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV,maskHeight,maskWidth);
 
     cout << endl << "ORB Extractor Parameters: " << endl;
     cout << "- Number of Features: " << nFeatures << endl;
