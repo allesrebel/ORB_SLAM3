@@ -14,7 +14,7 @@ run_orbslam() {
   local log_file="cout_${result_folder_prefix}_${run_number}_${DATE}.log"
 
   echo "Starting ORBSLAM3 run #${run_number} with configuration: $config_file"
-  ./Examples/Stereo-Inertial/stereo_inertial_euroc ./Vocabulary/ORBvoc.txt $config_file ./Datasets/EuRoc/MH01 ./Examples/Stereo-Inertial/EuRoC_TimeStamps/MH01.txt dataset-MH01_stereo_imu 2>&1 | tee $log_file
+  ./Examples/Stereo-Inertial/stereo_inertial_euroc ./Vocabulary/ORBvoc.txt $config_file ./Datasets/EuRoc/MH_01_easy ./Examples/Stereo-Inertial/EuRoC_TimeStamps/MH01.txt dataset-MH01_stereo_imu 2>&1 | tee $log_file
 
   echo "Saving results..."
   local result_folder="${result_folder_prefix}_${DATE}_run_${run_number}"

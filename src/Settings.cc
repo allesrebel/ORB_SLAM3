@@ -480,9 +480,30 @@ namespace ORB_SLAM3 {
         bool found;
 
         thFarPoints_ = readParameter<float>(fSettings,"System.thFarPoints",found,false);
+        
         enableDeadlines = (bool)readParameter<int>(fSettings,"System.enableDeadlines",found,false);
+        if(enableDeadlines)
+        {
+            cout << "Deadlines enabled, will skip frames!" << endl;
+        }
+        
         enableFOV = (bool)readParameter<int>(fSettings,"System.enableFOV",found,false);
+        if(enableFOV)
+        {
+            cout << "FOV enabled" << endl;
+        }
+        maskHeight = readParameter<int>(fSettings,"System.maskHeight",found,false);
+        maskWidth = readParameter<int>(fSettings,"System.maskWidth",found,false);
+        if(enableFOV)
+        {
+            cout << "Static mask size: " << maskHeight << "x" << maskWidth << endl;
+        }
+        
         dumpMapPoints = (bool)readParameter<int>(fSettings,"System.dumpMapPoints",found,false);
+        if(dumpMapPoints)
+        {
+            cout << "Dumping map points enabled" << endl;
+        }
     }
 
     void Settings::precomputeRectificationMaps() {

@@ -47,7 +47,8 @@ public:
     enum {HARRIS_SCORE=0, FAST_SCORE=1 };
 
     ORBextractor(int nfeatures, float scaleFactor, int nlevels,
-                 int iniThFAST, int minThFAST,     bool enableFOV);
+                 int iniThFAST, int minThFAST,     bool enableFOV,
+                 int maskHeight,int maskWidth );
 
     ~ORBextractor(){}
 
@@ -107,7 +108,12 @@ protected:
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
 
+    // Mask out specific areas of the input image!
+    // This cooresponds to cells of the image that 
+    // are used for feature extraction
     bool enableFOV = false;
+    int maskHeight = 0;
+    int maskWidth = 0;
     bool dumpMapPoints = false;
 };
 

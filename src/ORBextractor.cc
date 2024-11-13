@@ -407,9 +407,11 @@ namespace ORB_SLAM3
             };
 
     ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
-                               int _iniThFAST, int _minThFAST, bool enableFOV):
+                               int _iniThFAST, int _minThFAST, bool enableFOV,
+                               int maskHeight, int maskWidth):
             nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
-            iniThFAST(_iniThFAST), minThFAST(_minThFAST),     enableFOV(enableFOV)
+            iniThFAST(_iniThFAST), minThFAST(_minThFAST), enableFOV(enableFOV),
+            maskHeight(maskHeight), maskWidth(maskWidth)
     {
         mvScaleFactor.resize(nlevels);
         mvLevelSigma2.resize(nlevels);
@@ -803,20 +805,33 @@ namespace ORB_SLAM3
             const int hCell = ceil(height/nRows);
 
             // Calculations for FOV
-            int center_x = nCols / 2;
-            int center_y = nRows / 2;
+            int center_col = nCols / 2;
+            int center_row = nRows / 2;
 
-            const int FOV_SIZE = 6; // 6x6 FOV
+            // TODO: Replace with some sort of guessing model
+            // to determine where to put the mask!
+            // For now, we'll attempt to use a mask that is specified by the user
+            struct mask_t
+            {
+                int width;
+                int height;
+            };
 
-            int start_x = center_x - FOV_SIZE/2;
-            int start_y = center_y - FOV_SIZE/2;
+            const mask_t FOV_MASK = {6, 6};
+
+            const int mask_start_row = center_row - FOV_MASK.height/2;
+            const int mask_end_row = mask_start_row + FOV_MASK.height;
+            const int mask_start_col = center_col - FOV_MASK.width/2;
+            const int mask_end_col = mask_start_col + FOV_MASK.width;
 
             for(int i=0; i<nRows; i++)
             {
 
                 if(enableFOV)
                 {
-                    if(i < start_y || i > start_y + FOV_SIZE*2){
+                    if( i < mask_start_row || i > mask_end_row )
+                    {
+                        // drop these cells
                         continue;
                     }
                 }
@@ -833,7 +848,9 @@ namespace ORB_SLAM3
                 {
                     if(enableFOV)
                     {
-                        if(j < start_x || j > start_x + FOV_SIZE*2){
+                        if(j < mask_start_col || j > mask_end_col)
+                        {
+                            // drop these cells
                             continue;
                         }
                     }
