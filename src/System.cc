@@ -308,6 +308,7 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     if( ShouldDropFrame(timestamp) )
     {
         cout << "Dropping frame " << timestamp << endl;
+        InsertTrackTime(0.0);   // to keep track of dropped frames compute time
         return Sophus::SE3f();  // return empty, since we won't be processing frame
     }
 
@@ -399,6 +400,7 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
     if( ShouldDropFrame(timestamp) )
     {
         cout << "Dropping frame " << timestamp << endl;
+        InsertTrackTime(0.0);   // to keep track of dropped frames compute time
         return Sophus::SE3f();  // return empty, since we won't be processing frame
     }
 
@@ -484,6 +486,7 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
     if( ShouldDropFrame(timestamp) )
     {
         cout << "Dropping frame " << timestamp << endl;
+        InsertTrackTime(0.0);   // to keep track of dropped frames compute time
         return Sophus::SE3f();  // return empty, since we won't be processing frame
     }
 
@@ -1465,17 +1468,17 @@ float System::GetImageScale()
 }
 
 #ifdef REGISTER_TIMES
-void System::InsertRectTime(double& time)
+void System::InsertRectTime(const double& time)
 {
     mpTracker->vdRectStereo_ms.push_back(time);
 }
 
-void System::InsertResizeTime(double& time)
+void System::InsertResizeTime(const double& time)
 {
     mpTracker->vdResizeImage_ms.push_back(time);
 }
 
-void System::InsertTrackTime(double& time)
+void System::InsertTrackTime(const double& time)
 {
     mpTracker->vdTrackTotal_ms.push_back(time);
 }

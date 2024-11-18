@@ -224,9 +224,9 @@ public:
     float GetImageScale();
 
 #ifdef REGISTER_TIMES
-    void InsertRectTime(double& time);
-    void InsertResizeTime(double& time);
-    void InsertTrackTime(double& time);
+    void InsertRectTime(const double& time);
+    void InsertResizeTime(const double& time);
+    void InsertTrackTime(const double& time);
 #endif
 
 private:
