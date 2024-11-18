@@ -15,7 +15,7 @@ run_orbslam() {
   local dataset_with_underscore=$(echo $dataset | sed 's/\([A-Z]*\)\([0-9]*\)/\1_\2/')
   local command="./Examples/Stereo-Inertial/stereo_inertial_euroc ./Vocabulary/ORBvoc.txt $config_file ./Datasets/EuRoc/${dataset_with_underscore}* ./Examples/Stereo-Inertial/EuRoC_TimeStamps/${dataset}.txt dataset-${dataset}_stereo_imu"
   echo "Running command: $command"
-  $command 2>&1 | tee $log_file
+  $command > $log_file
 
   echo "Saving results..."
   local result_folder="${result_folder_prefix}_${dataset}_${DATE}_run_${run_number}"
