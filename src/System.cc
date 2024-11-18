@@ -53,8 +53,13 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     "This is free software, and you are welcome to redistribute it" << endl <<
     "under certain conditions. See LICENSE.txt." << endl << endl;
 
+#ifdef REGISTER_TIMES
+    cout << "Built with REGISTER_TIMES"
+    << endl;
+#endif
+
 #ifdef GIT_COMMIT_HASH
-    cout << endl <<
+    cout <<
     "Git Commit Hash: " << GIT_COMMIT_HASH
     << endl << endl;
 #endif
