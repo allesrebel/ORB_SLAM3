@@ -15,19 +15,19 @@ run_orbslam() {
   local dataset_with_underscore=$(echo $dataset | sed 's/\([A-Z]*\)\([0-9]*\)/\1_\2/')
   local command="./Examples/Stereo-Inertial/stereo_inertial_euroc ./Vocabulary/ORBvoc.txt $config_file ./Datasets/EuRoc/${dataset_with_underscore}* ./Examples/Stereo-Inertial/EuRoC_TimeStamps/${dataset}.txt dataset-${dataset}_stereo_imu"
   echo "Running command: $command"
-  # $command > $log_file
+  $command > $log_file
 
-  # echo "Saving results..."
-  # local result_folder="${result_folder_prefix}_${dataset}_${DATE}_run_${run_number}"
-  # mkdir -p $result_folder
-  # mv LocalMapTimeStats.txt ExecMean.txt f_dataset-${dataset}_stereo_imu.txt SessionInfo.txt kf_dataset-${dataset}_stereo_imu.txt LBA_Stats.txt TrackingTimeStats.txt $log_file $result_folder
+  echo "Saving results..."
+  local result_folder="${result_folder_prefix}_${dataset}_${DATE}_run_${run_number}"
+  mkdir -p $result_folder
+  mv LocalMapTimeStats.txt ExecMean.txt f_dataset-${dataset}_stereo_imu.txt SessionInfo.txt kf_dataset-${dataset}_stereo_imu.txt LBA_Stats.txt TrackingTimeStats.txt $log_file $result_folder
 
-  # # Move map_points.csv if it exists
-  # if [ -f map_points.csv ]; then
-  #   mv map_points.csv $result_folder
-  # fi
+  # Move map_points.csv if it exists
+  if [ -f map_points.csv ]; then
+    mv map_points.csv $result_folder
+  fi
 
-  # echo "Results saved in $result_folder"
+  echo "Results saved in $result_folder"
 }
 
 # Number of runs for each configuration
