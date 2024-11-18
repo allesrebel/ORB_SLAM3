@@ -156,6 +156,29 @@ ${EIGEN3_INCLUDE_DIR}
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
+# Retrieve the latest commit hash
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Check if the working directory is dirty (has uncommitted changes)
+execute_process(
+    COMMAND git diff --quiet --exit-code
+    RESULT_VARIABLE IS_DIRTY
+)
+
+# Append "-dirty" if there are changes
+if(NOT IS_DIRTY EQUAL 0)
+    set(GIT_COMMIT_HASH "${GIT_COMMIT_HASH}-dirty")
+endif()
+
+# Define the preprocessor macro
+add_definitions(-DGIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\")
+
+message(STATUS "Updated GIT_COMMIT_HASH = ${GIT_COMMIT_HASH}")
+
 add_library(${PROJECT_NAME} SHARED
 src/System.cc
 src/Tracking.cc
