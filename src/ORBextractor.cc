@@ -817,7 +817,7 @@ namespace ORB_SLAM3
                 int height;
             };
 
-            const mask_t FOV_MASK = {6, 6};
+            const mask_t FOV_MASK = {maskWidth, maskHeight};
 
             const int mask_start_row = center_row - FOV_MASK.height/2;
             const int mask_end_row = mask_start_row + FOV_MASK.height;
