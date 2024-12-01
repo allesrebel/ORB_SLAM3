@@ -37,6 +37,6 @@ echo "Configuring and building ORB_SLAM3 ..."
 
 mkdir -p build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-#cmake .. -DCMAKE_BUILD_TYPE=Debug # -DNDEBUG # if you don't want asserts
+cmake .. -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_DATASET=ON
+#cmake .. -DCMAKE_BUILD_TYPE=Debug -DDOWNLOAD_DATASET=ON# -DNDEBUG # if you don't want asserts
 make -j
