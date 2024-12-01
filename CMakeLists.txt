@@ -1,20 +1,39 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5)
 project(ORB_SLAM3)
 
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
-MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
-
 # Add an option to download the dataset
 option(DOWNLOAD_DATASET "Download the EuRoc dataset" OFF)
 
 if(DOWNLOAD_DATASET)
+    set(DATASET_DIR "${PROJECT_SOURCE_DIR}/Datasets/EuRoc")
+
+    if(EXISTS ${DATASET_DIR})
+        message(WARNING "The dataset directory already exists: ${DATASET_DIR}")
+        message(WARNING "Do you want to re-download the dataset? (yes/no)")
+
+        # Read user input
+        string(TIMESTAMP NOW "%Y%m%d%H%M%S")
+        set(USER_INPUT_FILE "/tmp/user_input_${NOW}.txt")
+        execute_process(
+            COMMAND /bin/sh -c "read -p 'Re-download dataset? (yes/no): ' user_input && echo \${user_input} > ${USER_INPUT_FILE}"
+        )
+        file(READ ${USER_INPUT_FILE} USER_INPUT)
+        string(STRIP ${USER_INPUT} USER_INPUT)
+        file(REMOVE ${USER_INPUT_FILE})
+
+        if(NOT USER_INPUT STREQUAL "yes")
+            message(STATUS "Skipping dataset download.")
+            return()
+        endif()
+    endif()
+
     message(STATUS "Downloading EuRoc dataset...")
 
     # Define dataset URLs and target directories
-    set(DATASET_DIR "${PROJECT_SOURCE_DIR}/Datasets/EuRoc")
     file(MAKE_DIRECTORY ${DATASET_DIR})
 
     set(DATASETS
@@ -64,21 +83,21 @@ endif()
 
 # To clean up the build
 # TODO: uncomment one at a time, and fix these!!!
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-conversion-null -Wno-deprecated -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-reorder -Wno-unused-but-set-variable -Wno-dangling-else -Wno-uninitialized -Wno-maybe-uninitialized -Wno-aggressive-loop-optimizations -Wno-class-memaccess -Wno-unused-local-typedefs -Wno-overloaded-virtual -Wno-error=array-bounds")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-conversion-null -Wno-deprecated -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable -Wno-unused-variable -Wno-reorder -Wno-unused-but-set-variable -Wno-dangling-else -Wno-uninitialized -Wno-maybe-uninitialized -Wno-aggressive-loop-optimizations -Wno-class-memaccess -Wno-unused-local-typedefs -Wno-overloaded-virtual -Wno-array-bounds -Wno-error=array-bounds")
 
 # Set C++ flags based on the build type
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og -g")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og -g")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og -g")
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall   -O3")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wall   -O3")
 elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O2 -g")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O2 -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g")
 elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -Os")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -Os")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os")
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
@@ -111,17 +130,39 @@ if(UNIX AND NOT APPLE)
         ERROR_QUIET
     )
     if(NOT opencv_installed EQUAL 0)
-        message(FATAL_ERROR "libopencv-dev is not installed. Please run 'sudo apt install libopencv-dev' to install it.")
+        message(STATUS "libopencv-dev is not installed. Installing libopencv-dev...")
+        
+        # Check if the user is root
+        execute_process(
+            COMMAND id -u
+            OUTPUT_VARIABLE USER_ID
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        
+        if(USER_ID EQUAL 0)
+            execute_process(
+                COMMAND apt-get update
+                COMMAND apt-get install -y libopencv-dev
+                RESULT_VARIABLE install_result
+            )
+        else()
+            execute_process(
+                COMMAND sudo apt-get update
+                COMMAND sudo apt-get install -y libopencv-dev
+                RESULT_VARIABLE install_result
+            )
+        endif()
+
+        if(NOT install_result EQUAL 0)
+            message(FATAL_ERROR "Failed to install libopencv-dev. Please install it manually.")
+        endif()
     endif()
 endif()
 
 find_package(OpenCV 4.4)
-   if(NOT OpenCV_FOUND)
-        message(FATAL_ERROR "OpenCV > 4.4 not found.")
-   endif()
-
-MESSAGE("OPENCV VERSION:")
-MESSAGE(${OpenCV_VERSION})
+if(NOT OpenCV_FOUND)
+    message(FATAL_ERROR "OpenCV > 4.4 not found.")
+endif()
 
 # Check for OS type and request user to install libeigen3-dev if not installed
 if(UNIX AND NOT APPLE)
@@ -132,7 +173,108 @@ if(UNIX AND NOT APPLE)
         ERROR_QUIET
     )
     if(NOT eigen_installed EQUAL 0)
-        message(FATAL_ERROR "libeigen3-dev is not installed. Please run 'sudo apt install libeigen3-dev' to install it.")
+        message(STATUS "libeigen3-dev is not installed. Installing libeigen3-dev...")
+        
+        # Check if the user is root
+        execute_process(
+            COMMAND id -u
+            OUTPUT_VARIABLE USER_ID
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        
+        if(USER_ID EQUAL 0)
+            execute_process(
+            COMMAND apt-get update
+            COMMAND apt-get install -y libeigen3-dev
+            RESULT_VARIABLE install_result
+            )
+        else()
+            execute_process(
+            COMMAND sudo apt-get update
+            COMMAND sudo apt-get install -y libeigen3-dev
+            RESULT_VARIABLE install_result
+            )
+        endif()
+
+        if(NOT install_result EQUAL 0)
+            message(FATAL_ERROR "Failed to install libeigen3-dev. Please install it manually.")
+        endif()
+    endif()
+endif()
+
+# Check for OS type and request user to install libgl-dev if not installed
+if(UNIX AND NOT APPLE)
+    execute_process(
+        COMMAND dpkg -s libgl-dev
+        RESULT_VARIABLE libgl_installed
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if(NOT libgl_installed EQUAL 0)
+        message(STATUS "libgl-dev is not installed. Installing libgl-dev...")
+        
+        # Check if the user is root
+        execute_process(
+            COMMAND id -u
+            OUTPUT_VARIABLE USER_ID
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        
+        if(USER_ID EQUAL 0)
+            execute_process(
+                COMMAND apt-get update
+                COMMAND apt-get install -y libgl-dev
+                RESULT_VARIABLE install_result
+            )
+        else()
+            execute_process(
+                COMMAND sudo apt-get update
+                COMMAND sudo apt-get install -y libgl-dev
+                RESULT_VARIABLE install_result
+            )
+        endif()
+
+        if(NOT install_result EQUAL 0)
+            message(FATAL_ERROR "Failed to install libgl-dev. Please install it manually.")
+        endif()
+    endif()
+endif()
+
+# Check for OS type and request user to install libssl-dev if not installed
+if(UNIX AND NOT APPLE)
+    execute_process(
+        COMMAND dpkg -s libssl-dev
+        RESULT_VARIABLE libssl_installed
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if(NOT libssl_installed EQUAL 0)
+        message(STATUS "libssl-dev is not installed. Installing libssl-dev...")
+        
+        # Check if the user is root
+        execute_process(
+            COMMAND id -u
+            OUTPUT_VARIABLE USER_ID
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        
+        if(USER_ID EQUAL 0)
+            execute_process(
+                COMMAND apt-get update
+                COMMAND apt-get install -y libssl-dev
+                RESULT_VARIABLE install_result
+            )
+        else()
+            execute_process(
+                COMMAND sudo apt-get update
+                COMMAND sudo apt-get install -y libssl-dev
+                RESULT_VARIABLE install_result
+            )
+        endif()
+
+        if(NOT install_result EQUAL 0)
+            message(FATAL_ERROR "Failed to install libssl-dev. Please install it manually.")
+        endif()
     endif()
 endif()
 
@@ -144,6 +286,46 @@ if(GUI)
     add_definitions(-DGUI)
     include_directories(${Pangolin_INCLUDE_DIRS})
 endif()
+
+# Check for OS type and request user to install boost libraries if not installed
+if(UNIX AND NOT APPLE)
+    execute_process(
+        COMMAND dpkg -s libboost-all-dev
+        RESULT_VARIABLE boost_installed
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if(NOT boost_installed EQUAL 0)
+        message(STATUS "libboost-all-dev is not installed. Installing libboost-all-dev...")
+        
+        # Check if the user is root
+        execute_process(
+            COMMAND id -u
+            OUTPUT_VARIABLE USER_ID
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        
+        if(USER_ID EQUAL 0)
+            execute_process(
+                COMMAND apt-get update
+                COMMAND apt-get install -y libboost-all-dev
+                RESULT_VARIABLE install_result
+            )
+        else()
+            execute_process(
+                COMMAND sudo apt-get update
+                COMMAND sudo apt-get install -y libboost-all-dev
+                RESULT_VARIABLE install_result
+            )
+        endif()
+
+        if(NOT install_result EQUAL 0)
+            message(FATAL_ERROR "Failed to install libboost-all-dev. Please install it manually.")
+        endif()
+    endif()
+endif()
+
+
 find_package(realsense2)
 
 include_directories(
