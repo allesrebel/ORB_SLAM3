@@ -5,32 +5,67 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
+# Check if tar is installed
+execute_process(
+    COMMAND tar --version
+    RESULT_VARIABLE tar_installed
+    OUTPUT_QUIET
+    ERROR_QUIET
+)
+if(NOT tar_installed EQUAL 0)
+    message(STATUS "tar is not installed. Installing tar...")
+
+    # Check if the user is root
+    execute_process(
+        COMMAND id -u
+        OUTPUT_VARIABLE USER_ID
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    if(USER_ID EQUAL 0)
+        execute_process(
+            COMMAND apt-get update
+            COMMAND apt-get install -y tar
+            RESULT_VARIABLE install_result
+        )
+    else()
+        execute_process(
+            COMMAND sudo apt-get update
+            COMMAND sudo apt-get install -y tar
+            RESULT_VARIABLE install_result
+        )
+    endif()
+
+    if(NOT install_result EQUAL 0)
+        message(FATAL_ERROR "Failed to install tar. Please install it manually.")
+    endif()
+endif()
+
+# Check if the vocabulary file exists and extract it if it doesn't
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/Vocabulary/ORBvoc.txt")
+    message(STATUS "Uncompressing vocabulary ...")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E tar xzf ORBvoc.txt.tar.gz
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Vocabulary
+    )
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E ls -l
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Vocabulary
+    )
+endif()
+
 # Add an option to download the dataset
 option(DOWNLOAD_DATASET "Download the EuRoc dataset" OFF)
 
+set(DATASET_DIR "${PROJECT_SOURCE_DIR}/Datasets/EuRoc")
+
+if(EXISTS ${DATASET_DIR})
+    message(WARNING "The dataset directory already exists: ${DATASET_DIR}")
+else()
+    set(DOWNLOAD_DATASET ON)
+endif()
+
 if(DOWNLOAD_DATASET)
-    set(DATASET_DIR "${PROJECT_SOURCE_DIR}/Datasets/EuRoc")
-
-    if(EXISTS ${DATASET_DIR})
-        message(WARNING "The dataset directory already exists: ${DATASET_DIR}")
-        message(WARNING "Do you want to re-download the dataset? (yes/no)")
-
-        # Read user input
-        string(TIMESTAMP NOW "%Y%m%d%H%M%S")
-        set(USER_INPUT_FILE "/tmp/user_input_${NOW}.txt")
-        execute_process(
-            COMMAND /bin/sh -c "read -p 'Re-download dataset? (yes/no): ' user_input && echo \${user_input} > ${USER_INPUT_FILE}"
-        )
-        file(READ ${USER_INPUT_FILE} USER_INPUT)
-        string(STRIP ${USER_INPUT} USER_INPUT)
-        file(REMOVE ${USER_INPUT_FILE})
-
-        if(NOT USER_INPUT STREQUAL "yes")
-            message(STATUS "Skipping dataset download.")
-            return()
-        endif()
-    endif()
-
     message(STATUS "Downloading EuRoc dataset...")
 
     # Define dataset URLs and target directories
@@ -421,15 +456,46 @@ include/SerializationUtils.h
 include/Config.h
 include/Settings.h)
 
-add_subdirectory(Thirdparty/g2o)
+# Check if the libraries exist and build them if needed
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so")
+    message(STATUS "libDBoW2.so not found, building DBoW2...")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/build
+    )
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release -Wno-unused-variable -Wno-unused-variable ..
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/build
+    )
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} --build .
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/build
+    )
+endif()
 
-target_link_libraries(${PROJECT_NAME}
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
-${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
--lboost_serialization
--lcrypto
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so")
+    message(STATUS "libg2o.so not found, building g2o...")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
+    )
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=${MAKE_CXX_FLAGS} ..
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
+    )
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} --build .
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
+    )
+endif()
+
+# Add target libraries, thirdparty libraries, and OpenCV libraries, and boost serialization
+target_link_libraries(
+    ${PROJECT_NAME}
+    ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+    ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+    ${OpenCV_LIBS}
+    ${EIGEN3_LIBS}
+    -lboost_serialization
+    -lcrypto
 )
 
 if(GUI)
