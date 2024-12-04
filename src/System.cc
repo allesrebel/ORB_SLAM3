@@ -64,6 +64,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     << endl << endl;
 #endif
 
+    cout << "Compiled with C++ version: " << __cplusplus << endl << endl;
+
     cout << "Input sensor was set to: ";
 
     if(mSensor==MONOCULAR)

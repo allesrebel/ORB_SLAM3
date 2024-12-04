@@ -345,10 +345,10 @@ int main(int argc, char **argv) {
             if(!image_ready)
                 cond_image_rec.wait(lk);
 
-#ifdef COMPILEDWITHC11
+#if __cplusplus >= 201103L
             std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
 #else
-            std::chrono::monotonic_clock::time_point time_Start_Process = std::chrono::monotonic_clock::now();
+            #warning "This code requires C++11 or higher"
 #endif
 
             fs = fsSLAM;
