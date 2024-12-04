@@ -60,7 +60,7 @@ option(DOWNLOAD_DATASET "Download the EuRoc dataset" OFF)
 set(DATASET_DIR "${PROJECT_SOURCE_DIR}/Datasets/EuRoc")
 
 if(EXISTS ${DATASET_DIR})
-    message(WARNING "The dataset directory already exists: ${DATASET_DIR}")
+    message(STATUS "The dataset directory already exists: ${DATASET_DIR}")
 else()
     set(DOWNLOAD_DATASET ON)
 endif()
@@ -140,9 +140,15 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
 # Check C++11 or C++0x support
 include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
 CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-if(COMPILER_SUPPORTS_CXX14)
+
+if(COMPILER_SUPPORTS_CXX17)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+   add_definitions(-DCOMPILEDWITHC14)
+   message(STATUS "Using flags -std=c++17.")
+elseif(COMPILER_SUPPORTS_CXX14)
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
    add_definitions(-DCOMPILEDWITHC14)
    message(STATUS "Using flag -std=c++14.")
@@ -151,7 +157,7 @@ elseif(COMPILER_SUPPORTS_CXX11)
    add_definitions(-DCOMPILEDWITHC11)
    message(STATUS "Using flag -std=c++11.")
 else()
-   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
+   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++17,14,11 support. Please use a different C++ compiler.")
 endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
@@ -478,7 +484,7 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so")
         COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
     )
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=${MAKE_CXX_FLAGS} ..
+        COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} ..
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
     )
     execute_process(
