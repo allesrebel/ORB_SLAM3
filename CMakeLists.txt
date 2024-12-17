@@ -161,13 +161,22 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 # Check for OS type and request user to install libopencv-dev if not installed
 if(UNIX AND NOT APPLE)
+    # Check for libopencv-dev or opencv-dev
     execute_process(
         COMMAND dpkg -s libopencv-dev
-        RESULT_VARIABLE opencv_installed
+        RESULT_VARIABLE libopencv_installed
         OUTPUT_QUIET
         ERROR_QUIET
     )
-    if(NOT opencv_installed EQUAL 0)
+
+    execute_process(
+        COMMAND dpkg -s opencv-dev
+        RESULT_VARIABLE opencv_dev_installed
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    # If neither is installed
+    if(NOT libopencv_installed EQUAL 0 AND NOT opencv_dev_installed EQUAL 0)
         message(STATUS "libopencv-dev is not installed. Installing libopencv-dev...")
         
         # Check if the user is root
