@@ -109,6 +109,7 @@ public:
     // Compute the cell of a keypoint (return false if outside the grid)
     bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
 
+    // Get the indices of features within a specified area of the image.
     vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel=-1, const int maxLevel=-1, const bool bRight = false) const;
 
     // Search a match for each keypoint in the left image to a keypoint in the right image.
@@ -365,8 +366,6 @@ public:
         }
         cout << "Point distribution in Frame: left-> " << left << " --- right-> " << right << endl;
     }
-
-    Sophus::SE3<double> T_test;
 };
 
 }// namespace ORB_SLAM
