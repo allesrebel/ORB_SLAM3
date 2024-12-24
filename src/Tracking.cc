@@ -1555,6 +1555,7 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
 #ifdef REGISTER_TIMES
     vdORBExtract_ms.push_back(mCurrentFrame.mTimeORB_Ext);
     vdStereoMatch_ms.push_back(mCurrentFrame.mTimeStereoMatch);
+    tickManager.endFrame(mCurrentFrame.mTimeORB_Ext);
 #endif
 
     //cout << "Tracking start" << endl;

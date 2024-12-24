@@ -21,6 +21,9 @@
 #include "System.h"
 #include "Converter.h"
 #include <thread>
+#ifdef REGISTER_TIMES
+#include "TickManager.h"
+#endif
 #ifdef GUI
 #include <pangolin/pangolin.h>
 #endif
@@ -201,6 +204,11 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpFrameDrawer = new FrameDrawer(mpAtlas);
     mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
     #endif // GUI
+
+    #ifdef REGISTER_TIMES
+    // Set up Storage for Tick Manager!
+    static TickManager tm;
+    #endif // REGISTER_TIMES
 
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)

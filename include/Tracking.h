@@ -37,6 +37,10 @@
 #include "ImuTypes.h"
 #include "Settings.h"
 
+#ifdef REGISTER_TIMES
+#include "TickManager.h"
+#endif // REGISTER_TIMES
+
 #include "GeometricCamera.h"
 
 #include <mutex>
@@ -196,6 +200,9 @@ public:
     vector<double> vdLMTrack_ms;
     vector<double> vdNewKF_ms;
     vector<double> vdTrackTotal_ms;
+
+    // Set up Storage for Tick Manager!
+    TickManager tickManager;
 #endif
 
 protected:
