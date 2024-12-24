@@ -1535,6 +1535,9 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
 
     //cout << "Incoming frame creation" << endl;
 
+    // TODO: For IMU_STEREO, we can even pass the left image ONLY to the Frame constructor
+    // effectively making the right image optional if we are facing time constraints
+
     if (mSensor == System::STEREO && !mpCamera2)
         mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
     else if(mSensor == System::STEREO && mpCamera2)
