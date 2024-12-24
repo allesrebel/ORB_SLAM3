@@ -437,6 +437,7 @@ src/GeometricTools.cc
 src/TwoViewReconstruction.cc
 src/Config.cc
 src/Settings.cc
+src/TickManager.cc
 include/System.h
 include/Tracking.h
 include/LocalMapping.h
@@ -466,7 +467,9 @@ include/GeometricTools.h
 include/TwoViewReconstruction.h
 include/SerializationUtils.h
 include/Config.h
-include/Settings.h)
+include/Settings.h
+include/TickManager.h
+)
 
 # Check if the libraries exist and build them if needed
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so")
