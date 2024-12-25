@@ -201,8 +201,6 @@ public:
     vector<double> vdNewKF_ms;
     vector<double> vdTrackTotal_ms;
 
-    // Set up Storage for Tick Manager!
-    TickManager tickManager;
 #endif
 
 protected:

@@ -61,6 +61,8 @@
 
 #include "ORBextractor.h"
 
+#include "TickManager.h"
+
 
 using namespace cv;
 using namespace std;
@@ -861,6 +863,9 @@ namespace ORB_SLAM3
                         continue;
                     if(maxX>maxBorderX)
                         maxX = maxBorderX;
+
+                    // We're about to process a cell!
+                    TickManager::getInstance().incrementTicks();
 
                     vector<cv::KeyPoint> vKeysCell;
 
