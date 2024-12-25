@@ -30,6 +30,8 @@
 #include <include/CameraModels/Pinhole.h>
 #include <include/CameraModels/KannalaBrandt8.h>
 
+#include "TickManager.h"
+
 namespace ORB_SLAM3
 {
 
@@ -94,6 +96,8 @@ Frame::Frame(const Frame &frame)
 #ifdef REGISTER_TIMES
     mTimeStereoMatch = frame.mTimeStereoMatch;
     mTimeORB_Ext = frame.mTimeORB_Ext;
+
+    TickManager::getInstance().endFrame(mTimeORB_Ext);
 #endif
 }
 
@@ -127,6 +131,8 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
+
+    TickManager::getInstance().endFrame(mTimeORB_Ext);
 #endif
 
     N = mvKeys.size();
@@ -224,6 +230,8 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
+
+    TickManager::getInstance().endFrame(mTimeORB_Ext);
 #endif
 
 
@@ -313,6 +321,8 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
+
+    TickManager::getInstance().endFrame(mTimeORB_Ext);
 #endif
 
 
@@ -1064,6 +1074,8 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
+
+    TickManager::getInstance().endFrame(mTimeORB_Ext);
 #endif
 
     Nleft = mvKeys.size();

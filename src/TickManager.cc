@@ -6,7 +6,13 @@
 namespace ORB_SLAM3 
 {
 
-void TickManager::incrementTicks()
+TickManager& TickManager::getInstance()
+{
+    static TickManager instance;
+    return instance;
+}
+
+void TickManager::incrementTicks(feature_extraction_settings_t& settings)
 {
     elapsed_ticks++;  // Increment the frame's elapsed ticks
 }
@@ -14,12 +20,27 @@ void TickManager::incrementTicks()
 // Signal the end of a frame and reset elapsed ticks
 void TickManager::endFrame(double& actualFrameTime)
 {
-    frame_count++;
+    // if no ticks were recorded, return
+    if(elapsed_ticks == 0)
+    {
+        frame_budget = static_cast<int>(1.0 / actualFrameTime * getAverageTicksPerFrame());
+        printStats(actualFrameTime);
+        return;
+    }
+
     ticks_per_frame.push_back(elapsed_ticks);
 
     // Using actual time elapsed to do frame as the budget for the next frame
-    // frame_budget = 1/actualFrameTime * average_ticks_per_frame 
-    frame_budget = static_cast<int>(1.0 / actualFrameTime * getAverageTicksPerFrame());
+    const double time_per_tick = ( actualFrameTime / getAverageTicksPerFrame());
+    std::cout << "Time per tick: " << time_per_tick << std::endl;
+    frame_budget = static_cast<int>( 50.0f / time_per_tick );
+
+    // using the frame budget, we can figure out which mask to use!
+    // we know how many levels of the pyramid we have, we also know
+    // how many ticks per level, so we can figure out which fits the budget the best
+
+
+    printStats(actualFrameTime);
 
     // Reset for the next frame
     elapsed_ticks = 0;
@@ -30,15 +51,17 @@ double TickManager::getAverageTicksPerFrame() const
 {
     if (ticks_per_frame.empty()) return 0.0;
     int total_ticks = std::accumulate(ticks_per_frame.begin(), ticks_per_frame.end(), 0);
-    return static_cast<double>(total_ticks) / frame_count;
+    return static_cast<double>(total_ticks) / ticks_per_frame.size();
 }
 
 // Debug print
-void TickManager::printStats() const
+void TickManager::printStats(double& frameTimestamp) const
 {
-    std::cout << "Frame " << frame_count << " stats:\n";
+    std::cout << "Frame finished in " << frameTimestamp << " ms stats:\n";
+    std::cout << " - Recorded Frames: " << ticks_per_frame.size() << "\n";
     std::cout << " - Elapsed Ticks: " << elapsed_ticks << "\n";
     std::cout << " - Average Ticks Per Frame: " << getAverageTicksPerFrame() << "\n";
+    std::cout << " - Frame Budget in Ticks: " << frame_budget << "\n";
 }
 
 } // namespace ORB_SLAM3
