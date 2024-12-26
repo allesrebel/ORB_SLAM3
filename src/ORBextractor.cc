@@ -865,7 +865,16 @@ namespace ORB_SLAM3
                         maxX = maxBorderX;
 
                     // We're about to process a cell!
-                    TickManager::getInstance().incrementTicks();
+                    TickManager::getInstance().incrementTicks
+                    (
+                        { 
+                            .level = level, 
+                            .nRows = i, 
+                            .nCols = j, 
+                            .cellWidth = wCell, 
+                            .cellHeight = hCell 
+                        }
+                    );
 
                     vector<cv::KeyPoint> vKeysCell;
 

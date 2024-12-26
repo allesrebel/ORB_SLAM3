@@ -12,19 +12,40 @@ TickManager& TickManager::getInstance()
     return instance;
 }
 
-void TickManager::incrementTicks(feature_extraction_settings_t& settings)
+void TickManager::incrementTicks(const feature_extraction_info_t&& infoGiven)
 {
+    // Check if the level is new
+    if( settings.pyramid_levels.size() <= infoGiven.level )
+    {
+        settings.pyramid_levels.push_back
+        ( 
+            {
+                .nRows = infoGiven.nRows, 
+                .nCols = infoGiven.nCols, 
+                .cellWidth = infoGiven.cellWidth, 
+                .cellHeight = infoGiven.cellHeight
+            } 
+        );
+    }
+    else
+    {
+        // Update the level's cells, choosing the larger of the two
+        settings.pyramid_levels[infoGiven.level].nRows = std::max( settings.pyramid_levels[infoGiven.level].nRows, infoGiven.nRows );
+        settings.pyramid_levels[infoGiven.level].nCols = std::max( settings.pyramid_levels[infoGiven.level].nCols, infoGiven.nCols );
+        settings.pyramid_levels[infoGiven.level].cellHeight = std::max( settings.pyramid_levels[infoGiven.level].cellHeight, infoGiven.cellHeight );
+        settings.pyramid_levels[infoGiven.level].cellWidth = std::max( settings.pyramid_levels[infoGiven.level].cellWidth, infoGiven.cellWidth );
+    }
+
     elapsed_ticks++;  // Increment the frame's elapsed ticks
 }
 
 // Signal the end of a frame and reset elapsed ticks
-void TickManager::endFrame(double& actualFrameTime)
+void TickManager::endFrame(long unsigned int& frame_num, double& actualFrameTime)
 {
     // if no ticks were recorded, return
     if(elapsed_ticks == 0)
     {
         frame_budget = static_cast<int>(1.0 / actualFrameTime * getAverageTicksPerFrame());
-        printStats(actualFrameTime);
         return;
     }
 
@@ -38,9 +59,7 @@ void TickManager::endFrame(double& actualFrameTime)
     // using the frame budget, we can figure out which mask to use!
     // we know how many levels of the pyramid we have, we also know
     // how many ticks per level, so we can figure out which fits the budget the best
-
-
-    printStats(actualFrameTime);
+    // TODO: implement this
 
     // Reset for the next frame
     elapsed_ticks = 0;
@@ -55,13 +74,21 @@ double TickManager::getAverageTicksPerFrame() const
 }
 
 // Debug print
-void TickManager::printStats(double& frameTimestamp) const
+void TickManager::printStats(long unsigned int& frame_num, double& frameTimestamp) const
 {
-    std::cout << "Frame finished in " << frameTimestamp << " ms stats:\n";
+    std::cout << "Frame " << frame_num << " finished in " << frameTimestamp << " ms stats:\n";
     std::cout << " - Recorded Frames: " << ticks_per_frame.size() << "\n";
     std::cout << " - Elapsed Ticks: " << elapsed_ticks << "\n";
     std::cout << " - Average Ticks Per Frame: " << getAverageTicksPerFrame() << "\n";
     std::cout << " - Frame Budget in Ticks: " << frame_budget << "\n";
+
+    // print out the pyramid levels
+    std::cout << " - Pyramid Level Cells: \n";
+    for( int i = 0; i < settings.pyramid_levels.size(); i++ )
+    {
+        std::cout << "   - Level " << i << ": " << settings.pyramid_levels[i].nCols << "x" << settings.pyramid_levels[i].nRows << "\n";
+        std::cout <<"      - Cell Size: " << settings.pyramid_levels[i].cellWidth << "x" << settings.pyramid_levels[i].cellHeight << "\n";
+    }
 }
 
 } // namespace ORB_SLAM3
