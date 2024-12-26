@@ -9,16 +9,32 @@ namespace ORB_SLAM3
 
 struct feature_extraction_settings_t
 {
+
+    struct pyramid_level_t
+    {
+        int nRows;    // number of rows in the grid at this level
+        int nCols;    // number of columns in the grid at this level
+        int cellWidth;  // width of each cell in the grid
+        int cellHeight; // height of each cell in the grid
+    };
+
     // These are the variables we need in order to figure out
     // how much time we have to provision to featurizing the frame
-    int nlevels;  // pyramid levels
-    int nCols;    // number of columns in the grid
-    int nRows;    // number of rows in the grid
+    std::vector<pyramid_level_t> pyramid_levels;
 
     // optional settings (TODO:)
     // bool enableFOV;
     // int maskHeight;
     // int maskWidth;
+};
+
+struct feature_extraction_info_t
+{
+    int level;
+    int nRows;
+    int nCols;
+    int cellWidth;
+    int cellHeight;
 };
 
 class TickManager 
@@ -37,16 +53,16 @@ public:
     static TickManager& getInstance();
 
     // Increment the frame's elapsed ticks, and extraction settings
-    void incrementTicks(feature_extraction_settings_t&);
+    void incrementTicks(const feature_extraction_info_t&&);
 
     // Signal the end of a frame and reset elapsed ticks, and actual time to do frame
-    void endFrame(double&);
+    void endFrame(long unsigned int&, double&);
 
     // Calculate average ticks per frame
     double getAverageTicksPerFrame() const;
 
     // Debug print
-    void printStats(double&) const;
+    void printStats(long unsigned int&, double&) const;
 
     // Delete copy constructor and assignment operator to enforce singleton pattern
     TickManager(const TickManager&) = delete;
