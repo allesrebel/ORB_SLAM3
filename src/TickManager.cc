@@ -53,7 +53,6 @@ void TickManager::endFrame(long unsigned int& frame_num, double& actualFrameTime
 
     // Using actual time elapsed to do frame as the budget for the next frame
     const double time_per_tick = ( actualFrameTime / getAverageTicksPerFrame());
-    std::cout << "Time per tick: " << time_per_tick << std::endl;
     frame_budget = static_cast<int>( 50.0f / time_per_tick );
 
     // using the frame budget, we can figure out which mask to use!

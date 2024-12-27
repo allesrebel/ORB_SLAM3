@@ -1,7 +1,5 @@
 echo "Configuring and building ORB_SLAM3 ..."
 
-mkdir -p build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-#cmake .. -DCMAKE_BUILD_TYPE=Debug # -DNDEBUG # if you don't want asserts
-cmake --build . -j$(nproc)
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DASSERT_DISABLE=ON
+#cmake -B build -DCMAKE_BUILD_TYPE=Debug -DASSERT_DISABLE=OFF
+cmake --build build -j$(nproc)

@@ -5,6 +5,18 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+add_definitions(-DBUILD_TYPE="${CMAKE_BUILD_TYPE}")
+
+option(ASSERT_DISABLE "Disable Asserts via NDEBUG define" ON)
+if(ASSERT_DISABLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")
+    message(STATUS "Asserts: Disabled")
+else()
+    message(STATUS "Asserts: Enabled!!!")
+endif()
+
 # Check if tar is installed
 execute_process(
     COMMAND tar --version
@@ -399,7 +411,7 @@ execute_process(
 )
 
 # Append "-dirty" if there are changes
-if(NOT IS_DIRTY EQUAL 0)
+if(IS_DIRTY EQUAL 1)
     set(GIT_COMMIT_HASH "${GIT_COMMIT_HASH}-dirty")
 endif()
 
