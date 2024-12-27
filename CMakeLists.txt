@@ -483,44 +483,21 @@ include/Settings.h
 include/TickManager.h
 )
 
-# Check if the libraries exist and build them if needed
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so")
-    message(STATUS "libDBoW2.so not found, building DBoW2...")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/build
-    )
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release -Wno-unused-variable -Wno-unused-variable ..
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/build
-    )
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} --build .
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/build
-    )
-endif()
+# Add DBoW2 library
+add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2)
+include_directories(${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/include)
 
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so")
-    message(STATUS "libg2o.so not found, building g2o...")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
-    )
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} ..
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
-    )
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} --build .
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
-    )
-endif()
+# Add g2o library
+add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/g2o)
+include_directories(${PROJECT_SOURCE_DIR}/Thirdparty/g2o)
 
 # Add target libraries, thirdparty libraries, and OpenCV libraries, and boost serialization
 target_link_libraries(
     ${PROJECT_NAME}
-    ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-    ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
     ${OpenCV_LIBS}
     ${EIGEN3_LIBS}
+    DBoW2
+    g2o
     -lboost_serialization
     -lcrypto
 )
