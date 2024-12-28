@@ -40,10 +40,10 @@ DATASETS=("MH01" "MH02" "MH03" "MH04" "MH05")
 
 # Configurations to process
 CONFIGURATIONS=(
-  "./Examples/Stereo-Inertial/EuRoC_deadlines.yaml result_stereo_inertial_deadlines"
-  "./Examples/Stereo-Inertial/EuRoC_fov_deadlines.yaml result_stereo_inertial_fov_deadlines"
+  #"./Examples/Stereo-Inertial/EuRoC_deadlines.yaml result_stereo_inertial_deadlines"
+  #"./Examples/Stereo-Inertial/EuRoC_fov_deadlines.yaml result_stereo_inertial_fov_deadlines"
   "./Examples/Stereo-Inertial/EuRoC_fov.yaml result_stereo_inertial_fov"
-  "./Examples/Stereo-Inertial/EuRoC.yaml result_stereo_inertial_normal"
+  #"./Examples/Stereo-Inertial/EuRoC.yaml result_stereo_inertial_normal"
 )
 
 # Loop through configurations
@@ -57,12 +57,23 @@ for config_pair in "${CONFIGURATIONS[@]}"; do
 
     # Loop through different mask sizes and create corresponding configurations
     for ((mask_size=2; mask_size<=12; mask_size++)); do
-      CONFIG_FILE="./Examples/Stereo-Inertial/${FILENAME}_mask_${mask_size}x${mask_size}.yaml"
-      cp $BASE_CONFIG $CONFIG_FILE
+      CONFIG_FILE="${FILENAME}_mask_${mask_size}x${mask_size}.yaml"
+      if [ ! -f "$CONFIG_FILE" ]; then
+        cp $BASE_CONFIG $CONFIG_FILE
 
-      # Update the maskHeight and maskWidth values in the copied YAML file
-      sed -i "s/^System.maskHeight: [0-9]*/System.maskHeight: ${mask_size}/" $CONFIG_FILE
-      sed -i "s/^System.maskWidth: [0-9]*/System.maskWidth: ${mask_size}/" $CONFIG_FILE
+        # Check if the config file has the lines, if not add them, else do the sed
+        if ! grep -q "^System.maskHeight:" $CONFIG_FILE; then
+          echo "System.maskHeight: ${mask_size}" >> $CONFIG_FILE
+        else
+          sed -i "s/^System.maskHeight: [0-9]*/System.maskHeight: ${mask_size}/" $CONFIG_FILE
+        fi
+
+        if ! grep -q "^System.maskWidth:" $CONFIG_FILE; then
+          echo "System.maskWidth: ${mask_size}" >> $CONFIG_FILE
+        else
+          sed -i "s/^System.maskWidth: [0-9]*/System.maskWidth: ${mask_size}/" $CONFIG_FILE
+        fi
+      fi
 
       # Randomize dataset and configuration selection
       for ((i=1; i<=NUM_RUNS; i++)); do
@@ -70,9 +81,6 @@ for config_pair in "${CONFIGURATIONS[@]}"; do
           run_orbslam $CONFIG_FILE $RESULT_FOLDER_PREFIX $dataset $i $mask_size
         done | shuf
       done | shuf
-
-      # Remove the temporary configuration file after use
-      rm $CONFIG_FILE
     done
   else
     # If not FOV-related, just run the base configuration as is
