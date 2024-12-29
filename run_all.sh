@@ -33,17 +33,17 @@ run_orbslam() {
 }
 
 # Number of runs for each configuration
-NUM_RUNS=1
+NUM_RUNS=50
 
 # Datasets to process
 DATASETS=("MH01" "MH02" "MH03" "MH04" "MH05")
 
 # Configurations to process
 CONFIGURATIONS=(
-  #"./Examples/Stereo-Inertial/EuRoC_deadlines.yaml result_stereo_inertial_deadlines"
-  #"./Examples/Stereo-Inertial/EuRoC_fov_deadlines.yaml result_stereo_inertial_fov_deadlines"
+  "./Examples/Stereo-Inertial/EuRoC_deadlines.yaml result_stereo_inertial_deadlines"
+  "./Examples/Stereo-Inertial/EuRoC_fov_deadlines.yaml result_stereo_inertial_fov_deadlines"
   "./Examples/Stereo-Inertial/EuRoC_fov.yaml result_stereo_inertial_fov"
-  #"./Examples/Stereo-Inertial/EuRoC.yaml result_stereo_inertial_normal"
+  "./Examples/Stereo-Inertial/EuRoC.yaml result_stereo_inertial_normal"
 )
 
 # Loop through configurations
