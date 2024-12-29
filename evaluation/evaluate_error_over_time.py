@@ -5,7 +5,6 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Import the associate functions from the separate module.
 # Make sure 'associate.py' is Python 3–compatible and in the same folder or in your Python path.
 from associate import read_file_list, associate
 
@@ -62,6 +61,39 @@ def align(model, data):
     return rot, trans, trans_error, scale
 
 
+def read_metrics_file(filename):
+    """
+    Read the metrics file (the additional text file) into a dict:
+       timestamp -> total_ms_value
+
+    Expected lines look like:
+      1403636579763555584.000000,0.000000,0.000000,13.863084,5.118943,0.004608,9.826650,6.913653,0.004288,21.885552
+    with a header line that starts with '#'.
+    """
+    metrics_dict = {}
+    with open(filename, 'r') as f:
+        for line in f:
+            line = line.strip()
+            # Skip comments or empty lines
+            if not line or line.startswith('#'):
+                continue
+
+            parts = line.split(',')
+            # The first column is the timestamp (in ns, as float string)
+            # The last column is the "Total[ms]" we want to plot
+            try:
+                timestamp_str = parts[0]
+                total_str     = parts[-1]
+                timestamp_s = float(timestamp_str)
+                total_ms    = float(total_str)
+
+                metrics_dict[timestamp_s] = total_ms
+            except (ValueError, IndexError):
+                # If there's a parsing error, skip that line or handle differently
+                continue
+    return metrics_dict
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="""
@@ -87,6 +119,12 @@ relative to the ground truth. The script:
                         help='Output image file to save the plot (default: trajectory_error.png)')
     parser.add_argument('--show', action='store_true',
                         help='If set, displays the plot window instead of saving to a file.')
+    # New argument for the additional metrics file
+    parser.add_argument('--metrics_file', type=str, default=None,
+                        help='Optional metrics file (timestamped) to plot on the same figure (e.g., #Frame Timestamp[ns],...,Total[ms])')
+    # New argument to switch the x-axis from timestamps to frame numbers
+    parser.add_argument('--use_frame_numbers', action='store_true',
+                        help='If set, x-axis will be frame indices (starting at 0) instead of timestamps.')
     args = parser.parse_args()
 
     # 1) Read the trajectories
@@ -98,9 +136,7 @@ relative to the ground truth. The script:
     if len(matches) < 2:
         sys.exit("Not enough matching timestamps between groundtruth and estimated trajectory!")
 
-    # 3) Build matched 3D position arrays
-    #    We take the first 3 entries [tx, ty, tz] from each matched sample
-    #    shape: (3, N)
+    # 3) Build matched 3D position arrays (3,N)
     gt_xyz  = np.matrix([[float(v) for v in gt_list[a][0:3]] 
                          for (a, _) in matches]).T
     est_xyz = np.matrix([[float(v) * args.scale for v in est_list[b][0:3]] 
@@ -109,29 +145,81 @@ relative to the ground truth. The script:
     # 4) Align the estimated points to the ground truth
     rot, trans, errors, final_scale = align(est_xyz, gt_xyz)
 
-    # 5) Once aligned, compute the per-frame error and get the timestamps
-    #    The `errors` array from align() is the 3D distance error per matched index
-    #    For plotting vs. time, we'll just use the groundtruth stamps (a)
+    # 5) Once aligned, we have the 3D error per matched index
+    #    For plotting vs. time, we'll just use the groundtruth stamps
     times = [a for (a, _) in matches]
 
-    # Sort by time if needed (they should already be sorted by 'associate', but just to be safe)
-    # We'll make a single list of (time, error), then sort by time
+    # Sort by time, just to be sure
     time_error_pairs = sorted(zip(times, errors), key=lambda x: x[0])
-
-    # Unzip into separate lists
     times_sorted  = [p[0] for p in time_error_pairs]
     errors_sorted = [p[1] for p in time_error_pairs]
 
-    # 6) Plot the time vs error
-    plt.figure()
-    plt.plot(times_sorted, errors_sorted, label='Translational Error', color='blue')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Translation Error (m)')
-    plt.title('Trajectory Translation Error Over Time')
-    plt.grid(True)
-    plt.legend()
+    # 6) Optionally parse the metrics file
+    if args.metrics_file:
+        metrics_dict = read_metrics_file(args.metrics_file)
+    else:
+        metrics_dict = None
 
-    # 7) Save or show
+    # -- At this point, we have all the data (errors vs. times, plus optional metrics).
+    #    Now we decide if we want to switch the x-axis from timestamps to frame numbers.
+
+    if args.use_frame_numbers:
+        # Replace the time stamps with frame indices
+        # frames_sorted will be [0, 1, 2, ..., N-1]
+        frames_sorted = list(range(len(times_sorted)))
+        x_vals_error = frames_sorted
+        x_label = 'Frame index'
+    else:
+        # Use the original timestamps
+        x_vals_error = times_sorted
+        x_label = 'Time (s)'
+
+    # For plotting the metrics, we need to handle the x-values carefully
+    #   if we are using frames, we plot them by frame index
+    #   otherwise, we plot them by the original timestamp.
+    # We'll store them in "x_vals_metrics" and "metrics_vals" below:
+    x_vals_metrics = []
+    metrics_vals   = []
+
+    if metrics_dict is not None:
+        # If using timestamps, we collect (timestamp, metric).
+        # If using frames, we collect (frame_index, metric).
+        if args.use_frame_numbers:
+            # We'll only plot metrics for frames that also appear in times_sorted
+            for i, t in enumerate(times_sorted):
+                if t in metrics_dict:
+                    x_vals_metrics.append(i)                   # the frame index
+                    metrics_vals.append(metrics_dict[t])       # total ms
+        else:
+            # We'll directly use the timestamps
+            for t in times_sorted:
+                if t in metrics_dict:
+                    x_vals_metrics.append(t)
+                    metrics_vals.append(metrics_dict[t])
+
+    # 7) Plot
+    fig, ax1 = plt.subplots()
+    ax1.plot(x_vals_error, errors_sorted, label='Translational Error (m)', color='blue')
+    ax1.set_xlabel(x_label)
+    ax1.set_ylabel('Translation Error (m)', color='blue')
+    ax1.grid(True)
+    ax1.tick_params(axis='y', labelcolor='blue')
+
+    if metrics_dict is not None:
+        ax2 = ax1.twinx()
+        ax2.plot(x_vals_metrics, metrics_vals, label='Total[ms]', color='red')
+        ax2.set_ylabel('Total (ms)', color='red')
+        ax2.tick_params(axis='y', labelcolor='red')
+
+        # Combined legend
+        lines_1, labels_1 = ax1.get_legend_handles_labels()
+        lines_2, labels_2 = ax2.get_legend_handles_labels()
+        ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper left')
+    else:
+        # If no metrics file provided, just one legend
+        ax1.legend(loc='upper left')
+
+    # 8) Save or show
     if args.show:
         plt.show()
     else:
@@ -141,4 +229,3 @@ relative to the ground truth. The script:
 
 if __name__ == "__main__":
     main()
-
