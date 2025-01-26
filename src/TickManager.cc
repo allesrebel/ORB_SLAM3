@@ -12,9 +12,14 @@ TickManager& TickManager::getInstance()
     return instance;
 }
 
-void TickManager::incrementTicks(feature_extraction_settings_t& settings)
+void TickManager::incrementTicks(const feature_extraction_settings_t& settings)
 {
     elapsed_ticks++;  // Increment the frame's elapsed ticks
+}
+
+bool TickManager::skipCell(const feature_extraction_state_t& cell)
+{
+    return true;
 }
 
 // Signal the end of a frame and reset elapsed ticks

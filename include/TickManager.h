@@ -21,6 +21,15 @@ struct feature_extraction_settings_t
     // int maskWidth;
 };
 
+struct feature_extraction_state_t
+{
+    // These are the variables we need in order to figure out
+    // how much time we have to provision to featurizing the frame
+    int level;
+    int col;
+    int row;
+};
+
 class TickManager 
 {
 private:
@@ -37,7 +46,10 @@ public:
     static TickManager& getInstance();
 
     // Increment the frame's elapsed ticks, and extraction settings
-    void incrementTicks(feature_extraction_settings_t&);
+    void incrementTicks(const feature_extraction_settings_t&);
+
+    // Skip Cell?
+    bool skipCell(const feature_extraction_state_t&);
 
     // Signal the end of a frame and reset elapsed ticks, and actual time to do frame
     void endFrame(double&);

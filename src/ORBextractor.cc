@@ -864,8 +864,22 @@ namespace ORB_SLAM3
                     if(maxX>maxBorderX)
                         maxX = maxBorderX;
 
+                    // We can create a temporary for the current settings
+                    // that can be used by tick manager to determine estimated
+                    // completion time
+                    const feature_extraction_settings_t settings{.nlevels=nlevels, .nCols=nCols, .nRows=nRows};
+                    const feature_extraction_state_t current_cell{.level=level, .col=i, .row=j};
+
                     // We're about to process a cell!
-                    TickManager::getInstance().incrementTicks();
+                    TickManager::getInstance().incrementTicks(settings);
+
+                    // Should we skip?, ask Tick Manager
+                    if( TickManager::getInstance().skipCell(current_cell) )
+                    {
+                        // Skip this cell
+                        std::cout << "Skipping cell: " << current_cell.level << ", " << current_cell.col << ", " << current_cell.row << std::endl;
+                        continue;
+                    }
 
                     vector<cv::KeyPoint> vKeysCell;
 
