@@ -5,6 +5,18 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+add_definitions(-DBUILD_TYPE="${CMAKE_BUILD_TYPE}")
+
+option(ASSERT_DISABLE "Disable Asserts via NDEBUG define" ON)
+if(ASSERT_DISABLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")
+    message(STATUS "Asserts: Disabled")
+else()
+    message(STATUS "Asserts: Enabled!!!")
+endif()
+
 # Check if tar is installed
 execute_process(
     COMMAND tar --version
@@ -399,7 +411,7 @@ execute_process(
 )
 
 # Append "-dirty" if there are changes
-if(NOT IS_DIRTY EQUAL 0)
+if(IS_DIRTY EQUAL 1)
     set(GIT_COMMIT_HASH "${GIT_COMMIT_HASH}-dirty")
 endif()
 
@@ -471,44 +483,21 @@ include/Settings.h
 include/TickManager.h
 )
 
-# Check if the libraries exist and build them if needed
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so")
-    message(STATUS "libDBoW2.so not found, building DBoW2...")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/build
-    )
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release -Wno-unused-variable -Wno-unused-variable ..
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/build
-    )
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} --build .
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/build
-    )
-endif()
+# Add DBoW2 library
+add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2)
+include_directories(${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/include)
 
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so")
-    message(STATUS "libg2o.so not found, building g2o...")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
-    )
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} ..
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
-    )
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} --build .
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/build
-    )
-endif()
+# Add g2o library
+add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/g2o)
+include_directories(${PROJECT_SOURCE_DIR}/Thirdparty/g2o)
 
 # Add target libraries, thirdparty libraries, and OpenCV libraries, and boost serialization
 target_link_libraries(
     ${PROJECT_NAME}
-    ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-    ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
     ${OpenCV_LIBS}
     ${EIGEN3_LIBS}
+    DBoW2
+    g2o
     -lboost_serialization
     -lcrypto
 )

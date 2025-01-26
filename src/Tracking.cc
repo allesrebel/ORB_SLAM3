@@ -118,6 +118,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     }
 
 #ifdef REGISTER_TIMES
+    vdFrameTimestamps.clear();
     vdRectStereo_ms.clear();
     vdResizeImage_ms.clear();
     vdORBExtract_ms.clear();
@@ -225,10 +226,16 @@ void Tracking::TrackStats2File()
     f.open("TrackingTimeStats.txt");
     f << fixed << setprecision(6);
 
-    f << "#Image Rect[ms],Image Resize[ms],ORB ext[ms],Stereo match[ms],IMU preint[ms],Pose pred[ms],LM track[ms],KF dec[ms],Total[ms]" << endl;
+    f << "#Frame Timestamp[ns],Image Rect[ms],Image Resize[ms],ORB ext[ms],Stereo match[ms],IMU preint[ms],Pose pred[ms],LM track[ms],KF dec[ms],Total[ms]" << endl;
 
     for(int i=0; i<vdTrackTotal_ms.size(); ++i)
     {
+        double timestamp = 0.0;
+        if(!vdFrameTimestamps.empty())
+        {
+            timestamp = ceil(vdFrameTimestamps[i]*1e9);
+        }
+
         double stereo_rect = 0.0;
         if(!vdRectStereo_ms.empty())
         {
@@ -253,7 +260,8 @@ void Tracking::TrackStats2File()
             imu_preint = vdIMUInteg_ms[i];
         }
 
-        f << stereo_rect << "," << resize_image << "," << vdORBExtract_ms[i] << "," << stereo_match << "," << imu_preint << ","
+        f << timestamp << ","
+          << stereo_rect << "," << resize_image << "," << vdORBExtract_ms[i] << "," << stereo_match << "," << imu_preint << ","
           << vdPosePred_ms[i] <<  "," << vdLMTrack_ms[i] << "," << vdNewKF_ms[i] << "," << vdTrackTotal_ms[i] << endl;
     }
 
@@ -1553,6 +1561,7 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
     mCurrentFrame.mnDataset = mnNumDataset;
 
 #ifdef REGISTER_TIMES
+    vdFrameTimestamps.push_back(mCurrentFrame.mTimeStamp);
     vdORBExtract_ms.push_back(mCurrentFrame.mTimeORB_Ext);
     vdStereoMatch_ms.push_back(mCurrentFrame.mTimeStereoMatch);
 #endif
@@ -1602,6 +1611,7 @@ Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, co
     mCurrentFrame.mnDataset = mnNumDataset;
 
 #ifdef REGISTER_TIMES
+    vdFrameTimestamps.push_back(mCurrentFrame.mTimeStamp);
     vdORBExtract_ms.push_back(mCurrentFrame.mTimeORB_Ext);
 #endif
 
@@ -1653,6 +1663,7 @@ Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &times
     mCurrentFrame.mnDataset = mnNumDataset;
 
 #ifdef REGISTER_TIMES
+    vdFrameTimestamps.push_back(mCurrentFrame.mTimeStamp);
     vdORBExtract_ms.push_back(mCurrentFrame.mTimeORB_Ext);
 #endif
 
