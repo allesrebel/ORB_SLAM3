@@ -1031,13 +1031,19 @@ bool Frame::UnprojectStereo(const int &i, Eigen::Vector3f &x3D)
 
 bool Frame::imuIsPreintegrated()
 {
-    unique_lock<std::mutex> lock(*mpMutexImu);
+    // Note: If we skipped every frame, it's possible that this isn't 
+    // a propertly constructed frame, so we need to check if Mutex is allocated
+    if(mpMutexImu)
+        unique_lock<std::mutex> lock(*mpMutexImu);
     return mbImuPreintegrated;
 }
 
 void Frame::setIntegrated()
 {
-    unique_lock<std::mutex> lock(*mpMutexImu);
+    // Note: If we skipped every frame, it's possible that this isn't 
+    // a propertly constructed frame, so we need to check if Mutex is allocated
+    if(mpMutexImu)
+        unique_lock<std::mutex> lock(*mpMutexImu);
     mbImuPreintegrated = true;
 }
 
