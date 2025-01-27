@@ -37,6 +37,10 @@
 #include "ImuTypes.h"
 #include "Settings.h"
 
+#ifdef REGISTER_TIMES
+#include "CellManager.h"
+#endif // REGISTER_TIMES
+
 #include "GeometricCamera.h"
 
 #include <mutex>
@@ -187,6 +191,7 @@ public:
     void TrackStats2File();
     void PrintTimeStats();
 
+    vector<double> vdFrameTimestamps;
     vector<double> vdRectStereo_ms;
     vector<double> vdResizeImage_ms;
     vector<double> vdORBExtract_ms;
@@ -196,6 +201,7 @@ public:
     vector<double> vdLMTrack_ms;
     vector<double> vdNewKF_ms;
     vector<double> vdTrackTotal_ms;
+
 #endif
 
 protected:

@@ -64,6 +64,12 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     << endl << endl;
 #endif
 
+#ifdef BUILD_TYPE
+    cout <<
+    "Build Type: " << BUILD_TYPE
+    << endl << endl;
+#endif
+
     cout << "Compiled with C++ version: " << __cplusplus << endl << endl;
 
     cout << "Input sensor was set to: ";
