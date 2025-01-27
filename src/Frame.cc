@@ -30,7 +30,7 @@
 #include <include/CameraModels/Pinhole.h>
 #include <include/CameraModels/KannalaBrandt8.h>
 
-#include "TickManager.h"
+#include "CellManager.h"
 
 namespace ORB_SLAM3
 {
@@ -117,6 +117,9 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
     mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
 
+    // TODO: We'd probably need to send in references to these guys at one point!
+    // CellManager::getInstance().startFrame({mnScaleLevels, FRAME_GRID_COLS, FRAME_GRID_ROWS});
+
     // ORB extraction
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_StartExtORB = std::chrono::steady_clock::now();
@@ -130,7 +133,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
 
-    TickManager::getInstance().endFrame(mnId, mTimeORB_Ext);
+    CellManager::getInstance().endFrame(mnId, mTimeORB_Ext);
 #endif
 
     N = mvKeys.size();
@@ -229,7 +232,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
 
-    TickManager::getInstance().endFrame(mnId, mTimeORB_Ext);
+    CellManager::getInstance().endFrame(mnId, mTimeORB_Ext);
 #endif
 
 
@@ -320,7 +323,7 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
 
-    TickManager::getInstance().endFrame(mnId, mTimeORB_Ext);
+    CellManager::getInstance().endFrame(mnId, mTimeORB_Ext);
 #endif
 
 
@@ -1079,7 +1082,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
 
-    TickManager::getInstance().endFrame(mnId, mTimeORB_Ext);
+    CellManager::getInstance().endFrame(mnId, mTimeORB_Ext);
 #endif
 
     Nleft = mvKeys.size();
