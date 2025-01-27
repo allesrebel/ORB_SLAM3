@@ -30,6 +30,8 @@
 #include <include/CameraModels/Pinhole.h>
 #include <include/CameraModels/KannalaBrandt8.h>
 
+#include "CellManager.h"
+
 namespace ORB_SLAM3
 {
 
@@ -115,6 +117,9 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
     mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
 
+    // TODO: We'd probably need to send in references to these guys at one point!
+    // CellManager::getInstance().startFrame({mnScaleLevels, FRAME_GRID_COLS, FRAME_GRID_ROWS});
+
     // ORB extraction
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_StartExtORB = std::chrono::steady_clock::now();
@@ -127,6 +132,8 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
+
+    CellManager::getInstance().endFrame(mnId, mTimeORB_Ext);
 #endif
 
     N = mvKeys.size();
@@ -224,6 +231,8 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
+
+    CellManager::getInstance().endFrame(mnId, mTimeORB_Ext);
 #endif
 
 
@@ -313,6 +322,8 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
+
+    CellManager::getInstance().endFrame(mnId, mTimeORB_Ext);
 #endif
 
 
@@ -1021,13 +1032,19 @@ bool Frame::UnprojectStereo(const int &i, Eigen::Vector3f &x3D)
 
 bool Frame::imuIsPreintegrated()
 {
-    unique_lock<std::mutex> lock(*mpMutexImu);
+    // Note: If we skipped every frame, it's possible that this isn't 
+    // a propertly constructed frame, so we need to check if Mutex is allocated
+    if(mpMutexImu)
+        unique_lock<std::mutex> lock(*mpMutexImu);
     return mbImuPreintegrated;
 }
 
 void Frame::setIntegrated()
 {
-    unique_lock<std::mutex> lock(*mpMutexImu);
+    // Note: If we skipped every frame, it's possible that this isn't 
+    // a propertly constructed frame, so we need to check if Mutex is allocated
+    if(mpMutexImu)
+        unique_lock<std::mutex> lock(*mpMutexImu);
     mbImuPreintegrated = true;
 }
 
@@ -1064,6 +1081,8 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
     mTimeORB_Ext = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(time_EndExtORB - time_StartExtORB).count();
+
+    CellManager::getInstance().endFrame(mnId, mTimeORB_Ext);
 #endif
 
     Nleft = mvKeys.size();

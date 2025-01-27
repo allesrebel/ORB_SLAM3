@@ -48,7 +48,7 @@ public:
 
     ORBextractor(int nfeatures, float scaleFactor, int nlevels,
                  int iniThFAST, int minThFAST,     bool enableFOV,
-                 int maskHeight,int maskWidth );
+                 int maskHeight,int maskWidth,     bool enableOasis);
 
     ~ORBextractor(){}
 
@@ -112,6 +112,7 @@ protected:
     // This cooresponds to cells of the image that 
     // are used for feature extraction
     bool enableFOV = false;
+    bool enableOasis = false;
     int maskHeight = 0;
     int maskWidth = 0;
     bool dumpMapPoints = false;
