@@ -518,6 +518,7 @@ endif()
 
 # Added Settings for Metrics Keeping
 add_definitions(-DREGISTER_TIMES)
+add_definitions(-DOASIS)
 
 # Build examples
 

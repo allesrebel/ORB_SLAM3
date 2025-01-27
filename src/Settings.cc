@@ -499,6 +499,12 @@ namespace ORB_SLAM3 {
             cout << "Static mask size: " << maskHeight << "x" << maskWidth << endl;
         }
         
+        enableOasis = (bool)readParameter<int>(fSettings,"System.enableOasis",found,false);
+        if(enableOasis)
+        {
+            cout << "OASIS enabled" << endl;
+        }
+
         dumpMapPoints = (bool)readParameter<int>(fSettings,"System.dumpMapPoints",found,false);
         if(dumpMapPoints)
         {
