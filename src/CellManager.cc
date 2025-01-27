@@ -1,7 +1,7 @@
 #include "CellManager.h"
 
 #include <iostream>
-#include <numeric> 
+#include <numeric>
 
 namespace ORB_SLAM3 
 {
@@ -127,7 +127,7 @@ void CellManager::endFrame(long unsigned int& frame_num, double& actualFrameTime
     // We're warmed up and can start filtering cells!
     enableOasis = true;
 
-    printStats(frame_num, actualFrameTime);
+    // printStats(frame_num, actualFrameTime);
 
     // Reset for the next frame
     elapsed_cells = 0;

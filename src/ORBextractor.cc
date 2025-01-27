@@ -410,10 +410,10 @@ namespace ORB_SLAM3
 
     ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
                                int _iniThFAST, int _minThFAST, bool enableFOV,
-                               int maskHeight, int maskWidth):
+                               int maskHeight, int maskWidth, bool enableOasis):
             nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
             iniThFAST(_iniThFAST), minThFAST(_minThFAST), enableFOV(enableFOV),
-            maskHeight(maskHeight), maskWidth(maskWidth)
+            maskHeight(maskHeight), maskWidth(maskWidth), enableOasis(enableOasis)
     {
         mvScaleFactor.resize(nlevels);
         mvLevelSigma2.resize(nlevels);
@@ -864,19 +864,25 @@ namespace ORB_SLAM3
                     if(maxX>maxBorderX)
                         maxX = maxBorderX;
 
-                    // We can create a temporary for the current settings
-                    // that can be used by Cell manager to determine estimated
-                    // completion time
-                    const feature_extraction_state_t current_cell{.level=level, .col=i, .row=j, .nLevels=nlevels, .nCols=nCols, .nRows=nRows};
-
-                    // We're about to process a cell!
-                    CellManager::getInstance().incrementCell();
-
-                    // Should we skip?, ask Cell Manager
-                    if( CellManager::getInstance().skipCell(current_cell) )
+                    // if we're using OASIS, we need to check if we should skip this cell
+                    if( enableOasis )
                     {
-                        // Skip this cell, don't featurize
-                        continue;
+
+                        // We can create a temporary for the current settings
+                        // that can be used by Cell manager to determine estimated
+                        // completion time
+                        const feature_extraction_state_t current_cell{.level=level, .col=i, .row=j, .nLevels=nlevels, .nCols=nCols, .nRows=nRows};
+
+                        // We're about to process a cell!
+                        CellManager::getInstance().incrementCell();
+
+                        // Should we skip?, ask Cell Manager
+                        if( CellManager::getInstance().skipCell(current_cell) )
+                        {
+                            // Skip this cell, don't featurize
+                            continue;
+                        }
+
                     }
 
                     vector<cv::KeyPoint> vKeysCell;
