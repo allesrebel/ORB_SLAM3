@@ -84,8 +84,8 @@ void CellManager::endFrame(long unsigned int& frame_num, double& actualFrameTime
         return;
     }
     const int largest_mask = std::max(pyramid_levels[0].nRows, pyramid_levels[0].nCols) + 1;
-    FOV_MASK.height = largest_mask;
-    FOV_MASK.width = largest_mask;
+    FOV_MASK.height = largest_mask + 1;
+    FOV_MASK.width = largest_mask + 1;
 
     for( int mask = 2; mask < largest_mask; mask++ )
     {
