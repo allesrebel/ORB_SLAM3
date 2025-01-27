@@ -38,7 +38,7 @@
 #include "Settings.h"
 
 #ifdef REGISTER_TIMES
-#include "TickManager.h"
+#include "CellManager.h"
 #endif // REGISTER_TIMES
 
 #include "GeometricCamera.h"

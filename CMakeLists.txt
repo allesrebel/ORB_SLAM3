@@ -449,7 +449,7 @@ src/GeometricTools.cc
 src/TwoViewReconstruction.cc
 src/Config.cc
 src/Settings.cc
-src/TickManager.cc
+src/CellManager.cc
 include/System.h
 include/Tracking.h
 include/LocalMapping.h
@@ -480,7 +480,7 @@ include/TwoViewReconstruction.h
 include/SerializationUtils.h
 include/Config.h
 include/Settings.h
-include/TickManager.h
+include/CellManager.h
 )
 
 # Add DBoW2 library
