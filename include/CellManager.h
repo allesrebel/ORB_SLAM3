@@ -40,6 +40,7 @@ private:
     std::vector<int> cells_per_frame;
     std::atomic<int> frame_budget;
     std::atomic<bool> enableOasis = false;
+    std::atomic<int> skip_frames = 0;
 
 
     struct pyramid_level_t
