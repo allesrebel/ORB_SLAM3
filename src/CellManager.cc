@@ -45,6 +45,12 @@ bool CellManager::skipCell(const feature_extraction_state_t& cell)
         {
             skip = true;
         }
+    
+        // check if we're skipping this cell, based on the number of frames we need to skip
+        if( skip_frames )
+        {
+            skip = true;
+        }
     }
 
     if( skip )
@@ -60,6 +66,13 @@ bool CellManager::skipCell(const feature_extraction_state_t& cell)
 // Signal the end of a frame and reset elapsed Cells
 void CellManager::endFrame(long unsigned int& frame_num, double& actualFrameTime)
 {
+
+    // if we're skipping frames, decrement the number of frames we need to skip
+    if( skip_frames )
+    {
+        skip_frames--;
+    }
+
     // if no Cells were recorded, return
     if(elapsed_cells == 0)
     {
@@ -67,11 +80,43 @@ void CellManager::endFrame(long unsigned int& frame_num, double& actualFrameTime
         return;
     }
 
+    if( skip_frames )
+    {
+        // we're skipping frames, so we don't need to calculate the budget
+        // just reset the elapsed cells and return
+        elapsed_cells = 0;
+        return;
+    }
+
     cells_per_frame.push_back(elapsed_cells);
 
     // Using actual time elapsed to do frame as the budget for the next frame
     const double time_per_cell = ( actualFrameTime / getAverageCellsPerFrame());
-    frame_budget = static_cast<int>( 50.0f / time_per_cell );
+
+    // We know that the frame should take 50ms, so we can calculate the budget
+    // based on when we're done with the frame, assumming actual time elapsed is < 50ms
+    // if it's > 50ms, we'll have to adjust the budget accordingly
+    const double frame_time = 50.0f; //ms
+    double frame_budget = static_cast<int>( frame_time / time_per_cell );
+
+    if( actualFrameTime > frame_time )   // if we're over budget, adjust the frame budget for the next frame
+    {
+        size_t frames_over_budget = 0;
+        
+        // see how many frames we're over budget
+        while( actualFrameTime > frame_time )
+        {
+            frames_over_budget++;
+            actualFrameTime -= frame_time;
+        }
+
+        // adjust number of frames over budget to account for 'dropped frames'
+        skip_frames = static_cast<int>(frames_over_budget);
+
+        // Assuming we're resuming at the same rate, we can calculate the remaining budget
+        const double remaining_budget = (2*frame_time) - actualFrameTime;
+        frame_budget =  static_cast<int>( remaining_budget / time_per_cell);
+    }
 
     // Iterate through each mask size, calculating the number
     // of cells the proposed mask will cover, and compare that against
