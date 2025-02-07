@@ -114,7 +114,10 @@ void CellManager::endFrame(long unsigned int& frame_num, double& actualFrameTime
         skip_frames = static_cast<int>(frames_over_budget);
 
         // Assuming we're resuming at the same rate, we can calculate the remaining budget
+        // We'll consume one of the skipped frames by accounting for the extra time needed
+        // in this frame!
         const double remaining_budget = (2*frame_time) - actualFrameTime;
+        if( skip_frames ) skip_frames--; // decrement!
         frame_budget =  static_cast<int>( remaining_budget / time_per_cell);
     }
 
