@@ -47,11 +47,12 @@ CONFIGURATIONS=(
   "./Examples/Stereo-Inertial/EuRoC.yaml result_stereo_inertial_normal"
 )
 
-# Loop through configurations
+# Array to store all the commands
+commands=()
+
 for config_pair in "${CONFIGURATIONS[@]}"; do
   IFS=' ' read -r BASE_CONFIG RESULT_FOLDER_PREFIX <<< "$config_pair"
 
-  # Check if config name contains "fov" or "FOV"
   if [[ $BASE_CONFIG == *"fov"* ]]; then
     # Extract the base name of the config file without extension
     FILENAME=$(basename "$BASE_CONFIG" .yaml)
@@ -60,39 +61,44 @@ for config_pair in "${CONFIGURATIONS[@]}"; do
     for ((mask_size=2; mask_size<=12; mask_size++)); do
       CONFIG_FILE="${FILENAME}_mask_${mask_size}x${mask_size}.yaml"
       if [ ! -f "$CONFIG_FILE" ]; then
-        cp $BASE_CONFIG $CONFIG_FILE
-
-        # Check if the config file has the lines, if not add them, else do the sed
-        if ! grep -q "^System.maskHeight:" $CONFIG_FILE; then
-          echo "System.maskHeight: ${mask_size}" >> $CONFIG_FILE
+        cp "$BASE_CONFIG" "$CONFIG_FILE"
+        # Update or add System.maskHeight
+        if ! grep -q "^System.maskHeight:" "$CONFIG_FILE"; then
+          echo "System.maskHeight: ${mask_size}" >> "$CONFIG_FILE"
         else
-          sed -i "s/^System.maskHeight: [0-9]*/System.maskHeight: ${mask_size}/" $CONFIG_FILE
+          sed -i "s/^System.maskHeight: [0-9]*/System.maskHeight: ${mask_size}/" "$CONFIG_FILE"
         fi
-
-        if ! grep -q "^System.maskWidth:" $CONFIG_FILE; then
-          echo "System.maskWidth: ${mask_size}" >> $CONFIG_FILE
+        # Update or add System.maskWidth
+        if ! grep -q "^System.maskWidth:" "$CONFIG_FILE"; then
+          echo "System.maskWidth: ${mask_size}" >> "$CONFIG_FILE"
         else
-          sed -i "s/^System.maskWidth: [0-9]*/System.maskWidth: ${mask_size}/" $CONFIG_FILE
+          sed -i "s/^System.maskWidth: [0-9]*/System.maskWidth: ${mask_size}/" "$CONFIG_FILE"
         fi
       fi
 
-      # Randomize dataset and configuration selection
+      # Collect all run commands for this configuration
       for ((i=1; i<=NUM_RUNS; i++)); do
         for dataset in "${DATASETS[@]}"; do
-          run_orbslam $CONFIG_FILE $RESULT_FOLDER_PREFIX $dataset $i $mask_size
-        done | shuf
-      done | shuf
+          commands+=("run_orbslam $CONFIG_FILE $RESULT_FOLDER_PREFIX $dataset $i $mask_size")
+        done
+      done
     done
   else
-    # If not FOV-related, just run the base configuration as is
-    # with mask_size set to something like 0 to indicate no mask
+    # For non-FOV configurations, set mask_size to 0
     mask_size=0
     for ((i=1; i<=NUM_RUNS; i++)); do
       for dataset in "${DATASETS[@]}"; do
-        run_orbslam $BASE_CONFIG $RESULT_FOLDER_PREFIX $dataset $i $mask_size
+        commands+=("run_orbslam $BASE_CONFIG $RESULT_FOLDER_PREFIX $dataset $i $mask_size")
       done
     done
   fi
-
 done
 
+# Shuffle the full list of commands
+shuffled_commands=$(printf "%s\n" "${commands[@]}" | shuf)
+
+# Execute each command from the shuffled list
+while IFS= read -r cmd; do
+  echo "Executing: $cmd"
+  eval "$cmd"
+done <<< "$shuffled_commands"
