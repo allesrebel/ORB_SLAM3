@@ -1,6 +1,7 @@
 #include "CellManager.h"
 
 #include <iostream>
+#include <fstream>
 #include <numeric>
 
 namespace ORB_SLAM3 
@@ -70,6 +71,7 @@ void CellManager::endFrame(long unsigned int& frame_num, double& actualFrameTime
     // if we're skipping frames, decrement the number of frames we need to skip
     if( skip_frames )
     {
+        std::cout << "Skipped/Dropped frame " << frame_num << std::endl;
         skip_frames--;
     }
 
@@ -175,7 +177,7 @@ void CellManager::endFrame(long unsigned int& frame_num, double& actualFrameTime
     // We're warmed up and can start filtering cells!
     enableOasis = true;
 
-    // printStats(frame_num, actualFrameTime);
+    printStats(frame_num, actualFrameTime);
 
     // Reset for the next frame
     elapsed_cells = 0;
@@ -192,30 +194,39 @@ double CellManager::getAverageCellsPerFrame() const
 // Debug print
 void CellManager::printStats(long unsigned int& frame_num, double& frameTimestamp) const
 {
-    std::cout << "Frame " << frame_num << " finished in " << frameTimestamp << " ms stats:\n";
-    std::cout << " - Recorded Frames: " << cells_per_frame.size() << "\n";
-    std::cout << " - Elapsed Cells: " << elapsed_cells << "\n";
-    std::cout << " - Average Cells Per Frame: " << getAverageCellsPerFrame() << "\n";
-    std::cout << " - Frame Budget in Cells: " << frame_budget << "\n";
+    // Open file in append mode
+    std::ofstream file("cellManager.txt", std::ios::app);
+    if (!file) {
+        // Handle file open error
+        std::cerr << "Failed to open cellManager.txt" << std::endl;
+        return;
+    }
 
-    // print out the FOV_MASK
-    std::cout << " - FOV Mask: " << FOV_MASK.width << "x" << FOV_MASK.height << "\n";
-
-    // print out the pyramid levels
+    // Print out the pyramid levels (only once)
     static bool once = true;
-    if( once )
+    if (once)
     {
-        std::cout << " - Pyramid Level Cells: \n";
-        for( int i = 0; i < pyramid_levels.size(); i++ )
+        file << " - Pyramid Level Cells: \n";
+        for (size_t i = 0; i < pyramid_levels.size(); i++)
         {
-            std::cout << "   - Level " << i << ": " << pyramid_levels[i].nCols << "x" << pyramid_levels[i].nRows << "\n";
+            file << "   - Level " << i << ": " 
+                 << pyramid_levels[i].nCols << "x" 
+                 << pyramid_levels[i].nRows << "\n";
         }
 
-        // print out if oasis enabled
-        std::cout << ( enableOasis ? " - Oasis Enabled" : " - Oasis Disabled" ) << std::endl;
-
+        // Print out if oasis enabled
+        file << (enableOasis ? " - Oasis Enabled" : " - Oasis Disabled") << std::endl;
         once = false;
     }
+
+    file << "Frame " << frame_num << " finished in " << frameTimestamp << " ms stats:\n";
+    file << " - Recorded Frames: " << cells_per_frame.size() << "\n";
+    file << " - Elapsed Cells: " << elapsed_cells << "\n";
+    file << " - Average Cells Per Frame: " << getAverageCellsPerFrame() << "\n";
+    file << " - Frame Budget in Cells: " << frame_budget << "\n";
+    
+    // Print out the FOV_MASK
+    file << " - FOV Mask: " << FOV_MASK.width << "x" << FOV_MASK.height << "\n";
 }
 
 } // namespace ORB_SLAM3
