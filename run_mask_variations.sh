@@ -38,6 +38,11 @@ run_orbslam() {
     mv "kf_dataset-${dataset}_stereo_imu.txt" "$result_folder"
   fi
 
+  # Move map_points.csv if it exists
+  if [ -f cellManager.txt ]; then
+    mv cellManager.txt $result_folder
+  fi
+
   echo "Results saved in $result_folder"
 }
 
