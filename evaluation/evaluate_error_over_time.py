@@ -28,14 +28,14 @@ def align(model, data):
     model_zerocentered = model - model.mean(1)
     data_zerocentered  = data  - data.mean(1)
 
-    # Compute W
-    W = np.zeros((3, 3))
+    # Compute W (force double precision here)
+    W = np.zeros((3, 3), dtype=np.float64)
     for col in range(model.shape[1]):
         W += np.outer(model_zerocentered[:, col], data_zerocentered[:, col])
 
     # SVD on W^T
     U, d, Vt = np.linalg.svd(W.T)
-    S = np.identity(3)
+    S = np.identity(3, dtype=np.float64)
     # Ensure a proper rotation (det(U) * det(Vt) should be +1)
     if np.linalg.det(U) * np.linalg.det(Vt) < 0:
         S[2, 2] = -1
@@ -49,7 +49,8 @@ def align(model, data):
         dots  += np.dot(data_zerocentered[:, col].T, rot_model[:, col])
         normi  = np.linalg.norm(model_zerocentered[:, col])
         norms += normi * normi
-    scale = float(dots / norms) if norms > 1e-12 else 1.0
+    # Extract the scalar using .item() to avoid deprecation warnings
+    scale = (dots / norms).item() if norms > 1e-12 else 1.0
 
     # Compute translation
     trans = data.mean(1) - scale * rot @ model.mean(1)
@@ -64,34 +65,23 @@ def align(model, data):
 
 def read_metrics_file(filename):
     """
-    Read the metrics file (the additional text file) into a dict:
-       timestamp -> total_ms_value
-
-    Expected lines look like:
-      1403636579763555584.000000,0.000000,0.000000,13.863084,5.118943,0.004608,9.826650,6.913653,0.004288,21.885552
-    with a header line that starts with '#'.
+    Read the metrics file into a numpy array.
+    The file is assumed to be a CSV with a header row.
+    
+    Example file:
+    #Frame Timestamp[ns],Image Rect[ms],Image Resize[ms],ORB ext[ms],
+    #Stereo match[ms],IMU preint[ms],Pose pred[ms],LM track[ms],
+    #KF dec[ms],Total[ms]
+    1403636579763555584.000000,0.000000,0.000000,26.484096,5.044527,0.004576,15.036108,8.526757,0.003296,34.782721
+    1403636579813555456.000000,0.000000,0.000000,24.773028,5.298355,0.083489,4.532519,8.118047,0.001120,34.077975
+    ...
+    
+    Returns:
+        numpy.ndarray: Array with each row representing a metric entry.
     """
-    metrics_dict = {}
-    with open(filename, 'r') as f:
-        for line in f:
-            line = line.strip()
-            # Skip comments or empty lines
-            if not line or line.startswith('#'):
-                continue
+    data = np.genfromtxt(filename, delimiter=',', dtype=np.float64, skip_header=1)
 
-            parts = line.split(',')
-            try:
-                # The first column is the timestamp (in ns, as float string)
-                # The last column is the "Total[ms]" we want to plot
-                timestamp_str = parts[0]
-                total_str     = parts[-1]
-                timestamp_s = float(timestamp_str)
-                total_ms    = float(total_str)
-
-                metrics_dict[timestamp_s] = total_ms
-            except (ValueError, IndexError):
-                continue
-    return metrics_dict
+    return data
 
 
 def main():
@@ -103,7 +93,8 @@ The script:
 2) Aligns the estimated trajectory (or trajectories) to the ground truth (Horn method),
 3) Computes the per-frame translation error,
 4) Plots the error vs. time (or frame number) with each estimated file shown in a different color.
-Optionally, an additional metrics file can be plotted on a secondary y-axis.
+Optionally, an additional metrics file can be used to mark dropped frames (total time == 0),
+but only up to the last timestamp present in the estimated data.
 """
     )
     parser.add_argument('groundtruth_file',
@@ -121,7 +112,9 @@ Optionally, an additional metrics file can be plotted on a secondary y-axis.
     parser.add_argument('--show', action='store_true',
                         help='If set, displays the plot window instead of saving to a file.')
     parser.add_argument('--metrics_file', type=str, default=None,
-                        help='Optional metrics file (timestamped) to plot on the same figure')
+                        help='Optional metrics file (timestamped) to check for dropped frames (total time == 0)')
+    parser.add_argument('--plot_dropped', type=str, default=False,
+                        help='Optional output image file to save the plot with dropped frames marked (default: False)')
     parser.add_argument('--use_frame_numbers', action='store_true',
                         help='If set, x-axis will be frame indices (starting at 0) instead of timestamps.')
     parser.add_argument('--ymin', type=float, default=None,
@@ -142,6 +135,9 @@ Optionally, an additional metrics file can be plotted on a secondary y-axis.
     num_est = len(args.estimated_files)
     colors = plt.cm.tab10(np.linspace(0, 1, num_est))
 
+    # This variable will track the last x-value (timestamp or frame index) in the estimated data.
+    global_max_x = None
+
     # Process each estimated file.
     for i, est_file in enumerate(args.estimated_files):
         est_list = read_file_list(est_file)
@@ -150,70 +146,84 @@ Optionally, an additional metrics file can be plotted on a secondary y-axis.
             print(f"Not enough matching timestamps between ground truth and estimated trajectory in file {est_file}!", file=sys.stderr)
             continue
 
-        # Build matched 3D position arrays (3 x N)
+        # Build matched 3D position arrays (3 x N) with double precision.
         gt_xyz = np.matrix([[float(v) for v in gt_list[a][0:3]]
-                            for (a, _) in matches]).T
+                            for (a, _) in matches], dtype=np.float64).T
         est_xyz = np.matrix([[float(v) * args.scale for v in est_list[b][0:3]]
-                             for (_, b) in matches]).T
+                            for (_, b) in matches], dtype=np.float64).T
 
         # Align the estimated trajectory to the ground truth.
         rot, trans, errors, final_scale = align(est_xyz, gt_xyz)
 
-        # Use the ground truth timestamps from the association.
-        times = [a for (a, _) in matches]
-        # Sort by time to ensure correct order.
-        time_error_pairs = sorted(zip(times, errors), key=lambda x: x[0])
-        times_sorted = [p[0] for p in time_error_pairs]
-        errors_sorted = [p[1] for p in time_error_pairs]
+        # Extract ground truth timestamps from matches using NumPy.
+        # Assume matches are already sorted by timestamp.
+        matches_arr = np.array(matches, dtype=np.float64)  # shape (N, 2)
+        times = matches_arr[:, 0]  # Timestamps
+
+        # No need to sort since they're already in order.
+        times_sorted = times
+        errors_sorted = errors  # Errors are in the same order as matches.
 
         # Choose x-axis values.
         if args.use_frame_numbers:
-            x_vals = list(range(len(times_sorted)))
+            x_vals = np.arange(len(times_sorted))
             x_label = 'Frame index'
         else:
             x_vals = times_sorted
             x_label = 'Timestamp'
 
+        # Update the global maximum x-value.
+        current_max = x_vals.max() if x_vals.size > 0 else None
+        if global_max_x is None or (current_max is not None and current_max > global_max_x):
+            global_max_x = current_max
+
         # Plot the translational error for this estimated file.
-        # Extract the run type from the file name using regex
-        match = re.search(r'_stereo_inertial_([^_]+)_', est_file)
-        run_type = match.group(1) if match else est_file
+        match_file = re.search(r'_stereo_inertial_([^_]+)_', est_file)
+        run_type = match_file.group(1) if match_file else est_file
         ax1.plot(x_vals, errors_sorted, label=f'Error: {run_type}', color=colors[i])
 
-    if args.ymin is not None or args.ymax is not None:
-        ax1.set_ylim(bottom=args.ymin, top=args.ymax)
-    ax1.set_xlabel(x_label)
-    ax1.set_ylabel('Translation Error (m)', color='black')
-    ax1.grid(True)
-    ax1.tick_params(axis='y', labelcolor='black')
-    ax1.set_title(args.title)
 
     # Process the metrics file, if provided.
     if args.metrics_file:
-        metrics_dict = read_metrics_file(args.metrics_file)
-        if metrics_dict:
-            # Sort the metrics by timestamp.
-            sorted_metrics = sorted(metrics_dict.items(), key=lambda kv: kv[0])
-            metrics_timestamps = [kv[0] for kv in sorted_metrics]
-            metrics_values = [kv[1] for kv in sorted_metrics]
+        metrics = read_metrics_file(args.metrics_file)
+        if metrics is not None and metrics.size > 0:
+            # Assume the metrics array is already sorted by timestamp.
+            metrics_timestamps = metrics[:, 0]
+            metrics_values = metrics[:, -1]
+
             if args.use_frame_numbers:
                 x_vals_metrics = list(range(len(metrics_timestamps)))
             else:
-                x_vals_metrics = metrics_timestamps
+                x_vals_metrics = metrics_timestamps.tolist()
 
-            ax2 = ax1.twinx()
-            ax2.plot(x_vals_metrics, metrics_values, label='Total[ms]', color='red')
-            ax2.set_ylabel('Total (ms)', color='red')
-            ax2.tick_params(axis='y', labelcolor='red')
+            # Debug: print out the first timestamp that gets processed.
+            print("First metrics timestamp processed:", metrics_timestamps[0])
+            print(f'Final Frame: {global_max_x}')
 
-            # Combine legends from both axes.
-            lines1, labels1 = ax1.get_legend_handles_labels()
-            lines2, labels2 = ax2.get_legend_handles_labels()
-            ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+            dropped_label_added = False
+            drop_counter = 0
+            total_frame_count = 0
+            for x, total_ms in zip(x_vals_metrics, metrics_values):
+                # Only consider metrics within the estimated data range.
+                total_frame_count += 1
+                if global_max_x is not None and x > global_max_x:
+                    break # we're past the last estimated timestamp
+                if total_ms == 0:
+                    drop_counter += 1
+                    # Only add the label once to avoid duplicate legend entries.
+                    if not dropped_label_added and args.plot_dropped:
+                        ax1.axvline(x=x, color='red', linestyle='--', label='Dropped frame')
+                        dropped_label_added = True
+                    elif args.plot_dropped:
+                        ax1.axvline(x=x, color='red', linestyle='--')
+            print(f"Total frames: {total_frame_count}")
+            print(f"Total dropped frames: {drop_counter}, as a percentage: {drop_counter / total_frame_count * 100:.2f}%")
+            print(f"Effective FPS: {total_frame_count / (global_max_x - metrics_timestamps[0]) * 1e9:.2f}")
         else:
             print("Metrics file provided but no valid data found.", file=sys.stderr)
-    else:
-        ax1.legend(loc='upper left')
+    
+    # Display legend from the main axis.
+    ax1.legend(loc='upper left')
 
     # Show or save the plot.
     if args.show:
