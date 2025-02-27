@@ -23,7 +23,7 @@ run_orbslam() {
   mv LocalMapTimeStats.txt ExecMean.txt LBA_Stats.txt TrackingTimeStats.txt SessionInfo.txt $log_file $result_folder
 
   # Move additional output files if they exist
-  for file in map_points.csv "f_dataset-${dataset}_stereo_imu.txt" "kf_dataset-${dataset}_stereo_imu.txt cellManager.txt"; do
+  for file in map_points.csv "f_dataset-${dataset}_stereo_imu.txt" "kf_dataset-${dataset}_stereo_imu.txt" "cellManager.txt"; do
     if [ -f "$file" ]; then
       mv "$file" "$result_folder"
     fi
