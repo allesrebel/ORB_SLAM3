@@ -154,6 +154,7 @@ int main(int argc, char **argv)
 #ifdef REGISTER_TIMES
             t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t2 - t1).count();
             SLAM.InsertTrackTime(t_track);
+            ORB_SLAM3::CellManager::getInstance().endFrame(tframe, t_track);
 #endif
 
             double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();

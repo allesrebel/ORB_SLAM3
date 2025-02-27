@@ -25,6 +25,8 @@
 #include <ctime>
 #include <sstream>
 
+#include<CellManager.h>
+
 #include <condition_variable>
 
 #include <opencv2/core/core.hpp>
@@ -381,6 +383,7 @@ int main(int argc, char **argv) {
 
         t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Track - t_Start_Track).count();
         SLAM.InsertTrackTime(t_track);
+        ORB_SLAM3::CellManager::getInstance().endFrame(tframe, t_track);
 #endif
     }
     cout << "System shutdown!\n";
