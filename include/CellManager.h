@@ -75,13 +75,13 @@ public:
     bool skipCell(const feature_extraction_state_t&);
 
     // Signal the end of a frame and reset elapsed cells, and actual time to do frame
-    void endFrame(long unsigned int&, double&);
+    void endFrame(double&, double&);
 
     // Calculate average cells per frame
     double getAverageCellsPerFrame() const;
 
     // Debug print
-    void printStats(long unsigned int&, double&) const;
+    void printStats(double&, double&) const;
 
     // Delete copy constructor and assignment operator to enforce singleton pattern
     CellManager(const CellManager&) = delete;

@@ -65,7 +65,7 @@ bool CellManager::skipCell(const feature_extraction_state_t& cell)
 }
 
 // Signal the end of a frame and reset elapsed Cells
-void CellManager::endFrame(long unsigned int& frame_num, double& actualFrameTime)
+void CellManager::endFrame(double& frame_num, double& actualFrameTime)
 {
 
     // if we're skipping frames, decrement the number of frames we need to skip
@@ -176,7 +176,12 @@ void CellManager::endFrame(long unsigned int& frame_num, double& actualFrameTime
 
     // We're warmed up and can start filtering cells!
     enableOasis = true;
-
+    std::cout << "Frame " << frame_num << " finished in " << actualFrameTime << " ms stats:" << std::endl;
+    std::cout << " - Recorded Frames: " << cells_per_frame.size() << std::endl;
+    std::cout << " - Elapsed Cells: " << elapsed_cells << std::endl;
+    std::cout << " - Average Cells Per Frame: " << getAverageCellsPerFrame() << std::endl;
+    std::cout << " - Frame Budget in Cells: " << frame_budget << std::endl;
+    std::cout << " - FOV Mask: " << FOV_MASK.width << "x" << FOV_MASK.height << std::endl;
     printStats(frame_num, actualFrameTime);
 
     // Reset for the next frame
@@ -192,7 +197,7 @@ double CellManager::getAverageCellsPerFrame() const
 }
 
 // Debug print
-void CellManager::printStats(long unsigned int& frame_num, double& frameTimestamp) const
+void CellManager::printStats(double& frame_num, double& frameTimestamp) const
 {
     // Open file in append mode
     std::ofstream file("cellManager.txt", std::ios::app);
