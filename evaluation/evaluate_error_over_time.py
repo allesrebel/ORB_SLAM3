@@ -224,6 +224,15 @@ but only up to the last timestamp present in the estimated data.
     
     # Display legend from the main axis.
     ax1.legend(loc='upper left')
+    # Set the y-axis limits if provided.
+    if args.ymin is not None:
+        plt.ylim(bottom=args.ymin)
+    if args.ymax is not None:
+        plt.ylim(top=args.ymax)
+    # Set the plot title and axis labels.
+    plt.title(args.title)
+    plt.xlabel(x_label)
+    plt.ylabel('Translation error (m)')
 
     # Show or save the plot.
     if args.show:
