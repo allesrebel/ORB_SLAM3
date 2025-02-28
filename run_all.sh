@@ -33,7 +33,7 @@ run_orbslam() {
 }
 
 # Number of runs for each configuration
-NUM_RUNS=50
+NUM_RUNS=10
 
 # Datasets to process
 DATASETS=("MH01" "MH02" "MH03" "MH04" "MH05")
