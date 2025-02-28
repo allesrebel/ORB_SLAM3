@@ -4,10 +4,11 @@ import argparse
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import re
+from decimal import Decimal
 
 # Make sure 'associate.py' is Python 3–compatible and in the same folder or in your Python path.
 from associate import read_file_list, associate
-import re
 
 
 def align(model, data):
@@ -67,21 +68,47 @@ def read_metrics_file(filename):
     """
     Read the metrics file into a numpy array.
     The file is assumed to be a CSV with a header row.
-    
-    Example file:
-    #Frame Timestamp[ns],Image Rect[ms],Image Resize[ms],ORB ext[ms],
-    #Stereo match[ms],IMU preint[ms],Pose pred[ms],LM track[ms],
-    #KF dec[ms],Total[ms]
-    1403636579763555584.000000,0.000000,0.000000,26.484096,5.044527,0.004576,15.036108,8.526757,0.003296,34.782721
-    1403636579813555456.000000,0.000000,0.000000,24.773028,5.298355,0.083489,4.532519,8.118047,0.001120,34.077975
-    ...
-    
-    Returns:
-        numpy.ndarray: Array with each row representing a metric entry.
     """
     data = np.genfromtxt(filename, delimiter=',', dtype=np.float64, skip_header=1)
-
     return data
+
+
+def read_cell_manager_file(filename):
+    """
+    Parse the cellManager file to extract frame timestamps and FOV Mask dimensions.
+    
+    The file is expected to contain blocks like:
+    
+        Frame 1.403640123456e+09 finished in 62.8161 ms stats:
+         ...
+         FOV Mask: 22x22
+    
+    This function reads the entire file and uses a regex to capture all such blocks.
+    
+    Returns:
+        tuple: Three lists containing timestamps, FOV mask widths, and FOV mask heights.
+    """
+    with open(filename, 'r') as f:
+        content = f.read()
+    # Regex pattern captures:
+    #  - The timestamp (with high precision) after "Frame"
+    #  - And later the FOV Mask dimensions.
+    pattern = r'Frame\s+([\d\.eE\+\-]+)\s+finished\s+in\s+[\d\.]+\s+ms\s+stats:.*?FOV Mask:\s*(\d+)\s*x\s*(\d+)'
+    matches = re.findall(pattern, content, flags=re.DOTALL)
+    timestamps = []
+    fov_widths = []
+    fov_heights = []
+    for timestamp_str, width_str, height_str in matches:
+        # Use Decimal to capture high precision, then convert to float for plotting.
+        try:
+            ts = float(Decimal(timestamp_str))
+            print(timestamp_str, ts)
+        except Exception:
+            ts = float(timestamp_str)
+        timestamps.append(ts)
+        fov_widths.append(int(width_str))
+        fov_heights.append(int(height_str))
+    return timestamps, fov_widths, fov_heights
 
 
 def main():
@@ -93,8 +120,8 @@ The script:
 2) Aligns the estimated trajectory (or trajectories) to the ground truth (Horn method),
 3) Computes the per-frame translation error,
 4) Plots the error vs. time (or frame number) with each estimated file shown in a different color.
-Optionally, an additional metrics file can be used to mark dropped frames (total time == 0),
-but only up to the last timestamp present in the estimated data.
+Optionally, a metrics file can be used to mark dropped frames and a cellManager file can be used to
+plot the FOV Mask size over time.
 """
     )
     parser.add_argument('groundtruth_file',
@@ -108,9 +135,9 @@ but only up to the last timestamp present in the estimated data.
     parser.add_argument('--max_difference', type=float, default=0.02,
                         help='Max allowed time difference for matching entries (default: 0.02 seconds)')
     parser.add_argument('--plot', type=str, default="trajectory_error.png",
-                        help='Output image file to save the plot (default: trajectory_error.png)')
+                        help='Output image file to save the trajectory error plot (default: trajectory_error.png)')
     parser.add_argument('--show', action='store_true',
-                        help='If set, displays the plot window instead of saving to a file.')
+                        help='If set, displays the plot windows instead of saving to file.')
     parser.add_argument('--metrics_file', type=str, default=None,
                         help='Optional metrics file (timestamped) to check for dropped frames (total time == 0)')
     parser.add_argument('--plot_dropped', type=str, default=False,
@@ -119,17 +146,22 @@ but only up to the last timestamp present in the estimated data.
                         help='If set, x-axis will be frame indices (starting at 0) instead of timestamps.')
     parser.add_argument('--ymin', type=float, default=None,
                         help='Minimum y-axis value for the plot (default: auto)')
-    parser.add_argument('--title', type=str, default='Trajectory Error Over Time',
-                        help='Title of the plot (default: Trajectory Error Over Time)')
     parser.add_argument('--ymax', type=float, default=None,
                         help='Maximum y-axis value for the plot (default: auto)')
+    # Updated: cellManager now expects a file (not a float)
+    parser.add_argument('--cellManager', type=str, default=None,
+                        help='Cell Manager output file to plot FOV Mask size over time')
+    parser.add_argument('--cellManager_plot', type=str, default="fov_mask_plot.png",
+                        help='Output image file for the FOV Mask plot (default: fov_mask_plot.png)')
+    parser.add_argument('--title', type=str, default='Trajectory Error Over Time',
+                        help='Title of the trajectory error plot (default: Trajectory Error Over Time)')
     args = parser.parse_args()
 
     # Read the ground truth trajectory once.
     gt_list = read_file_list(args.groundtruth_file)
 
-    # Prepare the plot.
-    fig, ax1 = plt.subplots()
+    # Prepare the main plot.
+    fig1, ax1 = plt.subplots()
 
     # Prepare a colormap for the multiple estimated files.
     num_est = len(args.estimated_files)
@@ -156,20 +188,15 @@ but only up to the last timestamp present in the estimated data.
         rot, trans, errors, final_scale = align(est_xyz, gt_xyz)
 
         # Extract ground truth timestamps from matches using NumPy.
-        # Assume matches are already sorted by timestamp.
-        matches_arr = np.array(matches, dtype=np.float64)  # shape (N, 2)
-        times = matches_arr[:, 0]  # Timestamps
-
-        # No need to sort since they're already in order.
-        times_sorted = times
-        errors_sorted = errors  # Errors are in the same order as matches.
+        matches_arr = np.array(matches, dtype=np.float64)
+        times = matches_arr[:, 0]
 
         # Choose x-axis values.
         if args.use_frame_numbers:
-            x_vals = np.arange(len(times_sorted))
+            x_vals = np.arange(len(times))
             x_label = 'Frame index'
         else:
-            x_vals = times_sorted
+            x_vals = times
             x_label = 'Timestamp'
 
         # Update the global maximum x-value.
@@ -180,23 +207,19 @@ but only up to the last timestamp present in the estimated data.
         # Plot the translational error for this estimated file.
         match_file = re.search(r'_stereo_inertial_([^_]+)_', est_file)
         run_type = match_file.group(1) if match_file else est_file
-        ax1.plot(x_vals, errors_sorted, label=f'Error: {run_type}', color=colors[i])
-
+        ax1.plot(x_vals, errors, label=f'Error: {run_type}', color=colors[i])
 
     # Process the metrics file, if provided.
     if args.metrics_file:
         metrics = read_metrics_file(args.metrics_file)
         if metrics is not None and metrics.size > 0:
-            # Assume the metrics array is already sorted by timestamp.
             metrics_timestamps = metrics[:, 0]
             metrics_values = metrics[:, -1]
-
             if args.use_frame_numbers:
                 x_vals_metrics = list(range(len(metrics_timestamps)))
             else:
                 x_vals_metrics = metrics_timestamps.tolist()
 
-            # Debug: print out the first timestamp that gets processed.
             print("First metrics timestamp processed:", metrics_timestamps[0])
             print(f'Final Frame: {global_max_x}')
 
@@ -204,13 +227,11 @@ but only up to the last timestamp present in the estimated data.
             drop_counter = 0
             total_frame_count = 0
             for x, total_ms in zip(x_vals_metrics, metrics_values):
-                # Only consider metrics within the estimated data range.
                 total_frame_count += 1
                 if global_max_x is not None and x > global_max_x:
-                    break # we're past the last estimated timestamp
+                    break
                 if total_ms == 0:
                     drop_counter += 1
-                    # Only add the label once to avoid duplicate legend entries.
                     if not dropped_label_added and args.plot_dropped:
                         ax1.axvline(x=x, color='red', linestyle='--', label='Dropped frame')
                         dropped_label_added = True
@@ -222,24 +243,39 @@ but only up to the last timestamp present in the estimated data.
         else:
             print("Metrics file provided but no valid data found.", file=sys.stderr)
     
-    # Display legend from the main axis.
+    # Set legend, labels, and title for the main plot.
     ax1.legend(loc='upper left')
-    # Set the y-axis limits if provided.
     if args.ymin is not None:
         plt.ylim(bottom=args.ymin)
     if args.ymax is not None:
         plt.ylim(top=args.ymax)
-    # Set the plot title and axis labels.
     plt.title(args.title)
     plt.xlabel(x_label)
     plt.ylabel('Translation error (m)')
 
-    # Show or save the plot.
+    # Process the cellManager file (FOV Mask) if provided.
+    if args.cellManager:
+        timestamps, fov_widths, fov_heights = read_cell_manager_file(args.cellManager)
+        if len(timestamps) > 0:
+            fig2, ax2 = plt.subplots()
+            ax2.plot(timestamps, fov_widths, 'bo-', label='FOV Mask Width')
+            ax2.plot(timestamps, fov_heights, 'ro-', label='FOV Mask Height')
+            ax2.set_title('FOV Mask Size Over Time')
+            ax2.set_xlabel('Timestamp')
+            ax2.set_ylabel('FOV Mask Dimension')
+            ax2.legend()
+        else:
+            print("No valid FOV Mask data found in cellManager file.", file=sys.stderr)
+
+    # Show or save the plots.
     if args.show:
         plt.show()
     else:
-        plt.savefig(args.plot, dpi=150)
-        print(f"Saved plot to {args.plot}")
+        fig1.savefig(args.plot, dpi=150)
+        print(f"Saved trajectory error plot to {args.plot}")
+        if args.cellManager and args.cellManager_plot:
+            fig2.savefig(args.cellManager_plot, dpi=150)
+            print(f"Saved FOV Mask plot to {args.cellManager_plot}")
 
 
 if __name__ == "__main__":

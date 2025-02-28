@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <numeric>
+#include <iomanip>
 
 namespace ORB_SLAM3 
 {
@@ -227,7 +228,7 @@ void CellManager::printStats(const double& frame_num, const double& frameTimesta
         once = false;
     }
 
-    file << "Frame " << frame_num << " finished in " << frameTimestamp << " ms stats:\n";
+    file << "Frame " << std::fixed << std::setprecision(9) << frame_num << " finished in " << frameTimestamp << " ms stats:\n";
     file << " - Recorded Frames: " << cells_per_frame.size() << "\n";
     file << " - Elapsed Cells: " << elapsed_cells << "\n";
     file << " - Average Cells Per Frame: " << getAverageCellsPerFrame() << "\n";
