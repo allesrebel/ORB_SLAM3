@@ -65,7 +65,7 @@ bool CellManager::skipCell(const feature_extraction_state_t& cell)
 }
 
 // Signal the end of a frame and reset elapsed Cells
-void CellManager::endFrame(double& frame_num, double& actualFrameTime)
+void CellManager::endFrame(const double& frame_num, double actualFrameTime)
 {
 
     // if we're skipping frames, decrement the number of frames we need to skip
@@ -92,6 +92,10 @@ void CellManager::endFrame(double& frame_num, double& actualFrameTime)
 
     cells_per_frame.push_back(elapsed_cells);
 
+    // compare largest pyramid level against elapsed cells
+    // if almost double, we can assume that stereo is done
+    static bool stereo_slam = (elapsed_cells > (pyramid_levels[0].nRows * pyramid_levels[0].nCols) * 1.8);
+
     // Using actual time elapsed to do frame as the budget for the next frame
     const double time_per_cell = ( actualFrameTime / getAverageCellsPerFrame());
 
@@ -100,16 +104,21 @@ void CellManager::endFrame(double& frame_num, double& actualFrameTime)
     // if it's > 50ms, we'll have to adjust the budget accordingly
     const double frame_time = 50.0f; //ms
     double frame_budget = static_cast<int>( frame_time / time_per_cell );
+    
+    // if we're doing stereo slam, we need to halve the budget (processing two images per frame)
+    if( stereo_slam )
+        frame_budget /= 2;
 
     if( actualFrameTime > frame_time )   // if we're over budget, adjust the frame budget for the next frame
     {
+        double frame_time_remaining = actualFrameTime;
         size_t frames_over_budget = 0;
         
         // see how many frames we're over budget
-        while( actualFrameTime > frame_time )
+        while( frame_time_remaining > frame_time )
         {
             frames_over_budget++;
-            actualFrameTime -= frame_time;
+            frame_time_remaining -= frame_time;
         }
 
         // adjust number of frames over budget to account for 'dropped frames'
@@ -118,7 +127,7 @@ void CellManager::endFrame(double& frame_num, double& actualFrameTime)
         // Assuming we're resuming at the same rate, we can calculate the remaining budget
         // We'll consume one of the skipped frames by accounting for the extra time needed
         // in this frame!
-        const double remaining_budget = (2*frame_time) - actualFrameTime;
+        const double remaining_budget = (2*frame_time) - ( actualFrameTime - frame_time * (skip_frames -1) );
         if( skip_frames ) skip_frames--; // decrement!
         frame_budget =  static_cast<int>( remaining_budget / time_per_cell);
     }
@@ -176,12 +185,6 @@ void CellManager::endFrame(double& frame_num, double& actualFrameTime)
 
     // We're warmed up and can start filtering cells!
     enableOasis = true;
-    std::cout << "Frame " << frame_num << " finished in " << actualFrameTime << " ms stats:" << std::endl;
-    std::cout << " - Recorded Frames: " << cells_per_frame.size() << std::endl;
-    std::cout << " - Elapsed Cells: " << elapsed_cells << std::endl;
-    std::cout << " - Average Cells Per Frame: " << getAverageCellsPerFrame() << std::endl;
-    std::cout << " - Frame Budget in Cells: " << frame_budget << std::endl;
-    std::cout << " - FOV Mask: " << FOV_MASK.width << "x" << FOV_MASK.height << std::endl;
     printStats(frame_num, actualFrameTime);
 
     // Reset for the next frame
@@ -197,7 +200,7 @@ double CellManager::getAverageCellsPerFrame() const
 }
 
 // Debug print
-void CellManager::printStats(double& frame_num, double& frameTimestamp) const
+void CellManager::printStats(const double& frame_num, const double& frameTimestamp) const
 {
     // Open file in append mode
     std::ofstream file("cellManager.txt", std::ios::app);
