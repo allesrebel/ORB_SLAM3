@@ -102,7 +102,6 @@ def read_cell_manager_file(filename):
         # Use Decimal to capture high precision, then convert to float for plotting.
         try:
             ts = float(Decimal(timestamp_str))
-            print(timestamp_str, ts)
         except Exception:
             ts = float(timestamp_str)
         timestamps.append(ts)
@@ -258,8 +257,8 @@ plot the FOV Mask size over time.
         timestamps, fov_widths, fov_heights = read_cell_manager_file(args.cellManager)
         if len(timestamps) > 0:
             fig2, ax2 = plt.subplots()
-            ax2.plot(timestamps, fov_widths, 'bo-', label='FOV Mask Width')
-            ax2.plot(timestamps, fov_heights, 'ro-', label='FOV Mask Height')
+            ax2.scatter(timestamps, fov_widths, color='blue', label='FOV Mask Dimension', marker='o')
+            #ax2.scatter(timestamps, fov_heights, color='red', label='FOV Mask Height', marker='o')
             ax2.set_title('FOV Mask Size Over Time')
             ax2.set_xlabel('Timestamp')
             ax2.set_ylabel('FOV Mask Dimension')
