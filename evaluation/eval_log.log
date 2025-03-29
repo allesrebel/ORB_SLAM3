@@ -1,0 +1,180 @@
+Saved trajectory error plot to mh01_normal_vs_deadlines_jetson.png
+Saved trajectory error plot to mh01_normal_vs_oasis_jetson.png
+First metrics timestamp processed: 1.4036365797635556e+18
+Final Frame: 1.4036367627135555e+18
+Total frames: 2625
+Total dropped frames: 544, as a percentage: 20.72%
+Effective FPS: 14.35
+Saved trajectory error plot to mh01_all_jetson.png
+Saved FOV Mask plot to mh01_jetson_cellManager.png
+JETSON MH01 DEADLINES
+compared_pose_pairs 2605 pairs
+absolute_translational_error.rmse 0.15308281963733364 m
+absolute_translational_error.mean 0.1415423144398791 m
+absolute_translational_error.median 0.14716442940345809 m
+absolute_translational_error.std 0.05831057272158106 m
+absolute_translational_error.min 0.004514526141401297 m
+absolute_translational_error.max 0.3032767582837478 m
+max idx: 2562
+JETSON MH01 NORMAL
+compared_pose_pairs 3638 pairs
+absolute_translational_error.rmse 0.061653100773268195 m
+absolute_translational_error.mean 0.05442465281168078 m
+absolute_translational_error.median 0.050804549726196725 m
+absolute_translational_error.std 0.028966566957214338 m
+absolute_translational_error.min 0.007225714442595427 m
+absolute_translational_error.max 0.13971913147965645 m
+max idx: 1526
+JETSON MH01 OASIS
+compared_pose_pairs 3638 pairs
+absolute_translational_error.rmse 0.08589311748030187 m
+absolute_translational_error.mean 0.07515256499973581 m
+absolute_translational_error.median 0.07303629616985355 m
+absolute_translational_error.std 0.041589897865292186 m
+absolute_translational_error.min 0.011220979028478299 m
+absolute_translational_error.max 0.1878482476734812 m
+max idx: 1525
+Saved trajectory error plot to mh02_normal_vs_deadlines_jetson.png
+Saved trajectory error plot to mh02_normal_vs_oasis_jetson.png
+First metrics timestamp processed: 1.4036368586516664e+18
+Final Frame: 1.4036370094516664e+18
+Total frames: 2171
+Total dropped frames: 445, as a percentage: 20.50%
+Effective FPS: 14.40
+Saved trajectory error plot to mh02_all_jetson.png
+Saved FOV Mask plot to mh02_jetson_cellManager.png
+JETSON MH02 DEADLINES
+compared_pose_pairs 2154 pairs
+absolute_translational_error.rmse 0.08602690674709369 m
+absolute_translational_error.mean 0.058911673517952325 m
+absolute_translational_error.median 0.045129071701474344 m
+absolute_translational_error.std 0.06269005828508493 m
+absolute_translational_error.min 0.00694485127820454 m
+absolute_translational_error.max 0.5724763321600881 m
+max idx: 2147
+JETSON MH02 NORMAL
+compared_pose_pairs 2999 pairs
+absolute_translational_error.rmse 0.039066138565393656 m
+absolute_translational_error.mean 0.03474767077066614 m
+absolute_translational_error.median 0.03348755369235136 m
+absolute_translational_error.std 0.01785392277411129 m
+absolute_translational_error.min 0.003133035547353895 m
+absolute_translational_error.max 0.09470655854294904 m
+max idx: 1515
+JETSON MH02 OASIS
+compared_pose_pairs 2829 pairs
+absolute_translational_error.rmse 0.061757469126362256 m
+absolute_translational_error.mean 0.05319997263179306 m
+absolute_translational_error.median 0.0444184220227436 m
+absolute_translational_error.std 0.03136475577571194 m
+absolute_translational_error.min 0.002714433647510327 m
+absolute_translational_error.max 0.16001009181095074 m
+max idx: 1606
+Saved trajectory error plot to mh03_normal_vs_deadlines_jetson.png
+Saved trajectory error plot to mh03_normal_vs_oasis_jetson.png
+First metrics timestamp processed: 1.403637130538319e+18
+Final Frame: 1.403637264388319e+18
+Total frames: 1929
+Total dropped frames: 385, as a percentage: 19.96%
+Effective FPS: 14.41
+Saved trajectory error plot to mh03_all_jetson.png
+Saved FOV Mask plot to mh03_jetson_cellManager.png
+JETSON MH03 DEADLINES
+compared_pose_pairs 1596 pairs
+absolute_translational_error.rmse 0.13380382456308973 m
+absolute_translational_error.mean 0.06452462895410775 m
+absolute_translational_error.median 0.04687198364659591 m
+absolute_translational_error.std 0.11721789848843397 m
+absolute_translational_error.min 0.001844414988458913 m
+absolute_translational_error.max 1.6989549081286062 m
+max idx: 1595
+JETSON MH03 NORMAL
+compared_pose_pairs 2294 pairs
+absolute_translational_error.rmse 0.05079023769682367 m
+absolute_translational_error.mean 0.04648444998110935 m
+absolute_translational_error.median 0.04639702019437944 m
+absolute_translational_error.std 0.020465682379378115 m
+absolute_translational_error.min 0.004365561737822249 m
+absolute_translational_error.max 0.11853322551194884 m
+max idx: 690
+JETSON MH03 OASIS
+compared_pose_pairs 2294 pairs
+absolute_translational_error.rmse 0.05094422986039447 m
+absolute_translational_error.mean 0.04688910879882465 m
+absolute_translational_error.median 0.047086948896919265 m
+absolute_translational_error.std 0.019917982631800005 m
+absolute_translational_error.min 0.007115081294716479 m
+absolute_translational_error.max 0.12393288831451871 m
+max idx: 685
+Saved trajectory error plot to mh04_normal_vs_deadlines_jetson.png
+Saved trajectory error plot to mh04_normal_vs_oasis_jetson.png
+First metrics timestamp processed: 1.403638127295097e+18
+Final Frame: 1.403638227695097e+18
+Total frames: 1553
+Total dropped frames: 284, as a percentage: 18.29%
+Effective FPS: 15.47
+Saved trajectory error plot to mh04_all_jetson.png
+Saved FOV Mask plot to mh04_jetson_cellManager.png
+JETSON MH04 DEADLINES
+compared_pose_pairs 1229 pairs
+absolute_translational_error.rmse 0.06688730087244098 m
+absolute_translational_error.mean 0.06231736356894845 m
+absolute_translational_error.median 0.05969360062239528 m
+absolute_translational_error.std 0.024299325418948223 m
+absolute_translational_error.min 0.008016435447932919 m
+absolute_translational_error.max 0.18011247362410773 m
+max idx: 409
+JETSON MH04 NORMAL
+compared_pose_pairs 1599 pairs
+absolute_translational_error.rmse 0.060886772970360194 m
+absolute_translational_error.mean 0.05513363236272457 m
+absolute_translational_error.median 0.05405116028066116 m
+absolute_translational_error.std 0.025835667307737818 m
+absolute_translational_error.min 0.006673171263324656 m
+absolute_translational_error.max 0.19822720495334584 m
+max idx: 522
+JETSON MH04 OASIS
+compared_pose_pairs 1599 pairs
+absolute_translational_error.rmse 0.06606058659440901 m
+absolute_translational_error.mean 0.06089543302861442 m
+absolute_translational_error.median 0.06022502589908776 m
+absolute_translational_error.std 0.025607564067184337 m
+absolute_translational_error.min 0.005125748044050795 m
+absolute_translational_error.max 0.19918695989497207 m
+max idx: 522
+Saved trajectory error plot to mh05_normal_vs_deadlines_jetson.png
+Saved trajectory error plot to mh05_normal_vs_oasis_jetson.png
+First metrics timestamp processed: 1.4036385180778294e+18
+Final Frame: 1.4036386305278295e+18
+Total frames: 1754
+Total dropped frames: 331, as a percentage: 18.87%
+Effective FPS: 15.60
+Saved trajectory error plot to mh05_all_jetson.png
+Saved FOV Mask plot to mh05_jetson_cellManager.png
+JETSON MH05 DEADLINES
+compared_pose_pairs 1398 pairs
+absolute_translational_error.rmse 0.16398080543876528 m
+absolute_translational_error.mean 0.1506841024792925 m
+absolute_translational_error.median 0.1526164719176767 m
+absolute_translational_error.std 0.06468389144413214 m
+absolute_translational_error.min 0.008936927070256888 m
+absolute_translational_error.max 0.33241745360956626 m
+max idx: 613
+JETSON MH05 NORMAL
+compared_pose_pairs 1836 pairs
+absolute_translational_error.rmse 0.06327192488917474 m
+absolute_translational_error.mean 0.057823401440368766 m
+absolute_translational_error.median 0.05758348786640856 m
+absolute_translational_error.std 0.02568639182616608 m
+absolute_translational_error.min 0.004360559618705475 m
+absolute_translational_error.max 0.1496711234362959 m
+max idx: 848
+JETSON MH05 OASIS
+compared_pose_pairs 1836 pairs
+absolute_translational_error.rmse 0.06689118864294079 m
+absolute_translational_error.mean 0.060591444367500476 m
+absolute_translational_error.median 0.05895280948935711 m
+absolute_translational_error.std 0.02833915996506583 m
+absolute_translational_error.min 0.004802733353371711 m
+absolute_translational_error.max 0.17160243261698063 m
+max idx: 851
