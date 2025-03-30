@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import re
+import statistics
 from decimal import Decimal
 
 # Make sure 'associate.py' is Python 3–compatible and in the same folder or in your Python path.
@@ -206,7 +207,13 @@ plot the FOV Mask size over time.
         # Plot the translational error for this estimated file.
         match_file = re.search(r'_stereo_inertial_([^_]+)_', est_file)
         run_type = match_file.group(1) if match_file else est_file
+        
+        # Extract the dataset name (e.g., "MH05") from the file path.
+        match_dataset = re.search(r'(MH\d{2})', est_file)
+        dataset_name = match_dataset.group(1) if match_dataset else None
+
         ax1.plot(x_vals, errors, label=f'Error: {run_type}', color=colors[i])
+        ax1.set_xlim(x_vals[0], x_vals[-2])
 
     # Process the metrics file, if provided.
     if args.metrics_file:
@@ -259,7 +266,12 @@ plot the FOV Mask size over time.
             fig2, ax2 = plt.subplots()
             ax2.scatter(timestamps, fov_widths, color='blue', label='FOV Mask Dimension', marker='o')
             #ax2.scatter(timestamps, fov_heights, color='red', label='FOV Mask Height', marker='o')
-            ax2.set_title('FOV Mask Size Over Time')
+            ax2.set_title(f'{dataset_name} Mask Size Over Time')
+            mean_val = statistics.mean(fov_widths)
+            std_val = statistics.stdev(fov_widths) 
+            print(f"FOV Mask size over time for {dataset_name}:")
+            print("Mean:", mean_val)
+            print("Standard Deviation:", std_val)
             ax2.set_xlabel('Timestamp')
             ax2.set_ylabel('FOV Mask Dimension')
             ax2.legend()
