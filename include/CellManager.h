@@ -41,6 +41,8 @@ private:
     std::atomic<int> frame_budget;
     std::atomic<bool> enableOasis = false;
     std::atomic<int> skip_frames = 0;
+    mutable std::atomic<double> smoothedCellsPerFrame = 0.0; // EMA for smoothing
+    double alpha = 0.5;                              // smoothing factor
 
 
     struct pyramid_level_t

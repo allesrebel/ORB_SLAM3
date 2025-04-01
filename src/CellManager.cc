@@ -195,9 +195,24 @@ void CellManager::endFrame(const double& frame_num, double actualFrameTime)
 // Calculate average Cells per frame
 double CellManager::getAverageCellsPerFrame() const 
 {
-    if (cells_per_frame.empty()) return 0.0;
-    int total_cells = std::accumulate(cells_per_frame.begin(), cells_per_frame.end(), 0);
-    return static_cast<double>(total_cells) / cells_per_frame.size();
+    if (cells_per_frame.empty()) 
+        return smoothedCellsPerFrame.load(); 
+
+    double latest_cells = static_cast<double>(cells_per_frame.back());
+
+    double current_smoothed = smoothedCellsPerFrame.load();
+
+    if (current_smoothed == 0.0)
+    {
+        smoothedCellsPerFrame.store(latest_cells);
+    }
+    else
+    {
+        double new_smoothed = alpha * latest_cells + (1.0 - alpha) * current_smoothed;
+        smoothedCellsPerFrame.store(new_smoothed);
+    }
+
+    return smoothedCellsPerFrame.load();
 }
 
 // Debug print
