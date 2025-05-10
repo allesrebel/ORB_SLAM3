@@ -5,30 +5,45 @@ DATE=$(date +"%Y-%m-%d_%H-%M-%S")
 
 # Function to execute ORBSLAM3 and save results
 run_orbslam() {
-  local config_file=$1
-  local result_folder_prefix=$2
-  local dataset=$3
+  local config_file=$1          # YAML config
+  local result_folder_prefix=$2 # “result_stereo_inertial_* …”
+  local dataset=$3              # MH01 … V203
   local run_number=$4
   local mask_size=$5
   local log_file="cout_${result_folder_prefix}_${dataset}_${mask_size}_${run_number}_${DATE}.log"
 
-  local dataset_with_underscore=$(echo $dataset | sed 's/\([A-Z]*\)\([0-9]*\)/\1_\2/')
-  local command="./Examples/Stereo-Inertial/stereo_inertial_euroc ./Vocabulary/ORBvoc.txt $config_file ./Datasets/EuRoc/${dataset_with_underscore}* ./Examples/Stereo-Inertial/EuRoC_TimeStamps/${dataset}.txt dataset-${dataset}_stereo_imu"
+  # -------------------------------------------------------------------------
+  # Convert dataset code (MH01, V202 …) to folder name (MH_01, V2_02 …)
+  # -------------------------------------------------------------------------
+  local dataset_with_underscore
+  if [[ $dataset == MH* ]]; then          # MH01 → MH_01
+    dataset_with_underscore="${dataset:0:2}_${dataset:2:2}"
+  elif [[ $dataset == V* ]]; then         # V202 → V2_02,  V101 → V1_01 …
+    dataset_with_underscore="V${dataset:1:1}_${dataset:2:2}"
+  else                                    # any other pattern (future-proof)
+    dataset_with_underscore="$dataset"
+  fi
+  # -------------------------------------------------------------------------
+
+  local command="./Examples/Stereo-Inertial/stereo_inertial_euroc \
+./Vocabulary/ORBvoc.txt $config_file \
+./Datasets/EuRoc/${dataset_with_underscore}* \
+./Examples/Stereo-Inertial/EuRoC_TimeStamps/${dataset}.txt \
+dataset-${dataset}_stereo_imu"
+
   echo "Running command: $command"
-  $command > $log_file
+  $command > "$log_file"
 
   echo "Saving results..."
   local result_folder="${DATE}_${result_folder_prefix}_${dataset}_${mask_size}_run_${run_number}"
-  mkdir -p $result_folder
-  mv LocalMapTimeStats.txt ExecMean.txt LBA_Stats.txt TrackingTimeStats.txt SessionInfo.txt $log_file $result_folder
+  mkdir -p "$result_folder"
+  mv LocalMapTimeStats.txt ExecMean.txt LBA_Stats.txt TrackingTimeStats.txt SessionInfo.txt "$log_file" "$result_folder" 2>/dev/null
 
-  # Move additional output files if they exist
-  for file in map_points.csv "f_dataset-${dataset}_stereo_imu.txt" "kf_dataset-${dataset}_stereo_imu.txt" "cellManager.txt"; do
-    if [ -f "$file" ]; then
-      mv "$file" "$result_folder"
-    fi
+  # Move optional outputs if present
+  for file in map_points.csv "f_dataset-${dataset}_stereo_imu.txt" \
+              "kf_dataset-${dataset}_stereo_imu.txt" "cellManager.txt"; do
+    [[ -f $file ]] && mv "$file" "$result_folder"
   done
-
   echo "Results saved in $result_folder"
 }
 
