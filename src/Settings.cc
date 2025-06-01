@@ -510,6 +510,18 @@ namespace ORB_SLAM3 {
         {
             cout << "Dumping map points enabled" << endl;
         }
+
+        enableOmegaSLAM = (bool)readParameter<int>(fSettings,"System.enableOmegaSLAM",found,false);
+        if(enableOmegaSLAM)
+        {
+            cout << "omegaSLAM enabled!" << endl;
+        }
+
+        debug_logs = (bool)readParameter<int>(fSettings,"System.debug_logs",found,false);
+        if(debug_logs)
+        {
+            cout << "Debug Logs enabled!" << endl;
+        }
     }
 
     void Settings::precomputeRectificationMaps() {
