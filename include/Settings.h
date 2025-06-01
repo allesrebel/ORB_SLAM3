@@ -130,6 +130,7 @@ namespace ORB_SLAM3 {
         int maskWidth = 0;
         bool dumpMapPoints = false;
         bool enableOmegaSLAM = false;
+        bool enablePIDSLAM = false;
         bool debug_logs = false;
 
     private:

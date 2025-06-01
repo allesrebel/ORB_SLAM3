@@ -183,8 +183,9 @@ public:
     vector<MapPoint*> GetLocalMapMPS();
 
     bool mbWriteStats;
-
+    bool mbEnablePIDSLAM;
     bool mbDumpMapPoints;
+    bool mbEnableDebugLogs;
 
 #ifdef REGISTER_TIMES
     void LocalMapStats2File();

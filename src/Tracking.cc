@@ -604,6 +604,8 @@ void Tracking::newParameterLoader(Settings *settings) {
     int maskHeight = settings->maskHeight;
     int maskWidth = settings->maskWidth;
     mbDumpMapPoints = settings->dumpMapPoints;
+    mbEnablePIDSLAM = settings->enablePIDSLAM;
+    mbEnableDebugLogs = settings->debug_logs;
 
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV,maskHeight,maskWidth,bEnableOasis);
 
@@ -1511,6 +1513,9 @@ bool Tracking::GetStepByStep()
 }
 
 
+// PID SLAM
+#include "FeatureSelector.hpp"
+static ORB_SLAM3::MFSelector sMFSelector;
 
 Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, string filename)
 {
@@ -1553,7 +1558,18 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
 
     // TODO: For IMU_STEREO, we can even pass the left image ONLY to the Frame constructor
     // effectively making the right image optional if we are facing time constraints
+    
+    // Pick the extractor that will be used to *build the new frame*
+    static Sophus::SE3<float> prevPose;
+    if( mbEnablePIDSLAM )
+    {
+        const auto [left, right]  = sMFSelector.current();
+        mpORBextractorLeft = left;
+        mpORBextractorRight = right;
+        prevPose = mLastFrame.GetPose();
+    }
 
+    // Construct the Frame   (unchanged apart from using the two pointers)
     if (mSensor == System::STEREO && !mpCamera2)
         mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
     else if(mSensor == System::STEREO && mpCamera2)
@@ -1577,6 +1593,9 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
     //cout << "Tracking start" << endl;
     Track();
     //cout << "Tracking end" << endl;
+
+    if( mbEnablePIDSLAM )
+        sMFSelector.updateExtractor(prevPose, mCurrentFrame.GetPose());
 
     return mCurrentFrame.GetPose();
 }
@@ -4064,7 +4083,7 @@ void Tracking::UpdateFrameIMU(const float s, const IMU::Bias &b, KeyFrame* pCurr
 {
     Map * pMap = pCurrentKeyFrame->GetMap();
     unsigned int index = mnFirstFrameId;
-    list<ORB_SLAM3::KeyFrame*>::iterator lRit = mlpReferences.begin();
+    list<KeyFrame*>::iterator lRit = mlpReferences.begin();
     list<bool>::iterator lbL = mlbLost.begin();
     for(auto lit=mlRelativeFramePoses.begin(),lend=mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lbL++)
     {
