@@ -487,6 +487,7 @@ include/SerializationUtils.h
 include/Config.h
 include/Settings.h
 include/CellManager.h
+include/FrameSelector.hpp
 )
 
 # Add DBoW2 library

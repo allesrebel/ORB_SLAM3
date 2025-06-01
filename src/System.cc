@@ -304,6 +304,10 @@ void System::AppendMapPointsToCSV(const long unsigned int& keyFrame_id, const Ei
     file.close();
 }
 
+// Omega SLAM, patched into ORBSLAM3
+#include "FrameSelector.hpp"
+static ORB_SLAM3::FrameSelector mFrameSelector;
+
 Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
@@ -382,6 +386,30 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     if (mSensor == System::IMU_STEREO)
         for(size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
             mpTracker->GrabImuData(vImuMeas[i_imu]);
+
+
+    // omega SLAM, use IMU data if we can, and if it's enabled
+    if
+    (
+        settings_->enableOmegaSLAM
+        && mSensor == System::IMU_STEREO  
+        && mpTracker->mCurrentFrame.HasPose()
+    )
+    {
+        Sophus::SE3f Tpred = mpTracker->mCurrentFrame.GetImuPose();
+        auto fid = mpTracker->mCurrentFrame.mnId + 1;
+
+        if(!mFrameSelector.accept(Tpred, fid, timestamp))
+        {
+            cout << "Omega SLAM Dropping frame " << timestamp << endl;
+
+            // drop this stereo pair
+            return Sophus::SE3f();  // return empty, since we won't be processing frame
+        }
+
+        // we're going to accept the frame, and allow the rest of
+        // the pipeline to utilize this information (left and right image)
+    }
 
     // std::cout << "start GrabImageStereo" << std::endl;
     Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed,imRightToFeed,timestamp,filename);

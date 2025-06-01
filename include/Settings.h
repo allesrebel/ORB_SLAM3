@@ -129,6 +129,8 @@ namespace ORB_SLAM3 {
         int maskHeight = 0;
         int maskWidth = 0;
         bool dumpMapPoints = false;
+        bool enableOmegaSLAM = false;
+        bool debug_logs = false;
 
     private:
         template<typename T>

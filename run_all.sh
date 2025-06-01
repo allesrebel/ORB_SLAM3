@@ -56,6 +56,7 @@ DATASETS=("MH01" "MH02" "MH03" "MH04" "MH05" "V101" "V102" "V103" "V201" "V202" 
 # Configurations to process
 CONFIGURATIONS=(
   "./Examples/Stereo-Inertial/EuRoC_oasis.yaml result_stereo_inertial_oasis"
+  "./Examples/Stereo-Inertial/EuRoC_omega_deadlines.yaml result_stereo_inertial_omega_deadlines"
   "./Examples/Stereo-Inertial/EuRoC_deadlines.yaml result_stereo_inertial_deadlines"
   "./Examples/Stereo-Inertial/EuRoC_fov_deadlines.yaml result_stereo_inertial_fov_deadlines"
   "./Examples/Stereo-Inertial/EuRoC_fov.yaml result_stereo_inertial_fov"
