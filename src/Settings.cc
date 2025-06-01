@@ -517,6 +517,12 @@ namespace ORB_SLAM3 {
             cout << "omegaSLAM enabled!" << endl;
         }
 
+        enablePIDSLAM = (bool)readParameter<int>(fSettings,"System.enablePIDSLAM",found,false);
+        if(enablePIDSLAM)
+        {
+            cout << "PID SLAM enabled!" << endl;
+        }
+
         debug_logs = (bool)readParameter<int>(fSettings,"System.debug_logs",found,false);
         if(debug_logs)
         {
