@@ -24,6 +24,7 @@
 #ifdef GUI
 #include <pangolin/pangolin.h>
 #endif
+#include "SlimSLAM.hpp"
 #include <iomanip>
 #include <openssl/md5.h>
 #include <boost/serialization/base_object.hpp>
@@ -208,6 +209,23 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
     #endif // GUI
 
+    // Load up the Control file if SlimSLAM is enabled
+    // otherwise load up configuration for training
+    if(settings_->enableSlimSLAM)
+    {
+        SlimSLAM& instance = SlimSLAM::GetInstance();
+        
+        if( settings_->enableSlimSLAMTraining )
+        {
+            instance.SetSkipFrames(settings_->slimSLAMTrainingFrameSkip);
+            instance.SetKpMax(settings_->slimSLAMTrainingKpMax);
+            instance.SetKpMin(settings_->slimSLAMTrainingKpMin);
+            instance.SetProcessingMode(settings_->slimSLAMTrainingProcMode);
+        }
+        else
+            instance.Initialize(settings_->slimSlamControlFile);
+    }
+
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
     cout << "Seq. Name: " << strSequence << endl;
@@ -324,6 +342,22 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
         return Sophus::SE3f();  // return empty, since we won't be processing frame
     }
 
+    // Slim SLAM, determines if we need to drop this frame or not!
+    if (settings_->enableSlimSLAM)
+    {
+        static int skip = 0;
+        int desired_skip = SlimSLAM::GetInstance().GetSkipFrames();
+        if( skip < desired_skip )
+        {
+            skip++;
+            cout << "Dropping frame " << timestamp << endl;
+            InsertTrackTime(0.0);   // to keep track of dropped frames compute time
+            return Sophus::SE3f();  // return empty, since we won't be processing frame
+        }
+        // skip >= desired_skip
+        skip = 0;
+    }
+
     cv::Mat imLeftToFeed, imRightToFeed;
     if(settings_ && settings_->needToRectify()){
         cv::Mat M1l = settings_->M1l();
@@ -420,6 +454,12 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+
+    // update SlimSLAM Settings based on timestamp (if not training)
+    if( settings_->enableSlimSLAM && !settings_->enableSlimSLAMTraining )
+    {
+        SlimSLAM::GetInstance().CheckAndApplyControls(timestamp);
+    }
 
     return Tcw;
 }

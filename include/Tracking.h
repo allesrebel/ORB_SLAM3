@@ -186,6 +186,7 @@ public:
     bool mbEnablePIDSLAM;
     bool mbDumpMapPoints;
     bool mbEnableDebugLogs;
+    bool mbEnableSlimSLAM;
 
 #ifdef REGISTER_TIMES
     void LocalMapStats2File();
