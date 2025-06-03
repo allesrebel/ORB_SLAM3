@@ -456,6 +456,7 @@ src/TwoViewReconstruction.cc
 src/Config.cc
 src/Settings.cc
 src/CellManager.cc
+src/SlimSLAM.cc
 include/System.h
 include/Tracking.h
 include/LocalMapping.h
@@ -488,6 +489,7 @@ include/Config.h
 include/Settings.h
 include/CellManager.h
 include/FrameSelector.hpp
+include/SlimSLAM.hpp
 )
 
 # Add DBoW2 library
