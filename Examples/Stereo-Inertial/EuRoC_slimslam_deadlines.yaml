@@ -12,9 +12,8 @@
 # The store file is created from the current session, if a file with the same name exists it is deleted
 #System.SaveAtlasToFile: "Session_MH01_MH02_MH03_Stereo60_Pseudo"
 
-SlimSLAM.Enable: true             # Must be false for training
+SlimSLAM.Enable: 1             # Must be false for training
 SlimSLAM.ControlFileBasePath: "./slamslim_control_files/" # Only Used if NOT Training
-SlimSLAM.EnableTraining: false    # Must be true for training
 
 
 #--------------------------------------------------------------------------------------------
