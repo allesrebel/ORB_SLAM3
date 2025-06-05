@@ -66,62 +66,74 @@ void SlimSLAM::LoadControlFile(const std::string& filePath)
     std::ifstream file(filePath);
     if (!file.is_open())
     {
-        std::cerr << "SLIMSLAM: ERROR: Could not open control file: " << filePath << std::endl;
+        std::cerr << "SLIMSLAM: ERROR: Could not open control file: "
+                  << filePath << std::endl;
         return;
     }
 
-    mControlCommands.clear(); // Clear any existing commands, ensuring a fresh load.
+    mControlCommands.clear();
     std::string line;
     int commandCount = 0;
+
     while (std::getline(file, line))
     {
-        if (line.empty() || line[0] == '#') continue; // Skip empty lines or comments
+        if (line.empty() || line[0] == '#')
+            continue;                          // skip blank / comment lines
 
-        std::stringstream ss(line);
-        std::string dataset_token, controlName_token;
-        double timestamp_token, value_token;
-        char comma1_token, comma2_token, comma3_token;
+        std::istringstream ss(line);
+        std::string datasetStr, tsStr, ctrlStr, valStr;
 
-        // Expected format: dataset,timestamp,control_name,value
-        if (std::getline(ss, dataset_token, ',') &&
-            (ss >> timestamp_token) && (ss >> comma1_token) && (comma1_token == ',') &&
-            std::getline(ss, controlName_token, ',') &&
-            (ss >> value_token) )
+        // CSV: dataset , timestamp , control_name , value
+        if (!std::getline(ss, datasetStr, ','))      continue;
+        if (!std::getline(ss, tsStr,     ','))      continue;
+        if (!std::getline(ss, ctrlStr,   ','))      continue;
+        if (!std::getline(ss, valStr))               continue; // rest of line
+
+        try
         {
-            // TODO: check if (ss >> comma3_token) to ensure no trailing characters, or just ss.eof()
-            mControlCommands[timestamp_token].push_back({controlName_token, value_token});
-            commandCount++;
-        } 
-        else 
+            double ts  = std::stod(tsStr);
+            double val = std::stod(valStr);
+
+            // Convert nanoseconds → seconds once on load
+            if (ts > 1e12)
+                ts /= 1e9;
+
+            mControlCommands[ts].push_back({ctrlStr, val});
+            ++commandCount;
+        }
+        catch (const std::exception& e)
         {
-            std::cerr << "SLIMSLAM: WARNING: Malformed line in control file: " << line << std::endl;
+            std::cerr << "SLIMSLAM: WARNING: Malformed line in control file: \""
+                      << line << "\" (" << e.what() << ')' << std::endl;
         }
     }
 
-    if (commandCount > 0) 
+    if (commandCount)
     {
-        std::cout << "SLIMSLAM: Control file loaded successfully with " << commandCount << " commands across "
-                  << mControlCommands.size() << " unique timestamps from: " << filePath << std::endl;
-    } 
-    else if (!filePath.empty()) 
-    {
-        std::cerr << "SLIMSLAM: WARNING: Control file was loaded but no valid commands were parsed, or the file was empty: " << filePath << std::endl;
+        std::cout << "SLIMSLAM: Control file loaded successfully with "
+                  << commandCount << " commands across "
+                  << mControlCommands.size() << " unique timestamps from: "
+                  << filePath << std::endl;
     }
-    // If filePath was empty, the message is handled in ConfigureInstance.
+    else
+    {
+        std::cerr << "SLIMSLAM: WARNING: No valid commands parsed (file empty "
+                     "or malformed): " << filePath << std::endl;
+    }
 }
 
 // Checks for control commands at the given timestamp and applies them.
 void SlimSLAM::CheckAndApplyControls(double timestamp)
 {
-    // Commands are applied only if the current frame's timestamp *exactly* matches
+    // Commands are applied only if the current frame's timestamp matches
     // a timestamp present in the control file.
     auto exact_match_it = mControlCommands.find(timestamp);
     if (exact_match_it != mControlCommands.end())
     {
-        // std::cout << "SLIMSLAM: Found commands for timestamp " << timestamp << std::endl;
+        std::cout << "SLIMSLAM: Found commands for timestamp " << timestamp << std::endl;
         for (const auto& command : exact_match_it->second)
         {
-            // std::cout << "  Applying: " << command.controlName << " = " << command.value << std::endl;
+            std::cout << "  Applying: " << command.controlName << " = " << command.value << std::endl;
             if (command.controlName == "Skip_Frames")
                 mSkipFrames = static_cast<int>(command.value);
             else if (command.controlName == "KP_max")
@@ -131,6 +143,14 @@ void SlimSLAM::CheckAndApplyControls(double timestamp)
             else if (command.controlName == "Processing_Frames")
                 mProcessingMode = static_cast<int>(command.value);
         }
+    }
+    else
+    {
+        // no match, apply default settings, Oracle didn't find an improvement
+        mKpMax = 200;
+        mKpMin = 180;
+        mProcessingMode = 2;
+        mSkipFrames = 0;
     }
 }
 
