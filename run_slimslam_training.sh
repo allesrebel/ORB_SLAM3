@@ -41,8 +41,8 @@ EUROC_BASE_PATH="${EUROC_BASE_PATH:-./Datasets/EuRoc}"
 # --- Script Variables & Pre-run Checks ---
 VOC_FILE="${ORB_SLAM3_BASE_PATH}/Vocabulary/ORBvoc.txt"
 BASE_TRAINING_SETTINGS_FILE="${ORB_SLAM3_BASE_PATH}/Examples/Stereo-Inertial/EuRoC_slimslam_training.yaml"
-RESULTS_BASE_DIR="./slamslim_training_results"
-CONTROL_FILES_BASE_DIR="./slamslim_control_files"
+RESULTS_BASE_DIR="./slimslam_training_results"
+CONTROL_FILES_BASE_DIR="./slimslam_control_files"
 EXEC_FILE="${ORB_SLAM3_BASE_PATH}/Examples/Stereo-Inertial/stereo_inertial_euroc"
 PYTHON_GENERATOR_SCRIPT="./generate_control_file.py"
 
@@ -150,18 +150,6 @@ for seq_info in "${SEQUENCES[@]}"; do
             fi
         done
     done
-
-    # --- Final Step: Generate the Control File for this Sequence ---
-    echo -e "\n[ANALYZING] Generating SlimSLAM Control File for $SEQUENCE_NAME..."
-    GROUND_TRUTH_PATH="${SEQUENCE_PATH}/mav0/state_groundtruth_estimate0/data.csv"
-    CONTROL_FILE_OUT="${CONTROL_FILES_BASE_DIR}/slamslim_controls_${SEQUENCE_NAME}.txt"
-    
-    if [ ! -f "$GROUND_TRUTH_PATH" ]; then
-        echo "ERROR: Ground truth file not found for $SEQUENCE_NAME. Skipping control file generation."
-        continue
-    fi
-    run_command python3 "$PYTHON_GENERATOR_SCRIPT" "$SEQUENCE_PATH" "$TIMESTAMPS_FILE" "$GROUND_TRUTH_PATH" "$SEQUENCE_RESULTS_DIR" "$CONTROL_FILE_OUT" "$SEQUENCE_NAME"
-    echo "-------------------------------------------------"
 done
 
 echo "================================================="
