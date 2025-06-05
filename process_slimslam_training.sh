@@ -18,7 +18,7 @@
 set -euo pipefail
 
 # --- tweak these if your layout is different -------------------
-BASE_RESULTS_DIR="slamslim_training_results"                  # raw SlimSLAM outputs
+BASE_RESULTS_DIR="slimslam_training_results"                  # raw SlimSLAM outputs
 GT_DIR="evaluation/Ground_truth/EuRoC_left_cam"               # EuRoC GT poses
 PY_SCRIPT="./generate_control_file.py"                        # the helper you posted
 TMP_RESULTS_ROOT="./_tmp_aggregated_results"                  # working area (auto-created)
