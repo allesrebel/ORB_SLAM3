@@ -49,6 +49,7 @@ if __name__ == "__main__":
     pa.add_argument('--max_difference', type=int, default=20_000_000)
     pa.add_argument('--plot')
     pa.add_argument('--verbose', action='store_true')
+    pa.add_argument('--csv', action='store_true')
     pa.add_argument('--verbose2', action='store_true')
     pa.add_argument('--save'); pa.add_argument('--save_associations')
     args = pa.parse_args()
@@ -86,28 +87,34 @@ if __name__ == "__main__":
     est_full_xyz  = np.matrix([[float(v)*args.scale for v in est_list[s][0:3]]
                                for s in second_stamps]).T
     est_full_aln  = scl * R @ est_full_xyz + t
+    if args.csv:
+        pd.DataFrame({
+            "timestamp": first_stamps,
+            "x": gt_full_xyz.T[:, 0].A1,
+            "y": gt_full_xyz.T[:, 1].A1,
+            "z": gt_full_xyz.T[:, 2].A1,
+        }).to_csv("ground_truth_traj.csv", index=False)
 
-    pd.DataFrame({
-        "timestamp": first_stamps,
-        "x": gt_full_xyz.T[:, 0].A1,
-        "y": gt_full_xyz.T[:, 1].A1,
-        "z": gt_full_xyz.T[:, 2].A1,
-    }).to_csv("ground_truth_traj.csv", index=False)
+        pd.DataFrame({
+            "timestamp": second_stamps,
+            "x": est_full_aln.T[:, 0].A1,
+            "y": est_full_aln.T[:, 1].A1,
+            "z": est_full_aln.T[:, 2].A1,
+        }).to_csv("estimated_traj_aligned.csv", index=False)
 
-    pd.DataFrame({
-        "timestamp": second_stamps,
-        "x": est_full_aln.T[:, 0].A1,
-        "y": est_full_aln.T[:, 1].A1,
-        "z": est_full_aln.T[:, 2].A1,
-    }).to_csv("estimated_traj_aligned.csv", index=False)
-
-    pd.DataFrame(pair_rows).to_csv("difference_segments.csv", index=False)
+        pd.DataFrame(pair_rows).to_csv("difference_segments.csv", index=False)
 
     # ---------- console output --------------------------------------------
     if args.verbose:
         print("compared_pose_pairs", len(err))
         print("absolute_translational_error.rmse",
               np.sqrt((err @ err) / len(err)), "m")
+        print("absolute_translational_error.mean",   np.mean(err),   "m")
+        print("absolute_translational_error.median", np.median(err), "m")
+        print("absolute_translational_error.std",    np.std(err),    "m")
+        print("absolute_translational_error.min",    np.min(err),    "m")
+        print("absolute_translational_error.max",    np.max(err),    "m")
+        print("max idx:", int(np.argmax(err)))
     else:
         rmse_scaled = np.sqrt((err @ err) / len(err))
         rmse_noscl  = np.sqrt((errGT @ errGT) / len(errGT))
