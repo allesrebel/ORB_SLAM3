@@ -71,12 +71,10 @@ def main():
     ap.add_argument('--cellManager')
     ap.add_argument('--cellManager_plot', default='fov_mask_plot.png')
     ap.add_argument('--title', default='Trajectory Error Over Time')
-    # --- NEW ARGUMENT ---
     # Add an argument to accept explicit names for the trajectories.
     ap.add_argument('--trajectory_names', help='Comma-separated list of names for the output columns')
     args = ap.parse_args()
 
-    # --- PROCESS NEW ARGUMENT ---
     # If trajectory_names are provided, split them into a list.
     # If the count doesn't match the file count, print a warning and fall back to the old method.
     trajectory_names = None
@@ -97,7 +95,6 @@ def main():
     wide_df = pd.DataFrame()
 
     for idx, est_path in enumerate(args.estimated_files):
-        # --- MODIFIED NAMING LOGIC ---
         # If explicit names are available and valid, use them. Otherwise, use the original regex method.
         if trajectory_names:
             run_type = trajectory_names[idx]
