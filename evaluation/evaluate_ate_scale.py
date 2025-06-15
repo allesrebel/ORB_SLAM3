@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-evaluate_ate_scale.py  –  ATE + scale evaluator.
+evaluate_ate_scale.py  –  ATE + scale evaluator with timestamp interpolation.
 
 Outputs:
     trajectory_pair.csv             (wide table: GT + aligned estimate)
@@ -13,6 +13,16 @@ import sys, argparse
 import numpy as np
 import pandas as pd
 import associate
+# --------------------------------------------------------------------------
+def interp_xyz(sample_dict, stamps, scale=1.0):
+    """Linear interpolation of (x,y,z) at the requested stamps."""
+    keys = np.array(sorted(sample_dict.keys()), float)
+    xyz  = np.array([[float(v) for v in sample_dict[k][0:3]] for k in keys])
+    out  = np.empty((len(stamps), 3))
+    for ax in range(3):
+        out[:, ax] = np.interp(stamps, keys, xyz[:, ax])
+    return np.matrix(out * scale).T   # shape (3 × N)
+
 # --------------------------------------------------------------------------
 def align(model, data):
     """Horn alignment. Returns transforms & per-frame errors."""
@@ -54,31 +64,38 @@ if __name__ == "__main__":
     pa.add_argument('--save'); pa.add_argument('--save_associations')
     args = pa.parse_args()
 
+    # ---------- load the two TUM files ------------------------------------
     gt_list  = associate.read_file_list(args.first_file,  False)
     est_list = associate.read_file_list(args.second_file, False)
-    matches  = associate.associate(gt_list, est_list,
-                                   args.offset, args.max_difference)
-    if len(matches) < 2:
-        sys.exit("Not enough matching timestamps")
 
-    # --- build XYZ matrices ------------------------------------------------
-    gt_xyz  = np.matrix([[float(v) for v in gt_list[a][0:3]]
-                         for a, _ in matches]).T
-    est_xyz = np.matrix([[float(v)*args.scale for v in est_list[b][0:3]]
-                         for _, b in matches]).T
+    # ---------- common timeline (use GT stamps that lie inside EST span) --
+    gt_stamps  = np.array(sorted(gt_list.keys()), float)
+    est_stamps = np.array(sorted(est_list.keys()), float)
+    if est_stamps.size < 2:
+        sys.exit("Estimated trajectory has < 2 poses")
+    common_stamps = gt_stamps[(gt_stamps >= est_stamps[0]) &
+                              (gt_stamps <= est_stamps[-1])]
+    if common_stamps.size < 2:
+        sys.exit("Not enough overlapping timestamps for interpolation")
 
+    # ---------- build XYZ matrices (interpolated) -------------------------
+    gt_xyz  = np.matrix([[float(v) for v in gt_list[s][0:3]]
+                         for s in common_stamps]).T
+    est_xyz = interp_xyz(est_list, common_stamps, scale=args.scale)
+
+    # ---------- alignment + errors ----------------------------------------
     R, tGT, errGT, t, err, scl = align(est_xyz, gt_xyz)
     est_xyz_aln = scl * R @ est_xyz + t
 
     # ---------- wide CSV: GT + aligned estimate ---------------------------
     pair_rows = []
-    for (tg, te), (xg, yg, zg), (xe, ye, ze) in zip(
-        matches, gt_xyz.T.A, est_xyz_aln.T.A):
-        pair_rows.append({"timestamp_gt": tg, "x_gt": xg, "y_gt": yg, "z_gt": zg,
-                          "timestamp_est": te, "x_est": xe, "y_est": ye, "z_est": ze})
+    for ts, (xg, yg, zg), (xe, ye, ze) in zip(
+        common_stamps, gt_xyz.T.A, est_xyz_aln.T.A):
+        pair_rows.append({"timestamp_gt": ts, "x_gt": xg, "y_gt": yg, "z_gt": zg,
+                          "timestamp_est": ts, "x_est": xe, "y_est": ye, "z_est": ze})
     pd.DataFrame(pair_rows).to_csv("trajectory_pair.csv", index=False)
 
-    # ---------- legacy CSVs -----------------------------------------------
+    # ---------- legacy CSVs (unchanged) -----------------------------------
     first_stamps  = np.array(sorted(gt_list.keys()), float)
     gt_full_xyz   = np.matrix([[float(v) for v in gt_list[s][0:3]]
                                for s in first_stamps]).T
@@ -131,9 +148,9 @@ if __name__ == "__main__":
         import matplotlib; matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots()
-        ax.plot(gt_full_xyz.T[:,0], gt_full_xyz.T[:,1],
+        ax.plot(gt_full_xyz.T[:, 0], gt_full_xyz.T[:, 1],
                 '-', color='black', label='ground truth')
-        ax.plot(est_full_aln.T[:,0], est_full_aln.T[:,1],
+        ax.plot(est_full_aln.T[:, 0], est_full_aln.T[:, 1],
                 '-', color='blue',  label='estimated')
         for (xg, yg, _), (xe, ye, _) in zip(gt_xyz.T.A, est_xyz_aln.T.A):
             ax.plot([xg, xe], [yg, ye], '-', color='red', label='_nolegend_')
