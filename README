@@ -1,0 +1,109 @@
+DOI: 10.5281/zenodo.16199258
+
+This artifact contains the source code of ORBSLAM3, the EuRoC dataset (https://journals.sagepub.com/doi/10.1177/0278364915620033), along with OASIS modifications. OASIS itself is implemented through source code modifications that can be toggled on or off via YAML configuration files. In addition, this artifact contains modified build pipeline and production run pipeline to collect data to analyze and compare (via 10.5281/zenodo.16197736). Additional controller variants implementations include, also can be enabled or disabled through configuration files: Omega SLAM (https://doi.org/10.1145/3410463.3414636), PID SLAM (https://doi.org/10.5220/0007386508400848), along with Fixed Mask Size Variants.
+
+In addition, general instructions are provided and links to cmake documentation is provided in case user would like to modify components. General instructions are provided to disable OASIS or have ORBSLAM3 run in original configuration. Note: A debug build is available as well, see 'build.sh' for enabling debug symbols and asserts.
+
+# Repository Information
+This copy was created on 7/20/2025, from https://github.com/allesrebel/ORB_SLAM3, commit 0b08ea7b54c88337d7cea3424365709301193add
+
+# Directory Structure
+Examples - contains examples utilizing ORBSLAM3 library for various sensor configurations and configuration YAMLs
+Thirdparty - ORBSLAM3 dependencies (g2o, DBoW2, Sophus)
+Vocabulary - A ready to use vocabulary provided by the authors of ORBSLAM3
+evaluation - evaluation scripts to assess SLAM outputs
+include - source code include directory
+src - source code implementation directory
+CMakeLists.txt - configuration and build instructions using CMAKE
+Calibration_Tutorial.pdf - instructions to adapt ORBSLAM3 for your own sensor configuration
+build.sh - build script for ORBSLAM3 library and example executables
+run_all.sh - production run of all controller variant trials
+run_example.sh - a quick test to ensure ORBSLAM3 is functioning correctly
+run_mask_variations.sh - a production run across many different static masks
+
+# Using DockerHub Base Image on Non-Native Architectures
+A container can be used to process the data, if docker is supported on your architecture:
+https://hub.docker.com/layers/library/ubuntu/jammy-20250714/images/sha256-da5fdf346e5313bef2a3dd2476c0251d48103213a5e3a0cb3afbb8909f3cf50f
+
+An example using ubuntu:jammy (above):
+"sudo docker pull ubuntu:jammy"
+"docker run -it ubuntu:jammy"
+"cd $HOME"
+<Download+extract Artifacts> 
+
+For convenience a container built using the above instructions is provided on docker hub at: https://hub.docker.com/repository/docker/allesrebel/oasis-orbslam3/general - meant for non-nvidia systems. See below for instructions on Nvidia devkits.
+
+# Manual Reproduction Steps (Ubuntu)
+In the Docker Base Image, with the artifacts extracted:
+"apt update"
+"apt install -y cmake python3 python3-pip binutils wget g++"
+"./build.sh"
+
+Will launch cmake and download the EuRoC MAV dataset, along with any ORBSLAM3 dependencies. 
+
+# DockerHub Preconfigured Image Instructions
+! This section is applicable to Non-Nvidia Devices
+1. Pull the docker image from dockerhub: 
+docker pull allesrebel/oasis-orbslam3:latest
+
+2. Run the container
+docker run -it allesrebel/oasis-orbslam3
+
+3. Execute 'run.sh' to perform a production run
+./run_all.sh
+
+4. Examine results in home folder
+
+# Nvidia Jetson DockerHub Container information
+! This section is only applicable if using an Nvidia Jetson DevKits
+1. Install and configure https://github.com/dusty-nv/jetson-containers
+	- This updates the docker runtime to use nvidia container version
+2. Run the following script: "$($JETSON_CONTAINERS/autotag opencv l4t-ml)"
+	- Where $JETSON_CONTAINERS is the install location of jetson-containers above
+3. "apt update", "apt install -y cmake wget", "./build.sh" to download dataset, and build ORBSLAM3 with OASIS
+	- Then experiments as normal can be performed ('run_all.sh', 'run_example.sh', etc)
+
+# Original data collection information
+This artifact contains trials performed on an Intel Platform with the following specifications:
+10-core Intel Core i7-6950X CPU
+64 GB 256-bit DDR4 RAM
+
+As well as on a Nvidia Jetson AGX Orin:
+8-core Arm Cortex-A78AE CPU
+16 GB 128-bit LPDDR5 RAM
+
+With dataset pulled directly from the EuRoC MAV dataset: https://journals.sagepub.com/doi/10.1177/0278364915620033
+Note: Alternatively you can pull from: https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets
+
+# ORBSLAM3 Configuration
+ORBSLAM3 itself is built as a loadable library. There are several different Examples utilizing this library in the Examples Directory.
+Provided is also controller configuration for each executable through YAML files. Note, the YAML files also contain default SLAM settings which can be modified if desired. For our work, we kept the defaults provided by the original authors of ORBSLAM3. 
+For example to disable OASIS, a comparison between "Examples/Stereo-Inertial/EuRoC.yaml" and "Examples/Stereo-Inertial/EuRoC_oasis.yaml" would reveal that "System.enableOasis: 1" is present for the OASIS configuration. Removal of this in the configuration file would disable OASIS.
+To support tracking of source code, the example executable also print out the commit hash of the git repo along with configuration read from the YAML file. For example, during execution with OASIS enabled, stdout would print "OASIS enabled" along with regular SLAM configurations.  
+
+# Experimental Configuration
+By default, when doing a production run 'run_all.sh', each controller is done across all environments in the EuRoC MAV dataset. These trials are done multiple times and each trial is done randomly to reduce impact from confounders. These can be directly modified as desired, for example, if more trials are required per controller variant, 'run_all.sh':51 can be modified. Or if specific variants need to be removed, lines 57-65 list YAML configurations and the resulting output name. Of if specific environments need to be removed or added, modification of line 54 and removing  the specific part of the dataset can be done. Each of these modifications has a direct impact on production run duration.
+
+# Configuration Variants
+"normal" refers to the configuration ORBSLAM3 authors provided
+"deadlines" refers to configuration processing time for each frame is accounted for, and compared against next frame's timestamp. If exceeded, the next frame is skipped. Multiple frames may be skipped to account for excessive processing times
+"oasis" refers to the dynamic masking based on computational budget controller (our method), deadlines are considered
+"fov" refers to utilizing a static mask size
+"pid_slam" refers to an implementation of https://doi.org/10.5220/0007386508400848
+"omega_slam" refers to an implementation of https://doi.org/10.1145/3410463.3414636
+
+"deadlines" can generally be applied to any method that doesn't normally consider deadlines. For example, performing an experiment with a static mask, while considering deadlines would be the "fov_deadlines" variant.
+
+# Output Data
+Each trial output may contain the following files:
+	ExecMean.txt (all)
+	LBA_Stats.txt (all)
+	LocalMapTimeStats.txt (all)
+	SessionInfo.txt (all)
+	TrackingTimeStats.txt (all)
+	cellManager.txt (oasis)
+	f_dataset-<EuRoC dataset>_<Sensor configuration>_<variant name>.txt (all)
+	kf_dataset-<EuRoC dataset>_<Sensor configuration>_<variant name>.txt (all)
+
+The common files labeled as (all) are found in all trials. While "cellManager.txt" is a readout of the oasis mask changes and is only generated for the OASIS variant trials. Of note are the last two files, "f_dataset" and "kf_dataset" which are the camera trajectory and key frame trajectory respectively.
+
