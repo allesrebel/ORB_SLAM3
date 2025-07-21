@@ -1,288 +1,159 @@
 #!/usr/bin/env python3
-# Modified by Raul Mur-Artal
-# Automatically compute the optimal scale factor for monocular VO/SLAM.
-# Software License Agreement (BSD License)
-#
-# Copyright (c) 2013, Juergen Sturm, TUM
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of TUM nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-#
-# Requirements:
-#   pip install numpy matplotlib
-
 """
-This script computes the absolute trajectory error from the ground truth
-trajectory and the estimated trajectory.
+evaluate_ate_scale.py  –  ATE + scale evaluator with timestamp interpolation.
+
+Outputs:
+    trajectory_pair.csv             (wide table: GT + aligned estimate)
+    ground_truth_traj.csv
+    estimated_traj_aligned.csv
+    difference_segments.csv
 """
+# --------------------------------------------------------------------------
+import sys, argparse
+import numpy as np
+import pandas as pd
+import associate
+# --------------------------------------------------------------------------
+def interp_xyz(sample_dict, stamps, scale=1.0):
+    """Linear interpolation of (x,y,z) at the requested stamps."""
+    keys = np.array(sorted(sample_dict.keys()), float)
+    xyz  = np.array([[float(v) for v in sample_dict[k][0:3]] for k in keys])
+    out  = np.empty((len(stamps), 3))
+    for ax in range(3):
+        out[:, ax] = np.interp(stamps, keys, xyz[:, ax])
+    return np.matrix(out * scale).T   # shape (3 × N)
 
-import sys
-import numpy
-import argparse
-
-import associate  # Make sure associate.py is in the same folder or accessible
-
+# --------------------------------------------------------------------------
 def align(model, data):
-    """Align two trajectories using the method of Horn (closed-form).
+    """Horn alignment. Returns transforms & per-frame errors."""
+    m0, d0 = model - model.mean(1), data - data.mean(1)
+    W = sum(np.outer(m0[:, c], d0[:, c]) for c in range(model.shape[1]))
+    U, _, Vt = np.linalg.svd(W.T)
+    S = np.identity(3);  S[2, 2] *= -1 if np.linalg.det(U) * np.linalg.det(Vt) < 0 else 1
+    R = U @ S @ Vt
 
-    Input:
-        model -- first trajectory (3xn)
-        data -- second trajectory (3xn)
+    dots, norms = 0.0, 0.0
+    for c in range(d0.shape[1]):
+        dots  += float(np.dot(d0[:, c].T, R @ m0[:, c]))  # -> scalar
+        norms += float(np.linalg.norm(m0[:, c])**2)
+    s = dots / norms if norms > 1e-12 else 1.0
 
-    Output:
-        rot -- rotation matrix (3x3)
-        trans -- translation vector (3x1)
-        trans_error -- translational error per point (1xn)
-    """
-    numpy.set_printoptions(precision=3, suppress=True)
-    model_zerocentered = model - model.mean(1)
-    data_zerocentered = data - data.mean(1)
+    tGT = data.mean(1) - s * R @ model.mean(1)
+    t   = data.mean(1) -     R @ model.mean(1)
 
-    W = numpy.zeros((3, 3))
-    for column in range(model.shape[1]):
-        W += numpy.outer(model_zerocentered[:, column], data_zerocentered[:, column])
+    m_alnGT = s * R @ model + tGT
+    m_aln   =     R @ model + t
 
-    U, d, Vh = numpy.linalg.linalg.svd(W.transpose())
-    S = numpy.matrix(numpy.identity(3))
-    if (numpy.linalg.det(U) * numpy.linalg.det(Vh) < 0):
-        S[2, 2] = -1
-    rot = U * S * Vh
-    rotmodel = rot * model_zerocentered
-
-    dots = 0.0
-    norms = 0.0
-    for column in range(data_zerocentered.shape[1]):
-        dots += numpy.dot(data_zerocentered[:, column].transpose(), rotmodel[:, column])
-        normi = numpy.linalg.norm(model_zerocentered[:, column])
-        norms += normi * normi
-    s = float(dots / norms)
-
-    transGT = data.mean(1) - s * rot * model.mean(1)
-    trans = data.mean(1) - rot * model.mean(1)
-    model_alignedGT = s * rot * model + transGT
-    model_aligned = rot * model + trans
-
-    alignment_errorGT = model_alignedGT - data
-    alignment_error = model_aligned - data
-
-    trans_errorGT = numpy.sqrt(numpy.sum(numpy.multiply(alignment_errorGT, alignment_errorGT), 0)).A[0]
-    trans_error = numpy.sqrt(numpy.sum(numpy.multiply(alignment_error, alignment_error), 0)).A[0]
-
-    return rot, transGT, trans_errorGT, trans, trans_error, s
-
-
-def plot_traj(ax, stamps, traj, style, color, label):
-    """
-    Plot a trajectory using matplotlib.
-
-    Input:
-        ax -- the plot
-        stamps -- time stamps (1xn)
-        traj -- trajectory (3xn)
-        style -- line style
-        color -- line color
-        label -- plot legend
-    """
-    stamps_sorted = sorted(stamps)
-    interval = numpy.median([s - t for s, t in zip(stamps_sorted[1:], stamps_sorted[:-1])]) \
-               if len(stamps_sorted) > 1 else 0
-    x = []
-    y = []
-    if len(stamps_sorted) > 0:
-        last = stamps_sorted[0]
-    else:
-        return
-
-    for i in range(len(stamps)):
-        if stamps[i] - last < 2 * interval:
-            x.append(traj[i][0])
-            y.append(traj[i][1])
-        elif len(x) > 0:
-            ax.plot(x, y, style, color=color, label=label)
-            label = ""
-            x = []
-            y = []
-        last = stamps[i]
-
-    if len(x) > 0:
-        ax.plot(x, y, style, color=color, label=label)
-
-
+    errGT = np.sqrt(np.sum(np.multiply(m_alnGT - data,
+                                       m_alnGT - data), axis=0)).A1
+    err   = np.sqrt(np.sum(np.multiply(m_aln   - data,
+                                       m_aln   - data), axis=0)).A1
+    return R, tGT, errGT, t, err, s
+# --------------------------------------------------------------------------
 if __name__ == "__main__":
-    # parse command line
-    parser = argparse.ArgumentParser(description='''
-    This script computes the absolute trajectory error from the ground truth trajectory
-    and the estimated trajectory.
-    ''')
-    parser.add_argument('first_file',
-                        help='ground truth trajectory (format: timestamp tx ty tz qx qy qz qw)')
-    parser.add_argument('second_file',
-                        help='estimated trajectory (format: timestamp tx ty tz qx qy qz qw)')
-    parser.add_argument('--offset',
-                        help='time offset added to the timestamps of the second file (default: 0.0)',
-                        default=0.0)
-    parser.add_argument('--scale',
-                        help='scaling factor for the second trajectory (default: 1.0)',
-                        default=1.0)
-    parser.add_argument('--max_difference',
-                        help='maximally allowed time difference for matching entries (default: 10000000 ns)',
-                        default=20000000)
-    parser.add_argument('--save',
-                        help='save aligned second trajectory to disk (format: stamp2 x2 y2 z2)')
-    parser.add_argument('--save_associations',
-                        help='save associated first and aligned second trajectory to disk '
-                             '(format: stamp1 x1 y1 z1 stamp2 x2 y2 z2)')
-    parser.add_argument('--plot',
-                        help='plot the first and the aligned second trajectory to an image (format: png)')
-    parser.add_argument('--verbose',
-                        help='print all evaluation data (otherwise, only the RMSE absolute translational error '
-                             'in meters after alignment will be printed)',
-                        action='store_true')
-    parser.add_argument('--verbose2',
-                        help='print scale error and RMSE absolute translational error in meters '
-                             'after alignment with and without scale correction',
-                        action='store_true')
-    args = parser.parse_args()
+    pa = argparse.ArgumentParser()
+    pa.add_argument('first_file')           # ground truth
+    pa.add_argument('second_file')          # estimated
+    pa.add_argument('--offset', type=float, default=0.0)
+    pa.add_argument('--scale',  type=float, default=1.0)
+    pa.add_argument('--max_difference', type=int, default=20_000_000)
+    pa.add_argument('--plot')
+    pa.add_argument('--verbose', action='store_true')
+    pa.add_argument('--csv', action='store_true')
+    pa.add_argument('--verbose2', action='store_true')
+    pa.add_argument('--save'); pa.add_argument('--save_associations')
+    args = pa.parse_args()
 
-    first_list = associate.read_file_list(args.first_file, False)
-    second_list = associate.read_file_list(args.second_file, False)
+    # ---------- load the two TUM files ------------------------------------
+    gt_list  = associate.read_file_list(args.first_file,  False)
+    est_list = associate.read_file_list(args.second_file, False)
 
-    matches = associate.associate(first_list, second_list,
-                                  float(args.offset),
-                                  float(args.max_difference))
+    # ---------- common timeline (use GT stamps that lie inside EST span) --
+    gt_stamps  = np.array(sorted(gt_list.keys()), float)
+    est_stamps = np.array(sorted(est_list.keys()), float)
+    if est_stamps.size < 2:
+        sys.exit("Estimated trajectory has < 2 poses")
+    common_stamps = gt_stamps[(gt_stamps >= est_stamps[0]) &
+                              (gt_stamps <= est_stamps[-1])]
+    if common_stamps.size < 2:
+        sys.exit("Not enough overlapping timestamps for interpolation")
 
-    if len(matches) < 2:
-        sys.exit("Couldn't find matching timestamp pairs between groundtruth and estimated trajectory!"
-                 " Did you choose the correct sequence?")
+    # ---------- build XYZ matrices (interpolated) -------------------------
+    gt_xyz  = np.matrix([[float(v) for v in gt_list[s][0:3]]
+                         for s in common_stamps]).T
+    est_xyz = interp_xyz(est_list, common_stamps, scale=args.scale)
 
-    # Build matrices of matched points
-    first_xyz = numpy.matrix([[float(value) for value in first_list[a][0:3]] 
-                              for a, b in matches]).transpose()
-    second_xyz = numpy.matrix([[float(value)*float(args.scale) 
-                                for value in second_list[b][0:3]] 
-                               for a, b in matches]).transpose()
+    # ---------- alignment + errors ----------------------------------------
+    R, tGT, errGT, t, err, scl = align(est_xyz, gt_xyz)
+    est_xyz_aln = scl * R @ est_xyz + t
 
-    # Sort the second_list by timestamp so we can build the full second_xyz
-    sorted_second_list = sorted(second_list.items(), key=lambda x: x[0])
-    second_xyz_full = numpy.matrix(
-        [
-            [float(value)*float(args.scale) for value in sorted_second_list[i][1][0:3]] 
-            for i in range(len(sorted_second_list))
-        ]
-    ).transpose()
+    # ---------- wide CSV: GT + aligned estimate ---------------------------
+    pair_rows = []
+    for ts, (xg, yg, zg), (xe, ye, ze) in zip(
+        common_stamps, gt_xyz.T.A, est_xyz_aln.T.A):
+        pair_rows.append({"timestamp_gt": ts, "x_gt": xg, "y_gt": yg, "z_gt": zg,
+                          "timestamp_est": ts, "x_est": xe, "y_est": ye, "z_est": ze})
+    pd.DataFrame(pair_rows).to_csv("trajectory_pair.csv", index=False)
 
-    # Perform alignment
-    rot, transGT, trans_errorGT, trans, trans_error, scale = align(second_xyz, first_xyz)
+    # ---------- legacy CSVs (unchanged) -----------------------------------
+    first_stamps  = np.array(sorted(gt_list.keys()), float)
+    gt_full_xyz   = np.matrix([[float(v) for v in gt_list[s][0:3]]
+                               for s in first_stamps]).T
 
-    # Aligned second trajectory (with scale correction)
-    second_xyz_aligned = scale * rot * second_xyz + trans
-    # Aligned second trajectory (without scale correction)
-    second_xyz_notscaled = rot * second_xyz + trans
-    second_xyz_notscaled_full = rot * second_xyz_full + trans
+    second_stamps = np.array(sorted(est_list.keys()), float)
+    est_full_xyz  = np.matrix([[float(v)*args.scale for v in est_list[s][0:3]]
+                               for s in second_stamps]).T
+    est_full_aln  = scl * R @ est_full_xyz + t
+    if args.csv:
+        pd.DataFrame({
+            "timestamp": first_stamps,
+            "x": gt_full_xyz.T[:, 0].A1,
+            "y": gt_full_xyz.T[:, 1].A1,
+            "z": gt_full_xyz.T[:, 2].A1,
+        }).to_csv("ground_truth_traj.csv", index=False)
 
-    # Build full matrices for the first_xyz_full and second_xyz_full
-    first_stamps = sorted(first_list.keys())
-    first_xyz_full = numpy.matrix(
-        [[float(value) for value in first_list[b][0:3]] 
-         for b in first_stamps]
-    ).transpose()
+        pd.DataFrame({
+            "timestamp": second_stamps,
+            "x": est_full_aln.T[:, 0].A1,
+            "y": est_full_aln.T[:, 1].A1,
+            "z": est_full_aln.T[:, 2].A1,
+        }).to_csv("estimated_traj_aligned.csv", index=False)
 
-    second_stamps = sorted(second_list.keys())
-    second_xyz_full = numpy.matrix(
-        [[float(value)*float(args.scale) for value in second_list[b][0:3]]
-         for b in second_stamps]
-    ).transpose()
+        pd.DataFrame(pair_rows).to_csv("difference_segments.csv", index=False)
 
-    second_xyz_full_aligned = scale * rot * second_xyz_full + trans
-
-    # Print results
+    # ---------- console output --------------------------------------------
     if args.verbose:
-        print(f"compared_pose_pairs {len(trans_error)} pairs")
-        print(f"absolute_translational_error.rmse {numpy.sqrt(numpy.dot(trans_error, trans_error) / len(trans_error))} m")
-        print(f"absolute_translational_error.mean {numpy.mean(trans_error)} m")
-        print(f"absolute_translational_error.median {numpy.median(trans_error)} m")
-        print(f"absolute_translational_error.std {numpy.std(trans_error)} m")
-        print(f"absolute_translational_error.min {numpy.min(trans_error)} m")
-        print(f"absolute_translational_error.max {numpy.max(trans_error)} m")
-        print(f"max idx: {numpy.argmax(trans_error)}")
+        print("compared_pose_pairs", len(err))
+        print("absolute_translational_error.rmse",
+              np.sqrt((err @ err) / len(err)), "m")
+        print("absolute_translational_error.mean",   np.mean(err),   "m")
+        print("absolute_translational_error.median", np.median(err), "m")
+        print("absolute_translational_error.std",    np.std(err),    "m")
+        print("absolute_translational_error.min",    np.min(err),    "m")
+        print("absolute_translational_error.max",    np.max(err),    "m")
+        print("max idx:", int(np.argmax(err)))
     else:
-        # RMSE with scale correction, scale factor, and RMSE without scale correction
-        rmse_scale = numpy.sqrt(numpy.dot(trans_error, trans_error) / len(trans_error))
-        rmse_no_scale = numpy.sqrt(numpy.dot(trans_errorGT, trans_errorGT) / len(trans_errorGT))
-        print(f"{rmse_scale},{scale},{rmse_no_scale}")
+        rmse_scaled = np.sqrt((err @ err) / len(err))
+        rmse_noscl  = np.sqrt((errGT @ errGT) / len(errGT))
+        print(f"{rmse_scaled},{scl},{rmse_noscl}")
 
     if args.verbose2:
-        print(f"compared_pose_pairs {len(trans_error)} pairs")
-        print(f"absolute_translational_error.rmse {numpy.sqrt(numpy.dot(trans_error, trans_error) / len(trans_error))} m")
-        print(f"absolute_translational_errorGT.rmse {numpy.sqrt(numpy.dot(trans_errorGT, trans_errorGT) / len(trans_errorGT))} m")
+        print("absolute_translational_error.rmse",
+              np.sqrt((err @ err) / len(err)), "m")
+        print("absolute_translational_errorGT.rmse",
+              np.sqrt((errGT @ errGT) / len(errGT)), "m")
 
-    # Save associations if requested
-    if args.save_associations:
-        with open(args.save_associations, "w") as f:
-            f.write("\n".join([
-                f"{a:.6f} {x1:.6f} {y1:.6f} {z1:.6f} {b:.6f} {x2:.6f} {y2:.6f} {z2:.6f}"
-                for (a, b), (x1, y1, z1), (x2, y2, z2) in zip(
-                    matches,
-                    first_xyz.transpose().A,
-                    second_xyz_aligned.transpose().A
-                )
-            ]))
-
-    # Save aligned second trajectory if requested
-    if args.save:
-        with open(args.save, "w") as f:
-            f.write("\n".join([
-                f"{stamp:.6f} " + " ".join([f"{d:.6f}" for d in line])
-                for stamp, line in zip(second_stamps,
-                                       second_xyz_notscaled_full.transpose().A)
-            ]))
-
-    # Plot if requested
+    # ---------- optional plot ---------------------------------------------
     if args.plot:
-        import matplotlib
-        matplotlib.use('Agg')
+        import matplotlib; matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        plot_traj(ax, first_stamps, first_xyz_full.transpose().A, '-', "black", "ground truth")
-        plot_traj(ax, second_stamps, second_xyz_full_aligned.transpose().A, '-', "blue", "estimated")
-
-        label = "difference"
-        for (a, b), (x1, y1, z1), (x2, y2, z2) in zip(matches,
-                                                     first_xyz.transpose().A,
-                                                     second_xyz_aligned.transpose().A):
-            ax.plot([x1, x2], [y1, y2], '-', color="red", label=label)
-            label = ""
-
-        ax.legend()
-        ax.set_xlabel('x [m]')
-        ax.set_ylabel('y [m]')
-        plt.axis('equal')
-        plt.savefig(args.plot, format="pdf")
-
+        fig, ax = plt.subplots()
+        ax.plot(gt_full_xyz.T[:, 0], gt_full_xyz.T[:, 1],
+                '-', color='black', label='ground truth')
+        ax.plot(est_full_aln.T[:, 0], est_full_aln.T[:, 1],
+                '-', color='blue',  label='estimated')
+        for (xg, yg, _), (xe, ye, _) in zip(gt_xyz.T.A, est_xyz_aln.T.A):
+            ax.plot([xg, xe], [yg, ye], '-', color='red', label='_nolegend_')
+        ax.set_xlabel('x [m]'); ax.set_ylabel('y [m]')
+        ax.set_aspect('equal'); ax.legend()
+        fig.savefig(args.plot, dpi=150)

@@ -1,0 +1,21 @@
+# Software Requirements
+- cmake
+- GNU binutils
+- g++
+- python3 installed on your system
+- python3 with pip, numpy, matplotlib, pandas installed
+- OpenCV
+- G2O
+- Eigen
+- https://github.com/dusty-nv/jetson-containers installed and configured on Nvidia Jetson
+
+# Hardware Requirements
+- any modern Linux/Unix system can run the code (or with via docker container)
+	- If using Windows/MacOS, utilize Docker container to run Linux/Unix
+	- https://hub.docker.com/layers/library/ubuntu/jammy-20250714/images/sha256-da5fdf346e5313bef2a3dd2476c0251d48103213a5e3a0cb3afbb8909f3cf50f (ubuntu:jammy)
+	- Alternatively, a fully configured docker environment is available:
+	- https://hub.docker.com/repository/docker/allesrebel/oasis-orbslam3/general
+- ~90 GB of disk space for this artifact, EuRoC dataset and potential full production run
+	- If you'd like to see the original data collected see DOI: 10.5281/zenodo.16197736
+- NVIDIA Jetson AGX Orin Development Kit
+

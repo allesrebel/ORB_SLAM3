@@ -1,0 +1,31 @@
+# DockerHub Image Instructions
+1. Pull the docker image from dockerhub: 
+docker pull allesrebel/oasis-orbslam3:latest
+
+2. Run the container
+docker run -it oasis-orbslam3
+
+3. Execute 'run_example.sh' to perform a quick test
+./run_example.sh
+
+4. Examine output files generated
+
+## Reproducing Data Collection
+!WARNING this collection takes significant duration of time
+
+Instead of running 'run_example.sh', instead do 'run_all.sh' to start production run.
+
+Once production run is completed, move all resulting folders into a common directory and place into oasis-data (in a manner similar to other platforms).
+
+# Starting from Docker Base Image
+A container can be used to process the data, if the base image supports your computer's architecture:
+https://hub.docker.com/layers/library/ubuntu/jammy-20250714/images/sha256-da5fdf346e5313bef2a3dd2476c0251d48103213a5e3a0cb3afbb8909f3cf50f
+
+An example using ubuntu:jammy (above):
+"sudo docker pull ubuntu:jammy"
+"docker run -it ubuntu:jammy"
+"cd $HOME"
+<Download+extract Artifacts> 
+
+For convenience a container built using the above instructions is provided on docker hub at:
+https://hub.docker.com/repository/docker/allesrebel/oasis-orbslam3
