@@ -5,7 +5,7 @@ This artifact contains the source code of ORBSLAM3, the EuRoC dataset (https://j
 In addition, general instructions are provided and links to cmake documentation is provided in case user would like to modify components. General instructions are provided to disable OASIS or have ORBSLAM3 run in original configuration. Note: A debug build is available as well, see 'build.sh' for enabling debug symbols and asserts.
 
 # Repository Information
-This copy was created on 7/20/2025, from https://github.com/allesrebel/ORB_SLAM3, commit 0b08ea7b54c88337d7cea3424365709301193add
+This copy was created on 7/20/2025, from https://github.com/allesrebel/ORB_SLAM3, commit 97984ac7637bc6af19ca5d01a466f1ab959314c9
 
 # Directory Structure
 Examples - contains examples utilizing ORBSLAM3 library for various sensor configurations and configuration YAMLs
