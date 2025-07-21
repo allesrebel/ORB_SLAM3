@@ -24,6 +24,7 @@
 #ifdef GUI
 #include <pangolin/pangolin.h>
 #endif
+#include "SlimSLAM.hpp"
 #include <iomanip>
 #include <openssl/md5.h>
 #include <boost/serialization/base_object.hpp>
@@ -208,6 +209,23 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
     #endif // GUI
 
+    // Load up the Control file if SlimSLAM is enabled
+    // otherwise load up configuration for training
+    if(settings_->enableSlimSLAM)
+    {
+        SlimSLAM& instance = SlimSLAM::GetInstance();
+        
+        if( settings_->enableSlimSLAMTraining )
+        {
+            instance.SetSkipFrames(settings_->slimSLAMTrainingFrameSkip);
+            instance.SetKpMax(settings_->slimSLAMTrainingKpMax);
+            instance.SetKpMin(settings_->slimSLAMTrainingKpMin);
+            instance.SetProcessingMode(settings_->slimSLAMTrainingProcMode);
+        }
+        else
+            instance.Initialize(settings_->slimSlamControlFile);
+    }
+
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
     cout << "Seq. Name: " << strSequence << endl;
@@ -304,6 +322,10 @@ void System::AppendMapPointsToCSV(const long unsigned int& keyFrame_id, const Ei
     file.close();
 }
 
+// Omega SLAM, patched into ORBSLAM3
+#include "FrameSelector.hpp"
+static ORB_SLAM3::FrameSelector mFrameSelector;
+
 Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point>& vImuMeas, string filename)
 {
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
@@ -318,6 +340,22 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
         cout << "Dropping frame " << timestamp << endl;
         InsertTrackTime(0.0);   // to keep track of dropped frames compute time
         return Sophus::SE3f();  // return empty, since we won't be processing frame
+    }
+
+    // Slim SLAM, determines if we need to drop this frame or not!
+    if (settings_->enableSlimSLAM)
+    {
+        static int skip = 0;
+        int desired_skip = SlimSLAM::GetInstance().GetSkipFrames();
+        if( skip < desired_skip )
+        {
+            skip++;
+            cout << "Dropping frame " << timestamp << endl;
+            InsertTrackTime(0.0);   // to keep track of dropped frames compute time
+            return Sophus::SE3f();  // return empty, since we won't be processing frame
+        }
+        // skip >= desired_skip
+        skip = 0;
     }
 
     cv::Mat imLeftToFeed, imRightToFeed;
@@ -383,6 +421,30 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
         for(size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
             mpTracker->GrabImuData(vImuMeas[i_imu]);
 
+
+    // omega SLAM, use IMU data if we can, and if it's enabled
+    if
+    (
+        settings_->enableOmegaSLAM
+        && mSensor == System::IMU_STEREO  
+        && mpTracker->mCurrentFrame.HasPose()
+    )
+    {
+        Sophus::SE3f Tpred = mpTracker->mCurrentFrame.GetImuPose();
+        auto fid = mpTracker->mCurrentFrame.mnId + 1;
+
+        if(!mFrameSelector.accept(Tpred, fid, timestamp))
+        {
+            cout << "Omega SLAM Dropping frame " << timestamp << endl;
+
+            // drop this stereo pair
+            return Sophus::SE3f();  // return empty, since we won't be processing frame
+        }
+
+        // we're going to accept the frame, and allow the rest of
+        // the pipeline to utilize this information (left and right image)
+    }
+
     // std::cout << "start GrabImageStereo" << std::endl;
     Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed,imRightToFeed,timestamp,filename);
 
@@ -392,6 +454,12 @@ Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, 
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+
+    // update SlimSLAM Settings based on timestamp (if not training)
+    if( settings_->enableSlimSLAM && !settings_->enableSlimSLAMTraining )
+    {
+        SlimSLAM::GetInstance().CheckAndApplyControls(timestamp);
+    }
 
     return Tcw;
 }
@@ -684,7 +752,7 @@ void System::SaveTrajectoryTUM(const string &filename)
 
     // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
     // which is true when tracking failed (lbL).
-    list<ORB_SLAM3::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
+    list<KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
     list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
     list<bool>::iterator lbL = mpTracker->mlbLost.begin();
     for(list<Sophus::SE3f>::iterator lit=mpTracker->mlRelativeFramePoses.begin(),
@@ -797,7 +865,7 @@ void System::SaveTrajectoryEuRoC(const string &filename)
 
     // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
     // which is true when tracking failed (lbL).
-    list<ORB_SLAM3::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
+    list<KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
     list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
     list<bool>::iterator lbL = mpTracker->mlbLost.begin();
 
@@ -902,7 +970,7 @@ void System::SaveTrajectoryEuRoC(const string &filename, Map* pMap)
 
     // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
     // which is true when tracking failed (lbL).
-    list<ORB_SLAM3::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
+    list<KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
     list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
     list<bool>::iterator lbL = mpTracker->mlbLost.begin();
 
@@ -1321,12 +1389,12 @@ void System::SaveTrajectoryKITTI(const string &filename)
 
     // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
     // which is true when tracking failed (lbL).
-    list<ORB_SLAM3::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
+    list<KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
     list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
     for(list<Sophus::SE3f>::iterator lit=mpTracker->mlRelativeFramePoses.begin(),
         lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++)
     {
-        ORB_SLAM3::KeyFrame* pKF = *lRit;
+        KeyFrame* pKF = *lRit;
 
         Sophus::SE3f Trw;
 

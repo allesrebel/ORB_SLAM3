@@ -28,6 +28,7 @@
 #include "KannalaBrandt8.h"
 #include "MLPnPsolver.h"
 #include "GeometricTools.h"
+#include "SlimSLAM.hpp"
 
 #include <iostream>
 
@@ -604,6 +605,9 @@ void Tracking::newParameterLoader(Settings *settings) {
     int maskHeight = settings->maskHeight;
     int maskWidth = settings->maskWidth;
     mbDumpMapPoints = settings->dumpMapPoints;
+    mbEnablePIDSLAM = settings->enablePIDSLAM;
+    mbEnableDebugLogs = settings->debug_logs;
+    mbEnableSlimSLAM = settings->enableSlimSLAM;
 
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST,bEnableFOV,maskHeight,maskWidth,bEnableOasis);
 
@@ -1511,6 +1515,9 @@ bool Tracking::GetStepByStep()
 }
 
 
+// PID SLAM
+#include "FeatureSelector.hpp"
+static ORB_SLAM3::MFSelector sMFSelector;
 
 Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, string filename)
 {
@@ -1550,10 +1557,33 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
     }
 
     //cout << "Incoming frame creation" << endl;
+    
+    // Pick the extractor that will be used to *build the new frame*
+    static Sophus::SE3<float> prevPose;
+    if( mbEnablePIDSLAM )
+    {
+        const auto [left, right]  = sMFSelector.current();
+        mpORBextractorLeft = left;
+        mpORBextractorRight = right;
+        prevPose = mLastFrame.GetPose();
+    }
 
-    // TODO: For IMU_STEREO, we can even pass the left image ONLY to the Frame constructor
-    // effectively making the right image optional if we are facing time constraints
+    // Based one SLIM SLAM's configuration, do stero or mono
+    static GeometricCamera* pOriginalCam2 = mpCamera2;
+    if(mbEnableSlimSLAM)
+    {
+        switch( SlimSLAM::GetInstance().GetProcessingMode() )
+        {
+            case 2:     // Stereo mode
+                mpCamera2 = pOriginalCam2;
+                break;
+            case 1:     // Mono mode
+                mpCamera2 = nullptr;
+                break;
+        }
+    }
 
+    // Construct the Frame   (unchanged apart from using the two pointers)
     if (mSensor == System::STEREO && !mpCamera2)
         mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera);
     else if(mSensor == System::STEREO && mpCamera2)
@@ -1577,6 +1607,9 @@ Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat 
     //cout << "Tracking start" << endl;
     Track();
     //cout << "Tracking end" << endl;
+
+    if( mbEnablePIDSLAM )
+        sMFSelector.updateExtractor(prevPose, mCurrentFrame.GetPose());
 
     return mCurrentFrame.GetPose();
 }
@@ -2925,7 +2958,11 @@ void Tracking::UpdateLastFrame()
             nPoints++;
         }
 
-        if(vDepthIdx[j].first>mThDepth && nPoints>100)
+        int upper_limit = 100;
+        if( mbEnableSlimSLAM ) // TODO: Grab from SlimSLAM
+            upper_limit = SlimSLAM::GetInstance().GetKpMax();
+
+        if(vDepthIdx[j].first>mThDepth && nPoints>upper_limit)
             break;
 
     }
@@ -3264,7 +3301,15 @@ bool Tracking::NeedNewKeyFrame()
     else
         c4=false;
 
-    if(((c1a||c1b||c1c) && c2)||c3 ||c4)
+    // TODO: SLIM SLAM condition, IF we need more tracked points we'll insert a keyframe
+    // which will generate additional mappoints from a new keyframe
+    bool c5 = false;
+    if( mbEnableSlimSLAM )
+        c5 = (mCurrentFrame.mvpMapPoints.size() < 150);
+    else
+        c5 = false;
+
+    if(((c1a||c1b||c1c) && c2)||c3 ||c4 || c5)
     {
         // If the mapping accepts keyframes, insert keyframe.
         // Otherwise send a signal to interrupt BA
@@ -3332,7 +3377,10 @@ void Tracking::CreateNewKeyFrame()
         // We create all those MapPoints whose depth < mThDepth.
         // If there are less than 100 close points we create the 100 closest.
         int maxPoint = 100;
-        if(mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
+
+        if( mbEnableSlimSLAM )
+            maxPoint = 200; // TODO: Replace with SlimSLAM
+        else if(mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
             maxPoint = 100;
 
         vector<pair<float,int> > vDepthIdx;
@@ -4064,7 +4112,7 @@ void Tracking::UpdateFrameIMU(const float s, const IMU::Bias &b, KeyFrame* pCurr
 {
     Map * pMap = pCurrentKeyFrame->GetMap();
     unsigned int index = mnFirstFrameId;
-    list<ORB_SLAM3::KeyFrame*>::iterator lRit = mlpReferences.begin();
+    list<KeyFrame*>::iterator lRit = mlpReferences.begin();
     list<bool>::iterator lbL = mlbLost.begin();
     for(auto lit=mlRelativeFramePoses.begin(),lend=mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lbL++)
     {

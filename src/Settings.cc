@@ -510,6 +510,47 @@ namespace ORB_SLAM3 {
         {
             cout << "Dumping map points enabled" << endl;
         }
+
+        enableOmegaSLAM = (bool)readParameter<int>(fSettings,"System.enableOmegaSLAM",found,false);
+        if(enableOmegaSLAM)
+        {
+            cout << "omegaSLAM enabled!" << endl;
+        }
+
+        enablePIDSLAM = (bool)readParameter<int>(fSettings,"System.enablePIDSLAM",found,false);
+        if(enablePIDSLAM)
+        {
+            cout << "PID SLAM enabled!" << endl;
+        }
+
+        enableSlimSLAM = (bool)readParameter<int>(fSettings,"SlimSLAM.Enable",found,false);
+        if(enableSlimSLAM)
+        {
+            cout << "SLIM SLAM enabled!" << endl;
+            slimSlamControlFile = readParameter<string>(fSettings,"SlimSLAM.ControlFile",found,false);
+            cout << "Will load " << slimSlamControlFile << " for SlimSLAM Oracle config!" << endl;
+        }
+
+        enableSlimSLAMTraining = (bool)readParameter<int>(fSettings,"SlimSLAM.EnableTraining",found,false);
+        if(enableSlimSLAMTraining)
+        {
+            cout << "Slim SLAM Oracle Training enabled!" << endl;
+            slimSLAMTrainingKpMin = readParameter<int>(fSettings,"SlimSLAM.KpMin",found,false);
+            slimSLAMTrainingKpMax = readParameter<int>(fSettings,"SlimSLAM.KpMax",found,false);
+            slimSLAMTrainingFrameSkip = readParameter<int>(fSettings,"SlimSLAM.FrameSkip",found,false);
+            slimSLAMTrainingProcMode = readParameter<int>(fSettings,"SlimSLAM.ProcMode",found,false);
+            cout << "Training with "
+                << slimSLAMTrainingKpMin << " "
+                << slimSLAMTrainingKpMax << " "
+                << slimSLAMTrainingFrameSkip << " "
+                << slimSLAMTrainingProcMode << endl;
+        }
+
+        debug_logs = (bool)readParameter<int>(fSettings,"System.debug_logs",found,false);
+        if(debug_logs)
+        {
+            cout << "Debug Logs enabled!" << endl;
+        }
     }
 
     void Settings::precomputeRectificationMaps() {

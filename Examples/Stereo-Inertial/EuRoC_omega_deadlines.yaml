@@ -12,12 +12,8 @@
 # The store file is created from the current session, if a file with the same name exists it is deleted
 #System.SaveAtlasToFile: "Session_MH01_MH02_MH03_Stereo60_Pseudo"
 
-# Handles enabling deadlines for frame processing. If enabled, system will skip frames that are not processed in time.
-#System.enableDeadlines: 1
-System.enableFOV: 1
-System.dumpMapPoints: 1
-System.maskHeight: 6
-System.maskWidth: 6
+System.enableDeadlines: 1
+System.enableOmegaSLAM: 1
 
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!

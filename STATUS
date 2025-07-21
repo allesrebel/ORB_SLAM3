@@ -1,0 +1,24 @@
+We are applying for all the badges: Artifact Available, Artifact Evaluated – Functional, Reusable, Artifact Reproduced
+
+Artifact Available:
+- The code, inputs and outputs are all archived and available with DOI numbers.
+
+AE Functional:
+- We provide the ability to build ORBSLAM3 with OASIS on any system through CMake dependency management.
+- We provide guidance to reproduce the paper's results, on any system. (see READMEs).
+- We provide a build pipeline, and a trial production script to perform experiments.
+- We provide an analysis pipeline, that can analyze the outputs of the production scripts.
+
+AE Reusable:
+- We document how to use your own data or reuse the data we collected, and application of the same analysis scripts to compare.
+- We provide configuration script examples to disable or modify ORBSLAM3.
+- We provide guidance to incorporate augmentations or adjustments to each pipeline (see READMEs).
+
+AE Reproduced:
+- We provide the data we collected, enabling the exact reproduction the papers results.
+- For complete artifact reproduction from input, we provide ORBSLAM3 with OASIS instructions. Experiments should be done on similar/matching systems (Intel i7 6950X and Nvidia Jetson AGX Orin) to produce paper results.
+- Build scripts automatically download and install dependencies for Unix Based machines
+- Instructions include how to utilize Docker containers to perform trials (both on Intel and Jetson)
+- Production scripts automatically randomize ordering of trials, and perform each variant multiple times, to reduce impacts of confounders.
+- Analysis scripts average by variant, and produce outputs that can be compared.
+

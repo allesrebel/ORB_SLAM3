@@ -129,6 +129,16 @@ namespace ORB_SLAM3 {
         int maskHeight = 0;
         int maskWidth = 0;
         bool dumpMapPoints = false;
+        bool enableOmegaSLAM = false;
+        bool enablePIDSLAM = false;
+        bool enableSlimSLAM = false;
+        std::string slimSlamControlFile = "SlimSLAMControlFile";
+        bool enableSlimSLAMTraining = false;
+        int slimSLAMTrainingKpMin = 0;
+        int slimSLAMTrainingKpMax = 0;
+        int slimSLAMTrainingFrameSkip = 0;
+        int slimSLAMTrainingProcMode = 0;
+        bool debug_logs = false;
 
     private:
         template<typename T>
