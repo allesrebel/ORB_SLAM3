@@ -21,6 +21,36 @@ run_all.sh - production run of all controller variant trials
 run_example.sh - a quick test to ensure ORBSLAM3 is functioning correctly
 run_mask_variations.sh - a production run across many different static masks
 
+# Screencast example (monocular SLAM on a desktop screen capture)
+Examples/Monocular/mono_screencast.cc            - live X11 screen-grab driver (needs DISPLAY)
+Examples/Monocular/mono_screencast_images.cc     - offline driver: replays a directory of frames through SLAM
+Examples/Monocular/mono_screencast_stream.cc     - cv::VideoCapture driver: any path/URL (file, RTSP, UDP/TCP MPEG-TS, etc.)
+Examples/Monocular/gen_screencast_video.cc       - synthesises a parallax-rich screencast .mp4 with 3D-projected windows, a moving cursor, and window navigation (so monocular SLAM can actually initialise)
+Examples/Monocular/ScreenCapture.{h,cpp}         - X11 capture wrapper used by mono_screencast
+Examples/Monocular/ScreenCapture.yaml            - SLAM intrinsics & ORB params for the screencast example
+Examples/Monocular/run_screencast_test.sh        - end-to-end image-driver test: ensures the video, extracts frames, runs SLAM, prints stats, dumps Map.ply
+
+End-to-end run (headless): ./Examples/Monocular/run_screencast_test.sh
+Outputs: test_data/run/{run.log, KeyFrameTrajectory.txt, Map.ply, SessionInfo.txt, TrackingTimeStats.txt, LBA_Stats.txt, LocalMapTimeStats.txt, ExecMean.txt}
+Visualise the map: meshlab test_data/run/Map.ply
+See README.md section 10 for full details, environment overrides (SCREENCAST_VIDEO_URL, SCREENCAST_SECONDS, …) and the live X11 invocation.
+
+# Screencast regression test suite
+tests/screencast/run_all_tests.sh         - top-level runner: invokes every sub-test and prints a final pass/fail summary
+tests/screencast/test_video_file.sh       - Test 1: decodes screencast_test.mp4 via cv::VideoCapture (mono_screencast_stream)
+tests/screencast/test_video_stream.sh     - Test 2: streams the video as TCP MPEG-TS over loopback and runs SLAM against the stream
+tests/screencast/test_x11_session.sh      - Test 3: spins up Xvfb, plays the video with mpv, jiggles mouse, runs mono_screencast
+tests/screencast/validate_trajectory.sh   - shared TUM-trajectory sanity validator (KFs, path length, quaternion norms, monotonic timestamps)
+tests/screencast/common.sh                - shared helpers (paths, ensure_test_video, parse_kfs/mps)
+
+Run everything:                ./tests/screencast/run_all_tests.sh
+Run a subset:                  ./tests/screencast/run_all_tests.sh file stream
+Run a single test directly:    ./tests/screencast/test_video_file.sh   (or test_video_stream.sh / test_x11_session.sh)
+Validate any trajectory:       ./tests/screencast/validate_trajectory.sh <traj.txt> <min_kfs> <min_path>
+
+Test 3 prerequisites: apt-get install -y xvfb xdotool x11-utils mpv
+Per-test outputs: test_data/test_video_file/, test_data/test_video_stream/, test_data/test_x11_session/ (each with KeyFrameTrajectory.txt + Map.ply + run.log)
+
 # Using DockerHub Base Image on Non-Native Architectures
 A container can be used to process the data, if docker is supported on your architecture:
 https://hub.docker.com/layers/library/ubuntu/jammy-20250714/images/sha256-da5fdf346e5313bef2a3dd2476c0251d48103213a5e3a0cb3afbb8909f3cf50f

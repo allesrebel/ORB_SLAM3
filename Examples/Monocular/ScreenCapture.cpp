@@ -48,11 +48,27 @@ cv::Mat ScreenCapture::capture()
     if (!img)
         return cv::Mat();
 
-    // XImage data is 32-bit BGRX on most X11 servers.
-    cv::Mat bgra(h_, w_, CV_8UC4, img->data);
-    cv::Mat gray;
-    cv::cvtColor(bgra, gray, cv::COLOR_BGRA2GRAY);
-    cv::Mat result = gray.clone();   // clone before freeing XImage backing buffer
+    // XImage data is 32-bit BGRX on most X11 servers. Use the actual
+    // bytes_per_line from the XImage as the cv::Mat row stride — XServers
+    // routinely pad rows for alignment, and assuming stride == w*4 silently
+    // gives sheared/garbled images that look superficially OK but break ORB
+    // feature matching. Drop the unused alpha channel and return BGR so the
+    // frame matches the rest of the screencast pipeline (Camera.RGB: 0).
+    // SLAM does its own grayscale conversion downstream.
+    cv::Mat bgra(h_, w_, CV_8UC4, img->data,
+                 static_cast<size_t>(img->bytes_per_line));
+    cv::Mat bgr;
+    cv::cvtColor(bgra, bgr, cv::COLOR_BGRA2BGR);
+
+    // X11 returns pixel-perfect screen content. UI elements (window borders,
+    // text, sharp rectangles) end up with hard aliased edges that shift by
+    // sub-pixel amounts between captures whenever the display compositor
+    // re-rasterises a frame. Those sub-pixel shifts make ORB descriptors
+    // around those edges fail to match between consecutive frames, blocking
+    // monocular initialisation. A 1-pixel Gaussian blur emulates the natural
+    // anti-aliasing of an LCD and is what makes feature tracking stable.
+    cv::Mat smoothed;
+    cv::GaussianBlur(bgr, smoothed, cv::Size(0, 0), /*sigma=*/1.0);
     XDestroyImage(img);
-    return result;
+    return smoothed;
 }

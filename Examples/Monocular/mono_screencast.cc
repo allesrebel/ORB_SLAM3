@@ -60,7 +60,11 @@ int main(int argc, char** argv)
     sigemptyset(&sa.sa_mask);
     sigaction(SIGINT, &sa, nullptr);
 
-    ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::MONOCULAR, /*viewer=*/true);
+    // viewer=false: this fork is the no_gui branch — Viewer / FrameDrawer /
+    // MapDrawer are stub classes and the System ctor dereferences a null
+    // FrameDrawer when bUseViewer=true. SLAM still produces the trajectory
+    // and Map.ply on shutdown.
+    ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::MONOCULAR, /*viewer=*/false);
     const float imageScale = SLAM.GetImageScale();
 
     cout << "Screen capture SLAM running. Press Ctrl+C to stop.\n";
@@ -70,19 +74,27 @@ int main(int argc, char** argv)
 
     const double target_fps = 30.0;
     const double frame_dt   = 1.0 / target_fps;
+    const auto   t_start    = Clock::now();
+
+    int captured = 0, skipped = 0;
 
     while (g_running && !SLAM.isShutDown()) {
         auto t0 = Clock::now();
 
-        double timestamp = std::chrono::duration_cast<Seconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
-
         cv::Mat frame = cap.capture();
         if (frame.empty()) {
             cerr << "XGetImage failed, skipping frame\n";
+            ++skipped;
             this_thread::sleep_for(chrono::milliseconds(33));
             continue;
         }
+
+        // Timestamp AFTER capture so SLAM gets the time the frame's pixels
+        // were actually read off the X server, not the time we entered the
+        // loop. XGetImage takes ~50 ms — using the pre-capture time here
+        // makes timestamps stale and breaks monocular initialisation.
+        double timestamp = std::chrono::duration_cast<Seconds>(
+            Clock::now() - t_start).count();
 
         if (imageScale != 1.f) {
             int w = static_cast<int>(frame.cols * imageScale);
@@ -91,14 +103,28 @@ int main(int argc, char** argv)
         }
 
         SLAM.TrackMonocular(frame, timestamp);
+        ++captured;
+        if (captured <= 5 || captured % 60 == 0) {
+            cout << "[capture " << captured << "] " << frame.cols << "x" << frame.rows
+                 << " t=" << timestamp << "s\n";
+        }
+        // Optional: dump every captured frame for offline replay/inspection.
+        if (const char* dump = std::getenv("SCREENCAST_DUMP_DIR")) {
+            char fn[256];
+            std::snprintf(fn, sizeof(fn), "%s/frame_%05d.png", dump, captured);
+            cv::imwrite(fn, frame);
+        }
 
         double elapsed = chrono::duration_cast<Seconds>(Clock::now() - t0).count();
         if (elapsed < frame_dt)
             this_thread::sleep_for(chrono::duration<double>(frame_dt - elapsed));
     }
+    cout << "Captured " << captured << " frames, skipped " << skipped << ".\n";
 
     SLAM.Shutdown();
     SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
-    cout << "Trajectory saved to KeyFrameTrajectory.txt\n";
+    SLAM.SaveMapPLY("Map.ply");
+    cout << "Trajectory saved to KeyFrameTrajectory.txt\n"
+         << "Map dumped to Map.ply\n";
     return 0;
 }

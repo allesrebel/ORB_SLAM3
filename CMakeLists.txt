@@ -638,6 +638,13 @@ add_executable(gen_screencast_video
 target_link_libraries(gen_screencast_video ${OpenCV_LIBS})
 target_compile_features(gen_screencast_video PRIVATE cxx_std_17)
 
+# Generic VideoCapture-based driver — opens a file path, RTSP/HTTP URL, UDP
+# MPEG-TS stream, etc., and feeds frames through SLAM in real time.
+add_executable(mono_screencast_stream
+        Examples/Monocular/mono_screencast_stream.cc)
+target_link_libraries(mono_screencast_stream ${PROJECT_NAME})
+target_compile_features(mono_screencast_stream PRIVATE cxx_std_17)
+
 #Monocular inertial examples
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Inertial)
 
