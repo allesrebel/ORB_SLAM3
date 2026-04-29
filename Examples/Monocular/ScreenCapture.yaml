@@ -1,0 +1,94 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# System config — ScreenCapture
+#
+# Tuned for the synthetic screencast test video produced by gen_screencast_video.
+# That generator renders a 3D-projected desktop with a virtual pinhole camera at:
+#     fx = fy = 800,   cx = W/2,   cy = H/2,   1280x720 @ 30 fps
+# So the intrinsics below match the synthesised content exactly, which lets
+# monocular SLAM initialise on the first ~30 frames.
+#
+# These intrinsics are also a reasonable approximation for a real screen
+# captured via X11 — adjust Camera.width / Camera.height if your display
+# is different. The synthetic camera focal length corresponds to a ~77° H-FOV.
+#--------------------------------------------------------------------------------------------
+
+File.version: "1.0"
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters
+#--------------------------------------------------------------------------------------------
+
+Camera.type: "PinHole"
+
+Camera1.fx: 800.0
+Camera1.fy: 800.0
+Camera1.cx: 640.0
+Camera1.cy: 360.0
+
+# No lens distortion — the synthetic generator and a flat physical screen
+# both produce undistorted pinhole imagery.
+Camera1.k1: 0.0
+Camera1.k2: 0.0
+Camera1.k3: 0.0
+Camera1.p1: 0.0
+Camera1.p2: 0.0
+
+# Native screen / video resolution.
+Camera.width:  1280
+Camera.height: 720
+
+# Process at full resolution — leave the principal point centred.
+# (Set to a smaller value to trade accuracy for speed.)
+Camera.newWidth:  1280
+Camera.newHeight: 720
+
+Camera.fps: 30
+
+# Synthetic generator and X11 capture both produce BGR.
+Camera.RGB: 0
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+
+ORBextractor.nFeatures: 1500
+ORBextractor.scaleFactor: 1.2
+ORBextractor.nLevels: 8
+
+# Lower thresholds help find features on UI elements with smooth fills.
+ORBextractor.iniThFAST: 12
+ORBextractor.minThFAST: 4
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1.0
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize: 2.0
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3.0
+Viewer.ViewpointX: 0.0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -1.8
+Viewer.ViewpointF: 500.0
+Viewer.imageViewScale: 1.0
+
+#--------------------------------------------------------------------------------------------
+# Misc — set defaults for this fork's optional extension flags so the loader
+# doesn't print "optional parameter does not exist" warnings on every run.
+#--------------------------------------------------------------------------------------------
+System.thFarPoints:     1000.0
+System.enableDeadlines: 0
+System.enableFOV:       0
+System.maskHeight:      0
+System.maskWidth:       0
+System.enableOasis:     0
+System.dumpMapPoints:   0
+System.enableOmegaSLAM: 0
+System.enablePIDSLAM:   0
+SlimSLAM.Enable:        0
+SlimSLAM.EnableTraining: 0
+System.debug_logs:      0

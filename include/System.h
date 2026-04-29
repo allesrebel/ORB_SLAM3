@@ -202,6 +202,11 @@ public:
     // SaveMap(const string &filename);
     // LoadMap(const string &filename);
 
+    // Dump the largest map to a Stanford PLY file: every map point as a
+    // white vertex, every keyframe as a small red wireframe frustum.
+    // Opens directly in MeshLab / CloudCompare / Blender. Call after Shutdown().
+    void SaveMapPLY(const std::string& filename, float frustumScale = 0.05f);
+
     // Information from most recent processed frame
     // You can call this right after TrackMonocular (or stereo or RGBD)
     int GetTrackingState();
