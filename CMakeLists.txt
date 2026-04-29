@@ -608,6 +608,36 @@ if(realsense2_FOUND)
     target_link_libraries(mono_realsense_D435i ${PROJECT_NAME})
 endif()
 
+# Desktop screen capture example (requires X11)
+find_package(X11)
+if(X11_FOUND)
+    add_executable(mono_screencast
+            Examples/Monocular/mono_screencast.cc
+            Examples/Monocular/ScreenCapture.cpp)
+    target_link_libraries(mono_screencast ${PROJECT_NAME} ${X11_LIBRARIES})
+    target_include_directories(mono_screencast PRIVATE
+            ${X11_INCLUDE_DIR}
+            ${PROJECT_SOURCE_DIR}/Examples/Monocular)
+    message(STATUS "Building mono_screencast (X11 screen capture)")
+else()
+    message(STATUS "X11 not found — skipping mono_screencast")
+endif()
+
+# Offline image-sequence driver — exercises the same SLAM path
+# without needing a live X server. Used for testing / CI.
+add_executable(mono_screencast_images
+        Examples/Monocular/mono_screencast_images.cc)
+target_link_libraries(mono_screencast_images ${PROJECT_NAME})
+target_compile_features(mono_screencast_images PRIVATE cxx_std_17)
+
+# Synthetic screencast generator — produces a parallax-rich test video
+# (3D-projected windows, moving cursor, window navigation) so SLAM can
+# initialise without needing a real screen recording.
+add_executable(gen_screencast_video
+        Examples/Monocular/gen_screencast_video.cc)
+target_link_libraries(gen_screencast_video ${OpenCV_LIBS})
+target_compile_features(gen_screencast_video PRIVATE cxx_std_17)
+
 #Monocular inertial examples
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Inertial)
 

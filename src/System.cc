@@ -819,6 +819,126 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
     f.close();
 }
 
+void System::SaveMapPLY(const string& filename, float frustumScale)
+{
+    cout << endl << "Saving map to " << filename << " ..." << endl;
+
+    // Pick the largest map (mirrors SaveTrajectoryEuRoC's "biggest map" logic).
+    vector<Map*> vpMaps = mpAtlas->GetAllMaps();
+    Map* pBiggerMap = nullptr;
+    int numMaxKFs = 0;
+    for (Map* pMap : vpMaps) {
+        if (pMap && static_cast<int>(pMap->GetAllKeyFrames().size()) > numMaxKFs) {
+            numMaxKFs = pMap->GetAllKeyFrames().size();
+            pBiggerMap = pMap;
+        }
+    }
+    if (!pBiggerMap) {
+        cerr << "SaveMapPLY: no map available" << endl;
+        return;
+    }
+
+    vector<MapPoint*> vpMPs = pBiggerMap->GetAllMapPoints();
+    vector<KeyFrame*> vpKFs = pBiggerMap->GetAllKeyFrames();
+    sort(vpKFs.begin(), vpKFs.end(), KeyFrame::lId);
+
+    // ---- Collect map-point vertices (filter culled points). ----
+    vector<Eigen::Vector3f> mpPos;
+    mpPos.reserve(vpMPs.size());
+    for (MapPoint* pMP : vpMPs) {
+        if (!pMP || pMP->isBad()) continue;
+        mpPos.push_back(pMP->GetWorldPos());
+    }
+
+    // ---- Collect keyframe frusta: 5 vertices + 8 edges per KF. ----
+    // Camera-frame coords for an outward-pointing pyramid along +Z:
+    const float d  = frustumScale;
+    const float hw = frustumScale * 0.8f;
+    const float hh = frustumScale * 0.6f;
+    const Eigen::Vector3f cam_pts[5] = {
+        Eigen::Vector3f(  0,   0,  0),   // 0 apex (camera centre)
+        Eigen::Vector3f(-hw, -hh,  d),   // 1 top-left
+        Eigen::Vector3f( hw, -hh,  d),   // 2 top-right
+        Eigen::Vector3f( hw,  hh,  d),   // 3 bottom-right
+        Eigen::Vector3f(-hw,  hh,  d),   // 4 bottom-left
+    };
+    const int frustum_edges[8][2] = {
+        {0,1},{0,2},{0,3},{0,4},   // apex -> corners
+        {1,2},{2,3},{3,4},{4,1},   // image-plane rectangle
+    };
+
+    vector<Eigen::Vector3f> kfVerts;
+    int validKFs = 0;
+    for (KeyFrame* pKF : vpKFs) {
+        if (!pKF || pKF->isBad()) continue;
+        Sophus::SE3f Twc = pKF->GetPoseInverse();
+        Eigen::Matrix3f Rwc = Twc.rotationMatrix();
+        Eigen::Vector3f twc = Twc.translation();
+        for (int k = 0; k < 5; ++k)
+            kfVerts.push_back(Rwc * cam_pts[k] + twc);
+        ++validKFs;
+    }
+
+    const size_t nVerts = mpPos.size() + kfVerts.size();
+    const size_t nEdges = static_cast<size_t>(validKFs) * 8u;
+
+    ofstream f(filename);
+    if (!f.is_open()) {
+        cerr << "SaveMapPLY: cannot open " << filename << " for writing" << endl;
+        return;
+    }
+    f << "ply\n"
+      << "format ascii 1.0\n"
+      << "comment ORB-SLAM3 map dump (" << mpPos.size()
+      << " points, " << validKFs << " keyframes)\n"
+      << "element vertex " << nVerts << "\n"
+      << "property float x\n"
+      << "property float y\n"
+      << "property float z\n"
+      << "property uchar red\n"
+      << "property uchar green\n"
+      << "property uchar blue\n"
+      << "element edge " << nEdges << "\n"
+      << "property int vertex1\n"
+      << "property int vertex2\n"
+      << "property uchar red\n"
+      << "property uchar green\n"
+      << "property uchar blue\n"
+      << "end_header\n";
+
+    f << fixed << setprecision(6);
+
+    // Map points — light grey.
+    for (const Eigen::Vector3f& p : mpPos)
+        f << p.x() << " " << p.y() << " " << p.z() << " 220 220 220\n";
+
+    // KF frustum vertices — apex bright red, corners pinkish.
+    for (size_t i = 0; i < kfVerts.size(); ++i) {
+        const Eigen::Vector3f& p = kfVerts[i];
+        if (i % 5 == 0)
+            f << p.x() << " " << p.y() << " " << p.z() << " 255  40  40\n";
+        else
+            f << p.x() << " " << p.y() << " " << p.z() << " 255 140 140\n";
+    }
+
+    // KF frustum edges — solid red.
+    const int kfBase = static_cast<int>(mpPos.size());
+    for (int i = 0; i < validKFs; ++i) {
+        const int v0 = kfBase + i * 5;
+        for (int e = 0; e < 8; ++e) {
+            f << (v0 + frustum_edges[e][0]) << " "
+              << (v0 + frustum_edges[e][1]) << " 255 40 40\n";
+        }
+    }
+
+    f.close();
+
+    cout << "  PLY: " << mpPos.size() << " points, "
+         << validKFs << " keyframes ("
+         << nVerts << " verts, " << nEdges << " edges) -> "
+         << filename << endl;
+}
+
 void System::SaveTrajectoryEuRoC(const string &filename)
 {
 
