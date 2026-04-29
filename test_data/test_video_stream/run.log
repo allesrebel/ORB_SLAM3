@@ -1,0 +1,157 @@
+VideoCapture opened: tcp://127.0.0.1:23464 (1280x720 @ 30 fps reported)
+
+ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+ORB-SLAM2 Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+This program comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions. See LICENSE.txt.
+
+Built with REGISTER_TIMES
+Git Commit Hash: 578b0d0-dirty
+
+Build Type: Release
+
+Compiled with C++ version: 201703
+
+Input sensor was set to: Monocular
+Loading settings from /root/ORB_SLAM3/Examples/Monocular/ScreenCapture.yaml
+	-Loaded camera 1
+	-Loaded image info
+	-Loaded ORB settings
+	-Loaded viewer settings
+System.LoadAtlasFromFile optional parameter does not exist...
+System.SaveAtlasToFile optional parameter does not exist...
+	-Loaded Atlas settings
+	-Loaded misc parameters
+----------------------------------
+SLAM settings: 
+	-Camera 1 parameters (Pinhole): [ 800 800 640 360 ]
+	-Camera 1 distortion parameters: [  0 0 0 0 0 ]
+	-Original image size: [ 1280 , 720 ]
+	-Current image size: [ 1280 , 720 ]
+	-Camera 1 parameters after resize: [  800 800 640 360 ]
+	-Sequence FPS: 30
+	-Features per image: 1500
+	-ORB scale factor: 1.2
+	-ORB number of scales: 8
+	-Initial FAST threshold: 12
+	-Min FAST threshold: 4
+
+
+Loading ORB Vocabulary. This could take a while...
+Vocabulary loaded!
+
+Initialization of Atlas from scratch 
+Creation of new map with id: 0
+Creation of new map with last KF id: 0
+Seq. Name: 
+There are 1 cameras in the atlas
+Camera 0 is pinhole
+Discard points further than 1000 m from current camera
+SLAM Started at System Time: 1777439674.87497
+[1] 1280x720  t=0.093798313s  track=39.08428 ms
+[2] 1280x720  t=0.133906469s  track=51.06177 ms
+[3] 1280x720  t=0.185638843s  track=48.930366 ms
+[4] 1280x720  t=0.235274673s  track=48.1263 ms
+[5] 1280x720  t=0.284056267s  track=50.369005 ms
+First KF:0; Map init KF:0
+New Map created with 255 points
+[30] 1280x720  t=1.436109794s  track=34.429749 ms
+[60] 1280x720  t=2.209209522s  track=22.027387 ms
+[90] 1280x720  t=2.938729641s  track=22.397759 ms
+[120] 1280x720  t=3.597830541s  track=23.931629 ms
+[150] 1280x720  t=4.270532452s  track=22.308568 ms
+[180] 1280x720  t=4.91725081s  track=20.794409 ms
+[210] 1280x720  t=5.562012136s  track=19.354308 ms
+[240] 1280x720  t=6.201094643s  track=19.411069 ms
+[270] 1280x720  t=6.872563416s  track=22.010406 ms
+[300] 1280x720  t=7.528925108s  track=20.669357 ms
+[330] 1280x720  t=8.228253326s  track=23.246504 ms
+[360] 1280x720  t=8.953334155s  track=22.045776 ms
+[390] 1280x720  t=9.597546306s  track=19.54576 ms
+Reached max_seconds=10, stopping after 410 frames
+Shutdown
+SLAM Finished at System Time: 1777439684.92056
+
+ TIME STATS in ms (mean$\pm$std)
+OpenCV version: 4.5.4
+---------------------------
+Tracking
+
+ORB Extraction: 18.313$\pm$2.6994
+Pose Prediction: 0.9526$\pm$1.0994
+LM Track: 1.6389$\pm$0.4117
+New KF decision: 0.037953$\pm$0.040147
+Total Tracking: -nan$\pm$-nan
+
+
+
+Local Mapping
+
+KF Insertion: 5.0014$\pm$1.652
+MP Culling: 0.033559$\pm$0.031941
+MP Creation: 24.422$\pm$8.1613
+LBA: 25.97$\pm$8.0808
+KF Culling: 2.2155$\pm$0.98447
+Total Local Mapping: 57.068$\pm$16.75
+---------------------------
+
+LBA complexity (mean$\pm$std)
+LBA Edges: 5607$\pm$1095.4
+LBA KF optimized: 14.533$\pm$4.0121
+LBA KF fixed: 1.6087$\pm$2.1211
+LBA MP: -nan$\pm$-nan
+
+LBA executions: 92
+LBA aborts: 0
+---------------------------
+
+Map complexity
+KFs in map: 24
+MPs in map: 1278
+---------------------------
+
+Place Recognition (mean$\pm$std)
+Database Query: 0.36448$\pm$0.10219
+SE3 estimation: 0.00026111$\pm$0.00056961
+Total Place Recognition: 0.42489$\pm$0.1785
+
+
+Loop Closing (mean$\pm$std)
+Loop Fusion: -nan$\pm$-nan
+Essential Graph: -nan$\pm$-nan
+Total Loop Closing: -nan$\pm$-nan
+
+Num exec: 0
+Number of KFs: -nan$\pm$-nan
+
+Map Merging (mean$\pm$std)
+Merge Maps: -nan$\pm$-nan
+Welding BA: -nan$\pm$-nan
+Optimization Ess.: -nan$\pm$-nan
+Total Map Merging: -nan$\pm$-nan
+
+Num exec: 0
+Number of KFs: -nan$\pm$-nan
+Number of MPs: -nan$\pm$-nan
+
+Full GBA (mean$\pm$std)
+GBA: -nan$\pm$-nan
+Map Update: -nan$\pm$-nan
+Total Full GBA: -nan$\pm$-nan
+
+Num exec: 0
+Num abort: 0
+Number of KFs: -nan$\pm$-nan
+Number of MPs: -nan$\pm$-nan
+
+Saving keyframe trajectory to KeyFrameTrajectory.txt ...
+
+Saving map to Map.ply ...
+  PLY: 1278 points, 24 keyframes (1398 verts, 192 edges) -> Map.ply
+
+--- Summary ---
+Frames fed:    410
+Frames dropped:0
+Trajectory:    KeyFrameTrajectory.txt
+Map dump:      Map.ply

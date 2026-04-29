@@ -233,3 +233,117 @@ A flag in `include\Config.h` activates time measurements. It is necessary to unc
 
 # 9. Calibration
 You can find a tutorial for visual-inertial calibration and a detailed description of the contents of valid configuration files at  `Calibration_Tutorial.pdf`
+
+# 10. Screencast Example
+
+A monocular example that drives ORB-SLAM3 from a desktop screen capture. Two binaries are provided:
+
+- `mono_screencast` — live X11 screen-grab driver (needs `DISPLAY`).
+- `mono_screencast_images` — replays a directory of screenshots through the same SLAM path; works headless.
+- `gen_screencast_video` — synthesises a parallax-rich screencast video (3D-projected window panels, moving cursor, window navigation) for offline testing without a real screen recording.
+
+Settings live in `Examples/Monocular/ScreenCapture.yaml` (intrinsics match the synthetic generator: 1280×720, fx=fy=800, principal point centred).
+
+## Build
+```
+cd build && cmake .. && make -j$(nproc) gen_screencast_video mono_screencast_images mono_screencast
+```
+`mono_screencast` is only built if `find_package(X11)` succeeds.
+
+## End-to-end test (headless, recommended)
+```
+./Examples/Monocular/run_screencast_test.sh
+```
+The script:
+
+1. Generates `test_data/screencast_test.mp4` if missing (or downloads it when `SCREENCAST_VIDEO_URL` is set).
+2. Extracts frames to `test_data/screencast_frames/`.
+3. Runs `mono_screencast_images` against the frames.
+4. Parses the log and prints a summary — exits non-zero if SLAM failed to map.
+
+Outputs land in `test_data/run/`:
+
+| File | Contents |
+|------|----------|
+| `KeyFrameTrajectory.txt` | TUM-format keyframe poses |
+| `Map.ply` | Map dump — point cloud + red wireframe camera frusta. Open in MeshLab / CloudCompare / Blender |
+| `run.log` | Full SLAM stdout |
+| `SessionInfo.txt`, `TrackingTimeStats.txt`, `LBA_Stats.txt`, `LocalMapTimeStats.txt`, `ExecMean.txt` | Per-thread timing / stats |
+
+Environment overrides:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SCREENCAST_VIDEO_URL` | _(unset)_ | If set, `curl` the video instead of synthesising it (falls back to synthesis on failure) |
+| `SCREENCAST_SECONDS`   | `12`      | Synthetic video duration |
+| `SCREENCAST_FPS`       | `30`      | Frame extraction rate (must match `Camera.fps` in the YAML) |
+| `SCREENCAST_WIDTH`     | `1280`    | Synthetic width  (must match `Camera.width`) |
+| `SCREENCAST_HEIGHT`    | `720`     | Synthetic height (must match `Camera.height`) |
+
+A passing run prints something like:
+```
+PASS — SLAM initialised, mapped 11 KFs / 1376 MPs over 11 keyframes.
+```
+
+## Visualising the map
+```
+meshlab test_data/run/Map.ply
+```
+Map points are rendered as a gray point cloud; each keyframe is a red wireframe pyramid (apex = camera centre, base = image plane).
+
+## Live X11 capture
+```
+./Examples/Monocular/mono_screencast Vocabulary/ORBvoc.txt Examples/Monocular/ScreenCapture.yaml :0
+```
+Press `Ctrl+C` to stop and save `KeyFrameTrajectory.txt`. Adjust `Camera.width` / `Camera.height` in the YAML to match your display.
+
+## Test suite
+
+A three-way regression suite lives under `tests/screencast/`. Each test isolates its outputs into `test_data/<test_name>/` and validates the resulting trajectory (keyframe count, non-zero translation, unit quaternions, monotonic timestamps, total path length).
+
+| Test | Driver | What it exercises |
+|------|--------|-------------------|
+| `test_video_file.sh`    | `mono_screencast_stream` | Decoding a video file in-process via `cv::VideoCapture` (no on-disk frame extraction step) |
+| `test_video_stream.sh`  | `mono_screencast_stream` | Reading a live TCP MPEG-TS / H.264 stream served by ffmpeg on the loopback interface |
+| `test_x11_session.sh`   | `mono_screencast`        | End-to-end X11 capture: spins up Xvfb, plays the screencast video on it, jiggles the mouse with xdotool, runs SLAM against the live display |
+
+Build all binaries first:
+```
+cd build && cmake .. && make -j$(nproc) gen_screencast_video mono_screencast_images mono_screencast_stream mono_screencast
+```
+
+Run every test in one shot:
+```
+./tests/screencast/run_all_tests.sh
+```
+Run a subset:
+```
+./tests/screencast/run_all_tests.sh file stream      # skip x11
+./tests/screencast/run_all_tests.sh x11               # x11 only
+```
+Run an individual test directly:
+```
+./tests/screencast/test_video_file.sh
+./tests/screencast/test_video_stream.sh
+./tests/screencast/test_x11_session.sh
+```
+Validate any TUM-format trajectory in isolation:
+```
+./tests/screencast/validate_trajectory.sh path/to/KeyFrameTrajectory.txt 5 0.001
+#                                              ^min KFs   ^min path length
+```
+
+Test 3 prerequisites (one-off): `apt-get install -y xvfb xdotool x11-utils mpv`.
+
+Test 3 also accepts overrides: `SCREENCAST_X11_DISPLAY=:99`, `SCREENCAST_X11_SECONDS=25`, `SCREENCAST_WIDTH=1280`, `SCREENCAST_HEIGHT=720`. Test 2 accepts `SCREENCAST_STREAM_PORT` and `SCREENCAST_STREAM_SECONDS`.
+
+A passing run prints, for each test, a per-axis trajectory range, total path length and quaternion-norm extremes, plus a one-line `PASS` summary. Sample output:
+```
+keyframes:        11
+x range:          [0.000000, 0.021442]   span=0.021442
+y range:          [-0.003249, 0.005669]  span=0.008918
+z range:          [-0.025066, 0.000000]  span=0.025066
+path length:      0.041059
+quaternion norm:  [1.000000, 1.000000]
+Test 1 PASS — file-decode SLAM mapped 11 KFs / 1191 MPs.
+```
