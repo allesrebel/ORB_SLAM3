@@ -36,11 +36,18 @@ namespace fs = std::filesystem;
 using OrbVocabulary =
     DBoW2::TemplatedVocabulary<DBoW2::FORB::TDescriptor, DBoW2::FORB>;
 
-// -- thresholds (tune in Phase 3.3) ----------------------------------------
-static constexpr double TAU_SAME        = 0.04;
-static constexpr double TAU_REVISIT     = 0.06;
+// -- thresholds (empirically tuned on VideoCUA Task A in Phase 3.3) -------
+// DBoW2's score() with ORBvoc.txt on UI screenshots returns much higher
+// values than typical (mostly 0.28-1.0 against representative frames).
+// The "stay" mode for stable UI sits around 0.30-0.35; values above 0.40
+// indicate strong similarity (early frames near representative). Anything
+// below 0.30 indicates real visual change, so 0.40 is the working threshold
+// to keep within-place noise from triggering births while still detecting
+// real transitions.
+static constexpr double TAU_SAME        = 0.40;
+static constexpr double TAU_REVISIT     = 0.55;
 static constexpr int    K_LEAVE_FRAMES  = 10;
-static constexpr double SCORE_NORM_DENOM = 0.20;  // for normalize() → [0,1]
+static constexpr double SCORE_NORM_DENOM = 1.0;  // DBoW2 score is already in [0,1] for ORBvoc
 
 static double normalize_score(double s) {
     double n = s / SCORE_NORM_DENOM;
