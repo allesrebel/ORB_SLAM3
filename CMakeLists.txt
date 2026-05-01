@@ -630,6 +630,14 @@ add_executable(mono_screencast_images
 target_link_libraries(mono_screencast_images ${PROJECT_NAME})
 target_compile_features(mono_screencast_images PRIVATE cxx_std_17)
 
+# Topological place-graph SLAM — reuses ORB extractor + DBoW2 vocab from the
+# main lib but skips the geometric back-end. Outputs a place_graph.json with
+# nodes per visually-distinct UI state and edges weighted by BoW dissimilarity.
+add_executable(mono_topological_screencast
+        Examples/Monocular/mono_topological_screencast.cc)
+target_link_libraries(mono_topological_screencast ${PROJECT_NAME})
+target_compile_features(mono_topological_screencast PRIVATE cxx_std_17)
+
 # Synthetic screencast generator — produces a parallax-rich test video
 # (3D-projected windows, moving cursor, window navigation) so SLAM can
 # initialise without needing a real screen recording.
