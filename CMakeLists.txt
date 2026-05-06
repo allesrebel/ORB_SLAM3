@@ -73,6 +73,7 @@ set(DATASET_DIR "${PROJECT_SOURCE_DIR}/Datasets/EuRoc")
 
 if(EXISTS ${DATASET_DIR})
     message(STATUS "The dataset directory already exists: ${DATASET_DIR}")
+    set(DOWNLOAD_DATASET OFF)
 else()
     set(DOWNLOAD_DATASET ON)
 endif()
