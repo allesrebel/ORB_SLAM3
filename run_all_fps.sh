@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the target FPS values to test
-FPS_VALUES=(10 20)
+FPS_VALUES=(2 5 10 15 20)
 
 # (Optional) allow overriding dataset for quick verification
 # If a dataset is provided as arg 1, we will modify run_fps_eval.sh temporarily.
