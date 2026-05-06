@@ -121,6 +121,12 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    double target_fps = -1.0;
+    cv::FileNode fpsNode = fsSettings["System.TargetFPS"];
+    if (!fpsNode.empty()) {
+        target_fps = fpsNode.real();
+    }
+
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
     vTimesTrack.resize(tot_images);
@@ -134,6 +140,7 @@ int main(int argc, char **argv)
     cv::Mat imLeft, imRight;
     for (seq = 0; seq<num_seq; seq++)
     {
+        double last_processed_time = -1.0;
         // Seq loop
         vector<ORB_SLAM3::IMU::Point> vImuMeas;
         double t_rect = 0.f;
@@ -162,6 +169,11 @@ int main(int argc, char **argv)
             }
 
             double tframe = vTimestampsCam[seq][ni];
+
+            if (target_fps > 0 && last_processed_time > 0 && (tframe - last_processed_time) < (1.0 / target_fps)) {
+                continue; // Skip this frame
+            }
+            last_processed_time = tframe;
 
             // Load imu measurements from previous frame
             vImuMeas.clear();
