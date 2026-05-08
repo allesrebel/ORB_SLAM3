@@ -73,64 +73,115 @@ set(DATASET_DIR "${PROJECT_SOURCE_DIR}/Datasets/EuRoc")
 
 if(EXISTS ${DATASET_DIR})
     message(STATUS "The dataset directory already exists: ${DATASET_DIR}")
+    set(DOWNLOAD_DATASET OFF)
 else()
     set(DOWNLOAD_DATASET ON)
 endif()
 
 if(DOWNLOAD_DATASET)
-    message(STATUS "Downloading EuRoc dataset...")
+    message(STATUS "Downloading EuRoc dataset (unified zips from ETH Research Collection)...")
 
-    # Define dataset URLs and target directories
     file(MAKE_DIRECTORY ${DATASET_DIR})
+    set(STAGING_DIR "${DATASET_DIR}/_tmp_dl")
+    file(MAKE_DIRECTORY ${STAGING_DIR})
 
-    set(DATASETS
-        "MH_01_easy|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_01_easy/MH_01_easy.zip"
-        "MH_02_easy|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_02_easy/MH_02_easy.zip"
-        "MH_03_medium|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_03_medium/MH_03_medium.zip"
-        "MH_04_difficult|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_04_difficult/MH_04_difficult.zip"
-        "MH_05_difficult|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_05_difficult/MH_05_difficult.zip"
-        "V1_01_easy|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/vicon_room1/V1_01_easy/V1_01_easy.zip"
-        "V1_02_medium|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/vicon_room1/V1_02_medium/V1_02_medium.zip"
-        "V1_03_difficult|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/vicon_room1/V1_03_difficult/V1_03_difficult.zip"
-        "V2_01_easy|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/vicon_room2/V2_01_easy/V2_01_easy.zip"
-        "V2_02_medium|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/vicon_room2/V2_02_medium/V2_02_medium.zip"
-        "V2_03_difficult|http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/vicon_room2/V2_03_difficult/V2_03_difficult.zip"
+    # Unified per-environment bundles published at
+    # https://www.research-collection.ethz.ch/entities/researchdata/bcaf173e-5dac-484b-bc37-faf97a594f1f
+    set(BUNDLES
+        "machine_hall|https://www.research-collection.ethz.ch/server/api/core/bitstreams/7b2419c1-62b5-4714-b7f8-485e5fe3e5fe/content"
+        "vicon_room1|https://www.research-collection.ethz.ch/server/api/core/bitstreams/02ecda9a-298f-498b-970c-b7c44334d880/content"
+        "vicon_room2|https://www.research-collection.ethz.ch/server/api/core/bitstreams/ea12bc01-3677-4b4c-853d-87c7870b8c44/content"
     )
 
-    foreach(dataset ${DATASETS})
-        string(REPLACE "|" ";" DATASET_INFO ${dataset})
-        list(GET DATASET_INFO 0 DATASET_NAME)
-        list(GET DATASET_INFO 1 DATASET_URL)
+    foreach(bundle ${BUNDLES})
+        string(REPLACE "|" ";" BUNDLE_INFO ${bundle})
+        list(GET BUNDLE_INFO 0 BUNDLE_NAME)
+        list(GET BUNDLE_INFO 1 BUNDLE_URL)
 
-        set(DATASET_PATH "${DATASET_DIR}/${DATASET_NAME}")
-        file(MAKE_DIRECTORY ${DATASET_PATH})
+        set(ZIP_FILE "${STAGING_DIR}/${BUNDLE_NAME}.zip")
+        set(EXTRACT_DIR "${STAGING_DIR}/${BUNDLE_NAME}")
+        file(MAKE_DIRECTORY ${EXTRACT_DIR})
 
-        set(ZIP_FILE "${DATASET_PATH}/${DATASET_NAME}.zip")
-
-        # Download the dataset
-        execute_process(
-            COMMAND wget -O ${ZIP_FILE} ${DATASET_URL}
-            RESULT_VARIABLE WGET_RESULT
-        )
-
-        if(NOT WGET_RESULT EQUAL 0)
-            message(FATAL_ERROR "Failed to download dataset ${DATASET_NAME} from ${DATASET_URL}. Please check your internet connection or the URL.")
+        # Skip download if the zip is already present (e.g. a previous interrupted run).
+        # wget -c resumes partial downloads.
+        if(EXISTS ${ZIP_FILE})
+            message(STATUS "Reusing existing ${ZIP_FILE}")
+        else()
+            execute_process(
+                COMMAND wget -c ${BUNDLE_URL} -O ${ZIP_FILE}
+                RESULT_VARIABLE WGET_RESULT
+            )
+            if(NOT WGET_RESULT EQUAL 0)
+                message(FATAL_ERROR "Failed to download ${BUNDLE_NAME} from ${BUNDLE_URL}. Please check your internet connection or the URL.")
+            endif()
         endif()
 
-        # Unzip the dataset
+        # The unified zips from ETH Research Collection contain a single top-level
+        # directory (e.g. machine_hall/) holding per-sequence folders. Each per-sequence
+        # folder contains an ASL-format <sequence>.zip (the file with mav0/ inside) and
+        # an <sequence>.bag rosbag. ORB-SLAM3 only needs the ASL format, so we extract
+        # the inner zip into ${DATASET_DIR}/<sequence>/ and ignore the bag.
         execute_process(
-            COMMAND unzip -o ${ZIP_FILE} -d ${DATASET_PATH}
-            RESULT_VARIABLE UNZIP_RESULT
-        )
+            COMMAND bash -c "set -e
+cd '${EXTRACT_DIR}'
+unzip -o '${ZIP_FILE}'
+shopt -s nullglob dotglob
+entries=( * )
+shopt -u dotglob
+top=''
+if [ \${#entries[@]} -ge 1 ] && [ -d \"\${entries[0]}\" ] && [ \${#entries[@]} -le 3 ]; then
+    # Filter out .DS_Store-style metadata files
+    real=()
+    for e in \"\${entries[@]}\"; do
+        if [ -d \"\$e\" ]; then real+=( \"\$e\" ); fi
+    done
+    if [ \${#real[@]} -eq 1 ]; then top=\"\${real[0]}\"; fi
+fi
+if [ -n \"\$top\" ]; then cd \"\$top\"; fi
 
-        if(NOT UNZIP_RESULT EQUAL 0)
-            message(FATAL_ERROR "Failed to unzip dataset ${DATASET_NAME}. Please make sure 'unzip' is installed and try again.")
+# Iterate over per-sequence subdirectories; extract their inner ASL zip.
+shopt -s nullglob
+found_any=0
+for d in */; do
+    d=\"\${d%/}\"
+    inner_zip=\"\"
+    for z in \"\$d\"/*.zip; do
+        inner_zip=\"\$z\"; break
+    done
+    if [ -n \"\$inner_zip\" ]; then
+        rm -rf '${DATASET_DIR}'/\"\$d\"
+        mkdir -p '${DATASET_DIR}'/\"\$d\"
+        unzip -o \"\$inner_zip\" -d '${DATASET_DIR}'/\"\$d\"
+        found_any=1
+    elif [ -d \"\$d/mav0\" ]; then
+        rm -rf '${DATASET_DIR}'/\"\$d\"
+        mv \"\$d\" '${DATASET_DIR}'/
+        found_any=1
+    fi
+done
+# Fallback: per-sequence zips sitting flat at this level.
+for z in *.zip; do
+    name=\"\${z%.zip}\"
+    rm -rf '${DATASET_DIR}'/\"\$name\"
+    mkdir -p '${DATASET_DIR}'/\"\$name\"
+    unzip -o \"\$z\" -d '${DATASET_DIR}'/\"\$name\"
+    found_any=1
+done
+if [ \"\$found_any\" -ne 1 ]; then
+    echo 'No sequences found in ${BUNDLE_NAME}' >&2
+    exit 1
+fi"
+            RESULT_VARIABLE ORG_RESULT
+        )
+        if(NOT ORG_RESULT EQUAL 0)
+            message(FATAL_ERROR "Failed to organize ${BUNDLE_NAME} into ${DATASET_DIR}.")
         endif()
 
-        # Remove the zip file after extraction
         file(REMOVE ${ZIP_FILE})
+        file(REMOVE_RECURSE ${EXTRACT_DIR})
     endforeach()
 
+    file(REMOVE_RECURSE ${STAGING_DIR})
     message(STATUS "EuRoc dataset downloaded successfully.")
 endif()
 
