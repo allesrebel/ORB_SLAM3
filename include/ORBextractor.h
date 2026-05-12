@@ -81,6 +81,12 @@ public:
         return mvInvLevelSigma2;
     }
 
+    // Dynamic Controller Setters
+    void setIniThFAST(int th) { iniThFAST = th; }
+    void setMinThFAST(int th) { minThFAST = th; }
+    int getIniThFAST() const { return iniThFAST; }
+    int getMinThFAST() const { return minThFAST; }
+
     std::vector<cv::Mat> mvImagePyramid;
 
 protected:

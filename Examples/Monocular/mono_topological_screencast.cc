@@ -226,6 +226,12 @@ int main(int argc, char** argv) {
 
     auto t0 = std::chrono::steady_clock::now();
 
+    // PID Controller State for Adaptive Features
+    int target_keypoints = 1000;
+    float integral_error = 0;
+    float prev_error = 0;
+    float Kp = 0.005f, Ki = 0.001f, Kd = 0.001f;
+
     for (size_t i = 0; i < frame_paths.size(); ++i) {
         cv::Mat img = cv::imread(frame_paths[i], cv::IMREAD_GRAYSCALE);
         if (img.empty()) {
@@ -236,7 +242,27 @@ int main(int argc, char** argv) {
         std::vector<cv::KeyPoint> kps;
         cv::Mat desc;
         std::vector<int> lapping_area = {0, 0};
+        
         extractor(img, cv::Mat(), kps, desc, lapping_area);
+
+        // PID update for next frame
+        int kp_count = kps.size();
+        float error = target_keypoints - kp_count;
+        integral_error += error;
+        float derivative = error - prev_error;
+        float adjustment = Kp * error + Ki * integral_error + Kd * derivative;
+        prev_error = error;
+        
+        int current_minTh = extractor.getMinThFAST();
+        // If we have too few features (error > 0), adjustment is positive, we want to DECREASE threshold.
+        // So we subtract the adjustment from the threshold.
+        int new_minTh = current_minTh - std::round(adjustment);
+        
+        // Bound the threshold to sane limits [1, 20]
+        if (new_minTh < 1) new_minTh = 1;
+        if (new_minTh > 20) new_minTh = 20;
+        
+        extractor.setMinThFAST(new_minTh);
 
         if (desc.empty()) {
             score_log << i << ",0\n";
