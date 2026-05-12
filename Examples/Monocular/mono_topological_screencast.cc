@@ -26,6 +26,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/calib3d.hpp>
+#include <opencv2/features2d.hpp>
 
 #include "ORBextractor.h"
 #include "Thirdparty/DBoW2/DBoW2/FORB.h"
@@ -56,6 +58,51 @@ static double normalize_score(double s) {
     return n;
 }
 
+// Pixel Hashing function
+static cv::Mat computeHash(const cv::Mat& img) {
+    cv::Mat resized, hash_mat;
+    cv::resize(img, resized, cv::Size(16, 16));
+    cv::Scalar mean = cv::mean(resized);
+    cv::compare(resized, mean[0], hash_mat, cv::CMP_GT);
+    return hash_mat;
+}
+
+static double compareHashes(const cv::Mat& h1, const cv::Mat& h2) {
+    if (h1.empty() || h2.empty()) return 0.0;
+    int diff = cv::countNonZero(h1 != h2);
+    return 1.0 - (double)diff / (h1.total());
+}
+
+static bool verifySpatial(const std::vector<cv::KeyPoint>& kps1, const cv::Mat& desc1,
+                          const std::vector<cv::KeyPoint>& kps2, const cv::Mat& desc2) {
+    if (desc1.empty() || desc2.empty()) return false;
+    
+    cv::BFMatcher matcher(cv::NORM_HAMMING, true); // cross-check
+    std::vector<cv::DMatch> matches;
+    matcher.match(desc1, desc2, matches);
+    
+    if (matches.size() < 15) return false; // Need enough matches for reliable RANSAC
+    
+    std::vector<cv::Point2f> pts1, pts2;
+    for (const auto& m : matches) {
+        pts1.push_back(kps1[m.queryIdx].pt);
+        pts2.push_back(kps2[m.trainIdx].pt);
+    }
+    
+    // Use Affine verification
+    std::vector<uchar> inliers;
+    cv::Mat affine = cv::estimateAffinePartial2D(pts1, pts2, inliers, cv::RANSAC, 3.0);
+    
+    if (affine.empty()) return false;
+    
+    int inlier_count = 0;
+    for (uchar inlier : inliers) {
+        if (inlier) inlier_count++;
+    }
+    
+    return inlier_count >= 10;
+}
+
 struct Place {
     int id;
     int representative_frame_idx;
@@ -63,6 +110,9 @@ struct Place {
     int frame_end;
     DBoW2::BowVector representative_bow;
     std::string representative_image_path;
+    std::vector<cv::KeyPoint> kps;
+    cv::Mat desc;
+    cv::Mat hash;
 };
 
 struct Edge {
@@ -122,6 +172,7 @@ int main(int argc, char** argv) {
     }
     fs::create_directories(out_dir);
     fs::create_directories(out_dir + "/place_keyframes");
+    fs::create_directories(out_dir + "/debug_keypoints");
 
     // -- load vocabulary ----------------------------------------------------
     std::cout << "Loading vocabulary: " << vocab_path << std::endl;
@@ -170,6 +221,9 @@ int main(int argc, char** argv) {
     std::ofstream score_log(out_dir + "/scores.csv");
     score_log << "frame,score_curr\n";
 
+    std::ofstream kp_stats(out_dir + "/keypoint_stats.csv");
+    kp_stats << "frame,count,min_x,max_x,min_y,max_y,var_x,var_y\n";
+
     auto t0 = std::chrono::steady_clock::now();
 
     for (size_t i = 0; i < frame_paths.size(); ++i) {
@@ -186,13 +240,49 @@ int main(int argc, char** argv) {
 
         if (desc.empty()) {
             score_log << i << ",0\n";
+            kp_stats << i << ",0,0,0,0,0,0,0\n";
             ++leaving_counter;
             continue;
         }
 
+        // --- DEBUG INSTRUMENTATION ---
+        cv::Mat img_kps;
+        cv::drawKeypoints(img, kps, img_kps, cv::Scalar::all(-1), cv::DrawMatchesFlags::DEFAULT);
+        std::ostringstream kp_img_name;
+        kp_img_name << out_dir << "/debug_keypoints/frame_" << std::setw(5) << std::setfill('0') << i << ".png";
+        cv::imwrite(kp_img_name.str(), img_kps);
+
+        double sum_x = 0, sum_y = 0;
+        double min_x = 1e9, max_x = -1e9, min_y = 1e9, max_y = -1e9;
+        for (const auto& kp : kps) {
+            sum_x += kp.pt.x;
+            sum_y += kp.pt.y;
+            if (kp.pt.x < min_x) min_x = kp.pt.x;
+            if (kp.pt.x > max_x) max_x = kp.pt.x;
+            if (kp.pt.y < min_y) min_y = kp.pt.y;
+            if (kp.pt.y > max_y) max_y = kp.pt.y;
+        }
+        double mean_x = sum_x / kps.size();
+        double mean_y = sum_y / kps.size();
+        double var_x = 0, var_y = 0;
+        for (const auto& kp : kps) {
+            var_x += (kp.pt.x - mean_x) * (kp.pt.x - mean_x);
+            var_y += (kp.pt.y - mean_y) * (kp.pt.y - mean_y);
+        }
+        var_x /= kps.size();
+        var_y /= kps.size();
+
+        kp_stats << i << "," << kps.size() << "," 
+                 << min_x << "," << max_x << "," 
+                 << min_y << "," << max_y << "," 
+                 << var_x << "," << var_y << "\n";
+        // -----------------------------
+
         DBoW2::BowVector  bow_t;
         DBoW2::FeatureVector fv_t;
         vocab.transform(descriptors_to_vec(desc), bow_t, fv_t, 4);
+
+        cv::Mat curr_hash = computeHash(img);
 
         if (current_place_idx < 0) {
             // cold start — birth place 0
@@ -206,6 +296,9 @@ int main(int argc, char** argv) {
             ip << out_dir << "/place_keyframes/" << p.id << ".png";
             cv::imwrite(ip.str(), cv::imread(frame_paths[i]));
             p.representative_image_path = ip.str();
+            p.kps = kps;
+            p.desc = desc;
+            p.hash = curr_hash;
             places.push_back(p);
             current_place_idx = p.id;
             score_log << i << ",1\n";
@@ -217,7 +310,15 @@ int main(int argc, char** argv) {
         score_log << i << "," << std::fixed << std::setprecision(6)
                   << score_curr << "\n";
 
-        if (score_curr >= TAU_SAME) {
+        double hash_sim_curr = compareHashes(curr_hash, places[current_place_idx].hash);
+
+        bool is_same = false;
+        if (score_curr >= TAU_SAME && hash_sim_curr >= 0.85) {
+            // Further verify spatially to prevent false positives from rearranged UI elements
+            is_same = verifySpatial(kps, desc, places[current_place_idx].kps, places[current_place_idx].desc);
+        }
+
+        if (is_same) {
             places[current_place_idx].frame_end = (int)i;
             leaving_counter = 0;
             continue;
@@ -229,10 +330,17 @@ int main(int argc, char** argv) {
         for (size_t p = 0; p < places.size(); ++p) {
             if ((int)p == current_place_idx) continue;
             double s = vocab.score(bow_t, places[p].representative_bow);
-            if (s > best_score) { best_score = s; best_revisit = (int)p; }
+            double hs = compareHashes(curr_hash, places[p].hash);
+            if (s >= TAU_REVISIT && hs >= 0.85) {
+                bool verified = verifySpatial(kps, desc, places[p].kps, places[p].desc);
+                if (verified && s > best_score) {
+                    best_score = s;
+                    best_revisit = (int)p;
+                }
+            }
         }
 
-        if (best_revisit >= 0 && best_score >= TAU_REVISIT) {
+        if (best_revisit >= 0) {
             Edge e;
             e.from_place_id = current_place_idx;
             e.to_place_id   = best_revisit;
@@ -258,6 +366,9 @@ int main(int argc, char** argv) {
             ip << out_dir << "/place_keyframes/" << new_p.id << ".png";
             cv::imwrite(ip.str(), cv::imread(frame_paths[i]));
             new_p.representative_image_path = ip.str();
+            new_p.kps = kps;
+            new_p.desc = desc;
+            new_p.hash = curr_hash;
 
             double d_score = vocab.score(
                 places[current_place_idx].representative_bow,
