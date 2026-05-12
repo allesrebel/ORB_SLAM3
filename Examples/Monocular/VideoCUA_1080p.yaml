@@ -43,7 +43,7 @@ ORBextractor.nFeatures: 1500
 ORBextractor.scaleFactor: 1.2
 ORBextractor.nLevels: 8
 ORBextractor.iniThFAST: 12
-ORBextractor.minThFAST: 4
+ORBextractor.minThFAST: 2
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters
