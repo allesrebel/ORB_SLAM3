@@ -51,6 +51,11 @@ static constexpr double TAU_REVISIT     = 0.55;
 static constexpr int    K_LEAVE_FRAMES  = 10;
 static constexpr double SCORE_NORM_DENOM = 1.0;  // DBoW2 score is already in [0,1] for ORBvoc
 
+// Optuna DSE parameters (Can be overridden via CLI)
+static double HASH_SIM_THRESHOLD = 0.85;
+static int AFFINE_MIN_INLIERS = 10;
+static int TARGET_KEYPOINTS = 1000;
+
 static double normalize_score(double s) {
     double n = s / SCORE_NORM_DENOM;
     if (n < 0.0) return 0.0;
@@ -58,12 +63,16 @@ static double normalize_score(double s) {
     return n;
 }
 
-// Pixel Hashing function
+// Pixel Hashing function (Upgraded to Perceptual Hash for scrolling resilience)
 static cv::Mat computeHash(const cv::Mat& img) {
-    cv::Mat resized, hash_mat;
-    cv::resize(img, resized, cv::Size(16, 16));
-    cv::Scalar mean = cv::mean(resized);
-    cv::compare(resized, mean[0], hash_mat, cv::CMP_GT);
+    cv::Mat resized, float_img, dct_img, hash_mat;
+    cv::resize(img, resized, cv::Size(32, 32));
+    resized.convertTo(float_img, CV_32F);
+    cv::dct(float_img, dct_img);
+    cv::Mat dct_8x8 = dct_img(cv::Rect(0, 0, 8, 8)).clone();
+    // Ignore DC term
+    double m = (cv::sum(dct_8x8)[0] - dct_8x8.at<float>(0,0)) / 63.0;
+    cv::compare(dct_8x8, m, hash_mat, cv::CMP_GT);
     return hash_mat;
 }
 
@@ -81,7 +90,8 @@ static bool verifySpatial(const std::vector<cv::KeyPoint>& kps1, const cv::Mat& 
     std::vector<cv::DMatch> matches;
     matcher.match(desc1, desc2, matches);
     
-    if (matches.size() < 15) return false; // Need enough matches for reliable RANSAC
+    // RANSAC Degeneracy Fallback: If not enough features (e.g. blank document), trust the Hash
+    if (matches.size() < 15) return true;
     
     std::vector<cv::Point2f> pts1, pts2;
     for (const auto& m : matches) {
@@ -100,7 +110,7 @@ static bool verifySpatial(const std::vector<cv::KeyPoint>& kps1, const cv::Mat& 
         if (inlier) inlier_count++;
     }
     
-    return inlier_count >= 10;
+    return inlier_count >= AFFINE_MIN_INLIERS;
 }
 
 struct Place {
@@ -169,6 +179,9 @@ int main(int argc, char** argv) {
     std::string out_dir = ".";
     for (int i = 5; i + 1 < argc; ++i) {
         if (std::string(argv[i]) == "--out") out_dir = argv[i + 1];
+        if (std::string(argv[i]) == "--target_kp") TARGET_KEYPOINTS = std::stoi(argv[i+1]);
+        if (std::string(argv[i]) == "--hash_th") HASH_SIM_THRESHOLD = std::stod(argv[i+1]);
+        if (std::string(argv[i]) == "--affine_min") AFFINE_MIN_INLIERS = std::stoi(argv[i+1]);
     }
     fs::create_directories(out_dir);
     fs::create_directories(out_dir + "/place_keyframes");
@@ -227,7 +240,8 @@ int main(int argc, char** argv) {
     auto t0 = std::chrono::steady_clock::now();
 
     // PID Controller State for Adaptive Features
-    int target_keypoints = 1000;
+    int target_keypoints = TARGET_KEYPOINTS;
+    float smoothed_kp = (float)TARGET_KEYPOINTS;
     float integral_error = 0;
     float prev_error = 0;
     float Kp = 0.005f, Ki = 0.001f, Kd = 0.001f;
@@ -245,13 +259,19 @@ int main(int argc, char** argv) {
         
         extractor(img, cv::Mat(), kps, desc, lapping_area);
 
-        // PID update for next frame
+        // PID update with EMA Damping
         int kp_count = kps.size();
-        float error = target_keypoints - kp_count;
+        smoothed_kp = 0.8f * smoothed_kp + 0.2f * kp_count;
+        
+        float error = target_keypoints - smoothed_kp;
         integral_error += error;
         float derivative = error - prev_error;
         float adjustment = Kp * error + Ki * integral_error + Kd * derivative;
         prev_error = error;
+        
+        // Clamp adjustment derivative to prevent wild oscillations
+        if (adjustment > 2.0f) adjustment = 2.0f;
+        if (adjustment < -2.0f) adjustment = -2.0f;
         
         int current_minTh = extractor.getMinThFAST();
         // If we have too few features (error > 0), adjustment is positive, we want to DECREASE threshold.
@@ -338,7 +358,7 @@ int main(int argc, char** argv) {
         double hash_sim_curr = compareHashes(curr_hash, places[current_place_idx].hash);
 
         bool is_same = false;
-        if (score_curr >= TAU_SAME && hash_sim_curr >= 0.85) {
+        if (score_curr >= TAU_SAME && hash_sim_curr >= HASH_SIM_THRESHOLD) {
             // Further verify spatially to prevent false positives from rearranged UI elements
             is_same = verifySpatial(kps, desc, places[current_place_idx].kps, places[current_place_idx].desc);
         }
@@ -356,7 +376,7 @@ int main(int argc, char** argv) {
             if ((int)p == current_place_idx) continue;
             double s = vocab.score(bow_t, places[p].representative_bow);
             double hs = compareHashes(curr_hash, places[p].hash);
-            if (s >= TAU_REVISIT && hs >= 0.85) {
+            if (s >= TAU_REVISIT && hs >= HASH_SIM_THRESHOLD) {
                 bool verified = verifySpatial(kps, desc, places[p].kps, places[p].desc);
                 if (verified && s > best_score) {
                     best_score = s;

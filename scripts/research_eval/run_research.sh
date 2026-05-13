@@ -51,22 +51,29 @@ for tid in "${IDS[@]}"; do
     rm -rf "${FRAMES_DIR}/*"
     ffmpeg -hide_banner -loglevel error -y -i "$VIDEO" -vf "fps=15" -start_number 1 "${FRAMES_DIR}/frame_%05d.png"
     
-    # 3. VLM Baseline
-    echo "[3/5] Running VLM Baseline"
+    # 3. SSIM Baseline
+    echo "[3/6] Running SSIM Baseline"
+    "$PYTHON_BIN" "${SCRIPT_DIR}/ssim_baseline.py" \
+        --frames-dir "$FRAMES_DIR" \
+        --out "${OUT_DIR}/ssim_graph.json" \
+        --fps 15.0
+        
+    # 4. VLM Baseline
+    echo "[4/6] Running VLM Baseline"
     "$PYTHON_BIN" "${SCRIPT_DIR}/vlm_baseline.py" \
         --frames-dir "$FRAMES_DIR" \
         --out "${OUT_DIR}/vlm_graph.json" \
         --fps 15.0
         
-    # 4. Embedding Baseline
-    echo "[4/5] Running Embedding Baseline (CLIP)"
+    # 5. Embedding Baseline
+    echo "[5/6] Running Embedding Baseline (CLIP)"
     "$PYTHON_BIN" "${SCRIPT_DIR}/embedding_baseline.py" \
         --frames-dir "$FRAMES_DIR" \
         --out "${OUT_DIR}/embedding_graph.json" \
         --fps 15.0
         
-    # 5. Topo-SLAM Baseline (requires C++ binary)
-    echo "[5/5] Running Enhanced Topo-SLAM"
+    # 6. Topo-SLAM Baseline (requires C++ binary)
+    echo "[6/6] Running Enhanced Topo-SLAM"
     TOPO_DIR="${OUT_DIR}/topological"
     mkdir -p "$TOPO_DIR"
     pushd "$TOPO_DIR" >/dev/null
