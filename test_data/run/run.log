@@ -1,4 +1,4 @@
-Loaded 360 images from /root/ORB_SLAM3/test_data/screencast_frames
+Loaded 360 images from /root/clean/ORB_SLAM3/test_data/screencast_frames
 Synthetic timestamps at 30 fps
 
 ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
@@ -8,14 +8,14 @@ This is free software, and you are welcome to redistribute it
 under certain conditions. See LICENSE.txt.
 
 Built with REGISTER_TIMES
-Git Commit Hash: 8280661-dirty
+Git Commit Hash: 93e5b97
 
 Build Type: Release
 
 Compiled with C++ version: 201703
 
 Input sensor was set to: Monocular
-Loading settings from /root/ORB_SLAM3/Examples/Monocular/ScreenCapture.yaml
+Loading settings from /root/clean/ORB_SLAM3/Examples/Monocular/ScreenCapture.yaml
 	-Loaded camera 1
 	-Loaded image info
 	-Loaded ORB settings
@@ -49,414 +49,414 @@ Seq. Name:
 There are 1 cameras in the atlas
 Camera 0 is pinhole
 Discard points further than 1000 m from current camera
-SLAM Started at System Time: 1777437018.25097
-[1/360] frame_00001.png  1280x720  track=36.783572 ms
-[2/360] frame_00002.png  1280x720  track=45.72681 ms
-[3/360] frame_00003.png  1280x720  track=47.147779 ms
-[4/360] frame_00004.png  1280x720  track=46.236514 ms
-[5/360] frame_00005.png  1280x720  track=43.207393 ms
-[6/360] frame_00006.png  1280x720  track=44.145529 ms
-[7/360] frame_00007.png  1280x720  track=44.467902 ms
-[8/360] frame_00008.png  1280x720  track=45.81094 ms
-[9/360] frame_00009.png  1280x720  track=42.415198 ms
-[10/360] frame_00010.png  1280x720  track=42.873811 ms
-[11/360] frame_00011.png  1280x720  track=44.258251 ms
-[12/360] frame_00012.png  1280x720  track=42.596159 ms
-[13/360] frame_00013.png  1280x720  track=42.423508 ms
-[14/360] frame_00014.png  1280x720  track=42.771151 ms
-[15/360] frame_00015.png  1280x720  track=43.815757 ms
-[16/360] frame_00016.png  1280x720  track=43.116313 ms
-[17/360] frame_00017.png  1280x720  track=42.088986 ms
-[18/360] frame_00018.png  1280x720  track=44.709043 ms
-[19/360] frame_00019.png  1280x720  track=42.69121 ms
-[20/360] frame_00020.png  1280x720  track=44.629233 ms
-[21/360] frame_00021.png  1280x720  track=44.140309 ms
-[22/360] frame_00022.png  1280x720  track=45.496969 ms
-[23/360] frame_00023.png  1280x720  track=42.024726 ms
-[24/360] frame_00024.png  1280x720  track=41.31579 ms
-[25/360] frame_00025.png  1280x720  track=41.313701 ms
-[26/360] frame_00026.png  1280x720  track=44.17692 ms
-[27/360] frame_00027.png  1280x720  track=44.705193 ms
+SLAM Started at System Time: 1778602273.50766
+[1/360] frame_00001.png  1280x720  track=34.752395 ms
+[2/360] frame_00002.png  1280x720  track=44.184399 ms
+[3/360] frame_00003.png  1280x720  track=43.273974 ms
+[4/360] frame_00004.png  1280x720  track=45.005673 ms
+[5/360] frame_00005.png  1280x720  track=44.858292 ms
+[6/360] frame_00006.png  1280x720  track=49.050616 ms
+[7/360] frame_00007.png  1280x720  track=43.201713 ms
+[8/360] frame_00008.png  1280x720  track=45.714247 ms
+[9/360] frame_00009.png  1280x720  track=47.684159 ms
+[10/360] frame_00010.png  1280x720  track=44.631501 ms
+[11/360] frame_00011.png  1280x720  track=44.385129 ms
+[12/360] frame_00012.png  1280x720  track=45.264925 ms
+[13/360] frame_00013.png  1280x720  track=44.864302 ms
+[14/360] frame_00014.png  1280x720  track=46.713503 ms
+[15/360] frame_00015.png  1280x720  track=45.444496 ms
+[16/360] frame_00016.png  1280x720  track=44.46423 ms
+[17/360] frame_00017.png  1280x720  track=44.754282 ms
+[18/360] frame_00018.png  1280x720  track=44.070088 ms
+[19/360] frame_00019.png  1280x720  track=43.159663 ms
+[20/360] frame_00020.png  1280x720  track=43.805077 ms
+[21/360] frame_00021.png  1280x720  track=45.095384 ms
+[22/360] frame_00022.png  1280x720  track=44.877592 ms
+[23/360] frame_00023.png  1280x720  track=43.372544 ms
+[24/360] frame_00024.png  1280x720  track=43.524085 ms
+[25/360] frame_00025.png  1280x720  track=43.072652 ms
+[26/360] frame_00026.png  1280x720  track=42.939402 ms
+[27/360] frame_00027.png  1280x720  track=43.315274 ms
 First KF:0; Map init KF:0
 New Map created with 253 points
-[28/360] frame_00028.png  1280x720  track=76.283591 ms
-[29/360] frame_00029.png  1280x720  track=52.545054 ms
-[30/360] frame_00030.png  1280x720  track=38.234151 ms
-[31/360] frame_00031.png  1280x720  track=40.950589 ms
-[32/360] frame_00032.png  1280x720  track=38.183251 ms
-[33/360] frame_00033.png  1280x720  track=23.584455 ms
-[34/360] frame_00034.png  1280x720  track=23.346153 ms
-[35/360] frame_00035.png  1280x720  track=22.139405 ms
-[36/360] frame_00036.png  1280x720  track=24.118658 ms
-[37/360] frame_00037.png  1280x720  track=23.559665 ms
-[38/360] frame_00038.png  1280x720  track=22.300147 ms
-[39/360] frame_00039.png  1280x720  track=25.106974 ms
-[40/360] frame_00040.png  1280x720  track=25.393676 ms
-[41/360] frame_00041.png  1280x720  track=24.776732 ms
-[42/360] frame_00042.png  1280x720  track=23.293652 ms
-[43/360] frame_00043.png  1280x720  track=24.248409 ms
-[44/360] frame_00044.png  1280x720  track=21.688183 ms
-[45/360] frame_00045.png  1280x720  track=23.796396 ms
-[46/360] frame_00046.png  1280x720  track=22.636518 ms
-[47/360] frame_00047.png  1280x720  track=23.516314 ms
-[48/360] frame_00048.png  1280x720  track=22.585418 ms
-[49/360] frame_00049.png  1280x720  track=23.837776 ms
-[50/360] frame_00050.png  1280x720  track=22.255396 ms
-[51/360] frame_00051.png  1280x720  track=22.949761 ms
-[52/360] frame_00052.png  1280x720  track=23.145712 ms
-[53/360] frame_00053.png  1280x720  track=24.866943 ms
-[54/360] frame_00054.png  1280x720  track=22.291316 ms
-[55/360] frame_00055.png  1280x720  track=23.006541 ms
-[56/360] frame_00056.png  1280x720  track=22.355137 ms
-[57/360] frame_00057.png  1280x720  track=24.337 ms
-[58/360] frame_00058.png  1280x720  track=23.611105 ms
-[59/360] frame_00059.png  1280x720  track=24.025467 ms
-[60/360] frame_00060.png  1280x720  track=21.623232 ms
-[61/360] frame_00061.png  1280x720  track=23.520304 ms
-[62/360] frame_00062.png  1280x720  track=21.967614 ms
-[63/360] frame_00063.png  1280x720  track=23.537005 ms
-[64/360] frame_00064.png  1280x720  track=21.640922 ms
-[65/360] frame_00065.png  1280x720  track=23.819676 ms
-[66/360] frame_00066.png  1280x720  track=25.85514 ms
-[67/360] frame_00067.png  1280x720  track=23.038961 ms
-[68/360] frame_00068.png  1280x720  track=21.30362 ms
-[69/360] frame_00069.png  1280x720  track=22.598478 ms
-[70/360] frame_00070.png  1280x720  track=23.769986 ms
-[71/360] frame_00071.png  1280x720  track=27.011537 ms
-[72/360] frame_00072.png  1280x720  track=25.708298 ms
-[73/360] frame_00073.png  1280x720  track=23.454164 ms
-[74/360] frame_00074.png  1280x720  track=25.317736 ms
-[75/360] frame_00075.png  1280x720  track=22.76444 ms
-[76/360] frame_00076.png  1280x720  track=22.238686 ms
-[77/360] frame_00077.png  1280x720  track=23.606295 ms
-[78/360] frame_00078.png  1280x720  track=24.213089 ms
-[79/360] frame_00079.png  1280x720  track=22.123645 ms
-[80/360] frame_00080.png  1280x720  track=23.336723 ms
-[81/360] frame_00081.png  1280x720  track=21.461811 ms
-[82/360] frame_00082.png  1280x720  track=24.486691 ms
-[83/360] frame_00083.png  1280x720  track=22.745139 ms
-[84/360] frame_00084.png  1280x720  track=22.93082 ms
-[85/360] frame_00085.png  1280x720  track=24.486111 ms
-[86/360] frame_00086.png  1280x720  track=27.40906 ms
-[87/360] frame_00087.png  1280x720  track=23.887107 ms
-[88/360] frame_00088.png  1280x720  track=26.469313 ms
-[89/360] frame_00089.png  1280x720  track=24.292079 ms
-[90/360] frame_00090.png  1280x720  track=26.204212 ms
-[91/360] frame_00091.png  1280x720  track=23.217742 ms
-[92/360] frame_00092.png  1280x720  track=25.332196 ms
-[93/360] frame_00093.png  1280x720  track=21.498531 ms
-[94/360] frame_00094.png  1280x720  track=24.306459 ms
-[95/360] frame_00095.png  1280x720  track=21.068218 ms
-[96/360] frame_00096.png  1280x720  track=22.169555 ms
-[97/360] frame_00097.png  1280x720  track=21.841124 ms
-[98/360] frame_00098.png  1280x720  track=25.89522 ms
-[99/360] frame_00099.png  1280x720  track=25.92121 ms
-[100/360] frame_00100.png  1280x720  track=22.551048 ms
-[101/360] frame_00101.png  1280x720  track=28.623618 ms
-[102/360] frame_00102.png  1280x720  track=23.340573 ms
-[103/360] frame_00103.png  1280x720  track=25.133235 ms
-[104/360] frame_00104.png  1280x720  track=24.604351 ms
-[105/360] frame_00105.png  1280x720  track=24.033798 ms
-[106/360] frame_00106.png  1280x720  track=21.998494 ms
-[107/360] frame_00107.png  1280x720  track=23.268242 ms
-[108/360] frame_00108.png  1280x720  track=22.74178 ms
-[109/360] frame_00109.png  1280x720  track=21.4107 ms
-[110/360] frame_00110.png  1280x720  track=21.905294 ms
-[111/360] frame_00111.png  1280x720  track=22.221485 ms
-[112/360] frame_00112.png  1280x720  track=22.312566 ms
-[113/360] frame_00113.png  1280x720  track=21.570851 ms
-[114/360] frame_00114.png  1280x720  track=22.82194 ms
-[115/360] frame_00115.png  1280x720  track=22.302406 ms
-[116/360] frame_00116.png  1280x720  track=20.678005 ms
-[117/360] frame_00117.png  1280x720  track=26.124582 ms
-[118/360] frame_00118.png  1280x720  track=23.831086 ms
-[119/360] frame_00119.png  1280x720  track=26.368333 ms
-[120/360] frame_00120.png  1280x720  track=23.253713 ms
-[121/360] frame_00121.png  1280x720  track=26.03998 ms
-[122/360] frame_00122.png  1280x720  track=22.349317 ms
-[123/360] frame_00123.png  1280x720  track=24.044588 ms
-[124/360] frame_00124.png  1280x720  track=21.30898 ms
-[125/360] frame_00125.png  1280x720  track=21.030927 ms
-[126/360] frame_00126.png  1280x720  track=21.505221 ms
-[127/360] frame_00127.png  1280x720  track=22.649359 ms
-[128/360] frame_00128.png  1280x720  track=22.177515 ms
-[129/360] frame_00129.png  1280x720  track=22.657488 ms
-[130/360] frame_00130.png  1280x720  track=21.562382 ms
-[131/360] frame_00131.png  1280x720  track=27.54412 ms
-[132/360] frame_00132.png  1280x720  track=27.38946 ms
-[133/360] frame_00133.png  1280x720  track=24.965444 ms
-[134/360] frame_00134.png  1280x720  track=24.663632 ms
-[135/360] frame_00135.png  1280x720  track=24.836873 ms
-[136/360] frame_00136.png  1280x720  track=24.829032 ms
-[137/360] frame_00137.png  1280x720  track=24.014768 ms
-[138/360] frame_00138.png  1280x720  track=23.157732 ms
-[139/360] frame_00139.png  1280x720  track=20.922077 ms
-[140/360] frame_00140.png  1280x720  track=27.516041 ms
-[141/360] frame_00141.png  1280x720  track=21.684612 ms
-[142/360] frame_00142.png  1280x720  track=21.894514 ms
-[143/360] frame_00143.png  1280x720  track=21.526351 ms
-[144/360] frame_00144.png  1280x720  track=20.156663 ms
-[145/360] frame_00145.png  1280x720  track=19.86495 ms
-[146/360] frame_00146.png  1280x720  track=21.38598 ms
-[147/360] frame_00147.png  1280x720  track=22.266966 ms
-[148/360] frame_00148.png  1280x720  track=25.520027 ms
-[149/360] frame_00149.png  1280x720  track=27.221349 ms
-[150/360] frame_00150.png  1280x720  track=25.91061 ms
-[151/360] frame_00151.png  1280x720  track=25.069595 ms
-[152/360] frame_00152.png  1280x720  track=24.033837 ms
-[153/360] frame_00153.png  1280x720  track=26.118281 ms
-[154/360] frame_00154.png  1280x720  track=29.951297 ms
-[155/360] frame_00155.png  1280x720  track=23.497454 ms
-[156/360] frame_00156.png  1280x720  track=21.705562 ms
-[157/360] frame_00157.png  1280x720  track=23.205882 ms
-[158/360] frame_00158.png  1280x720  track=26.516114 ms
-[159/360] frame_00159.png  1280x720  track=25.701868 ms
-[160/360] frame_00160.png  1280x720  track=25.442517 ms
-[161/360] frame_00161.png  1280x720  track=22.79314 ms
-[162/360] frame_00162.png  1280x720  track=27.241089 ms
-[163/360] frame_00163.png  1280x720  track=23.584124 ms
-[164/360] frame_00164.png  1280x720  track=29.947147 ms
-[165/360] frame_00165.png  1280x720  track=27.256049 ms
-[166/360] frame_00166.png  1280x720  track=27.647911 ms
-[167/360] frame_00167.png  1280x720  track=25.260456 ms
-[168/360] frame_00168.png  1280x720  track=26.524324 ms
-[169/360] frame_00169.png  1280x720  track=25.575978 ms
-[170/360] frame_00170.png  1280x720  track=26.233972 ms
-[171/360] frame_00171.png  1280x720  track=24.226439 ms
-[172/360] frame_00172.png  1280x720  track=28.170685 ms
-[173/360] frame_00173.png  1280x720  track=26.885667 ms
-[174/360] frame_00174.png  1280x720  track=25.373427 ms
-[175/360] frame_00175.png  1280x720  track=29.044161 ms
-[176/360] frame_00176.png  1280x720  track=24.563911 ms
-[177/360] frame_00177.png  1280x720  track=23.435894 ms
-[178/360] frame_00178.png  1280x720  track=26.090501 ms
-[179/360] frame_00179.png  1280x720  track=24.36395 ms
-[180/360] frame_00180.png  1280x720  track=24.781473 ms
-[181/360] frame_00181.png  1280x720  track=25.164815 ms
-[182/360] frame_00182.png  1280x720  track=23.178942 ms
-[183/360] frame_00183.png  1280x720  track=23.531635 ms
-[184/360] frame_00184.png  1280x720  track=23.693325 ms
-[185/360] frame_00185.png  1280x720  track=23.296603 ms
-[186/360] frame_00186.png  1280x720  track=21.072348 ms
-[187/360] frame_00187.png  1280x720  track=26.646535 ms
-[188/360] frame_00188.png  1280x720  track=24.47223 ms
-[189/360] frame_00189.png  1280x720  track=25.380067 ms
-[190/360] frame_00190.png  1280x720  track=26.727676 ms
-[191/360] frame_00191.png  1280x720  track=23.179452 ms
-[192/360] frame_00192.png  1280x720  track=23.000451 ms
-[193/360] frame_00193.png  1280x720  track=27.883352 ms
-[194/360] frame_00194.png  1280x720  track=26.493034 ms
-[195/360] frame_00195.png  1280x720  track=26.490784 ms
-[196/360] frame_00196.png  1280x720  track=23.962717 ms
-[197/360] frame_00197.png  1280x720  track=23.872647 ms
-[198/360] frame_00198.png  1280x720  track=23.507214 ms
-[199/360] frame_00199.png  1280x720  track=26.149381 ms
-[200/360] frame_00200.png  1280x720  track=26.709336 ms
-[201/360] frame_00201.png  1280x720  track=22.799539 ms
-[202/360] frame_00202.png  1280x720  track=20.962727 ms
-[203/360] frame_00203.png  1280x720  track=24.39461 ms
-[204/360] frame_00204.png  1280x720  track=25.533087 ms
-[205/360] frame_00205.png  1280x720  track=24.146868 ms
-[206/360] frame_00206.png  1280x720  track=22.507938 ms
-[207/360] frame_00207.png  1280x720  track=22.024594 ms
-[208/360] frame_00208.png  1280x720  track=23.269632 ms
-[209/360] frame_00209.png  1280x720  track=21.557302 ms
-[210/360] frame_00210.png  1280x720  track=23.258312 ms
-[211/360] frame_00211.png  1280x720  track=23.250412 ms
-[212/360] frame_00212.png  1280x720  track=22.429068 ms
-[213/360] frame_00213.png  1280x720  track=23.684095 ms
-[214/360] frame_00214.png  1280x720  track=23.405584 ms
-[215/360] frame_00215.png  1280x720  track=21.802773 ms
-[216/360] frame_00216.png  1280x720  track=23.947717 ms
-[217/360] frame_00217.png  1280x720  track=23.070421 ms
-[218/360] frame_00218.png  1280x720  track=20.730386 ms
-[219/360] frame_00219.png  1280x720  track=22.102155 ms
-[220/360] frame_00220.png  1280x720  track=23.729135 ms
-[221/360] frame_00221.png  1280x720  track=23.863126 ms
-[222/360] frame_00222.png  1280x720  track=24.34509 ms
-[223/360] frame_00223.png  1280x720  track=24.087568 ms
-[224/360] frame_00224.png  1280x720  track=23.576814 ms
-[225/360] frame_00225.png  1280x720  track=23.878966 ms
-[226/360] frame_00226.png  1280x720  track=22.151635 ms
-[227/360] frame_00227.png  1280x720  track=24.37483 ms
-[228/360] frame_00228.png  1280x720  track=23.690305 ms
-[229/360] frame_00229.png  1280x720  track=23.157012 ms
-[230/360] frame_00230.png  1280x720  track=22.593539 ms
-[231/360] frame_00231.png  1280x720  track=26.906826 ms
-[232/360] frame_00232.png  1280x720  track=23.433704 ms
-[233/360] frame_00233.png  1280x720  track=22.765839 ms
-[234/360] frame_00234.png  1280x720  track=24.785523 ms
-[235/360] frame_00235.png  1280x720  track=23.124042 ms
-[236/360] frame_00236.png  1280x720  track=22.674909 ms
-[237/360] frame_00237.png  1280x720  track=23.384404 ms
-[238/360] frame_00238.png  1280x720  track=22.583288 ms
-[239/360] frame_00239.png  1280x720  track=22.608438 ms
-[240/360] frame_00240.png  1280x720  track=22.300626 ms
-[241/360] frame_00241.png  1280x720  track=21.838574 ms
-[242/360] frame_00242.png  1280x720  track=22.759599 ms
-[243/360] frame_00243.png  1280x720  track=22.83916 ms
-[244/360] frame_00244.png  1280x720  track=23.312833 ms
-[245/360] frame_00245.png  1280x720  track=22.151015 ms
-[246/360] frame_00246.png  1280x720  track=23.169342 ms
-[247/360] frame_00247.png  1280x720  track=22.93307 ms
-[248/360] frame_00248.png  1280x720  track=22.375177 ms
-[249/360] frame_00249.png  1280x720  track=23.009181 ms
-[250/360] frame_00250.png  1280x720  track=22.411847 ms
-[251/360] frame_00251.png  1280x720  track=23.302333 ms
-[252/360] frame_00252.png  1280x720  track=21.079408 ms
-[253/360] frame_00253.png  1280x720  track=24.155238 ms
-[254/360] frame_00254.png  1280x720  track=25.640688 ms
-[255/360] frame_00255.png  1280x720  track=23.592895 ms
-[256/360] frame_00256.png  1280x720  track=22.607388 ms
-[257/360] frame_00257.png  1280x720  track=25.049474 ms
-[258/360] frame_00258.png  1280x720  track=21.721843 ms
-[259/360] frame_00259.png  1280x720  track=21.892154 ms
-[260/360] frame_00260.png  1280x720  track=23.164552 ms
-[261/360] frame_00261.png  1280x720  track=20.683025 ms
-[262/360] frame_00262.png  1280x720  track=23.666375 ms
-[263/360] frame_00263.png  1280x720  track=20.616405 ms
-[264/360] frame_00264.png  1280x720  track=21.984584 ms
-[265/360] frame_00265.png  1280x720  track=23.327473 ms
-[266/360] frame_00266.png  1280x720  track=22.444017 ms
-[267/360] frame_00267.png  1280x720  track=22.77376 ms
-[268/360] frame_00268.png  1280x720  track=21.468371 ms
-[269/360] frame_00269.png  1280x720  track=24.281659 ms
-[270/360] frame_00270.png  1280x720  track=22.171665 ms
-[271/360] frame_00271.png  1280x720  track=22.032554 ms
-[272/360] frame_00272.png  1280x720  track=23.131122 ms
-[273/360] frame_00273.png  1280x720  track=21.792833 ms
-[274/360] frame_00274.png  1280x720  track=22.748419 ms
-[275/360] frame_00275.png  1280x720  track=21.135458 ms
-[276/360] frame_00276.png  1280x720  track=23.615025 ms
-[277/360] frame_00277.png  1280x720  track=22.076134 ms
-[278/360] frame_00278.png  1280x720  track=24.4254 ms
-[279/360] frame_00279.png  1280x720  track=23.625335 ms
-[280/360] frame_00280.png  1280x720  track=21.808823 ms
-[281/360] frame_00281.png  1280x720  track=21.956274 ms
-[282/360] frame_00282.png  1280x720  track=24.092368 ms
-[283/360] frame_00283.png  1280x720  track=24.032318 ms
-[284/360] frame_00284.png  1280x720  track=23.580565 ms
-[285/360] frame_00285.png  1280x720  track=24.776002 ms
-[286/360] frame_00286.png  1280x720  track=24.295379 ms
-[287/360] frame_00287.png  1280x720  track=23.038091 ms
-[288/360] frame_00288.png  1280x720  track=23.717315 ms
-[289/360] frame_00289.png  1280x720  track=23.193072 ms
-[290/360] frame_00290.png  1280x720  track=22.120086 ms
-[291/360] frame_00291.png  1280x720  track=22.221516 ms
-[292/360] frame_00292.png  1280x720  track=24.610422 ms
-[293/360] frame_00293.png  1280x720  track=20.630065 ms
-[294/360] frame_00294.png  1280x720  track=21.899783 ms
-[295/360] frame_00295.png  1280x720  track=24.206839 ms
-[296/360] frame_00296.png  1280x720  track=27.526681 ms
-[297/360] frame_00297.png  1280x720  track=21.357051 ms
-[298/360] frame_00298.png  1280x720  track=23.341523 ms
-[299/360] frame_00299.png  1280x720  track=24.851803 ms
-[300/360] frame_00300.png  1280x720  track=21.064779 ms
-[301/360] frame_00301.png  1280x720  track=22.182005 ms
-[302/360] frame_00302.png  1280x720  track=25.090225 ms
-[303/360] frame_00303.png  1280x720  track=23.241112 ms
-[304/360] frame_00304.png  1280x720  track=21.965624 ms
-[305/360] frame_00305.png  1280x720  track=22.933661 ms
-[306/360] frame_00306.png  1280x720  track=21.38953 ms
-[307/360] frame_00307.png  1280x720  track=22.476167 ms
-[308/360] frame_00308.png  1280x720  track=24.519791 ms
-[309/360] frame_00309.png  1280x720  track=22.375557 ms
-[310/360] frame_00310.png  1280x720  track=23.829006 ms
-[311/360] frame_00311.png  1280x720  track=23.045331 ms
-[312/360] frame_00312.png  1280x720  track=22.728659 ms
-[313/360] frame_00313.png  1280x720  track=23.140012 ms
-[314/360] frame_00314.png  1280x720  track=21.064268 ms
-[315/360] frame_00315.png  1280x720  track=21.36147 ms
-[316/360] frame_00316.png  1280x720  track=23.256933 ms
-[317/360] frame_00317.png  1280x720  track=24.854873 ms
-[318/360] frame_00318.png  1280x720  track=22.704789 ms
-[319/360] frame_00319.png  1280x720  track=22.252816 ms
-[320/360] frame_00320.png  1280x720  track=25.165495 ms
-[321/360] frame_00321.png  1280x720  track=25.157555 ms
-[322/360] frame_00322.png  1280x720  track=22.307956 ms
-[323/360] frame_00323.png  1280x720  track=23.766826 ms
-[324/360] frame_00324.png  1280x720  track=22.490217 ms
-[325/360] frame_00325.png  1280x720  track=20.409204 ms
-[326/360] frame_00326.png  1280x720  track=22.173035 ms
-[327/360] frame_00327.png  1280x720  track=23.151752 ms
-[328/360] frame_00328.png  1280x720  track=21.113058 ms
-[329/360] frame_00329.png  1280x720  track=22.045375 ms
-[330/360] frame_00330.png  1280x720  track=21.32823 ms
-[331/360] frame_00331.png  1280x720  track=23.166322 ms
-[332/360] frame_00332.png  1280x720  track=21.138089 ms
-[333/360] frame_00333.png  1280x720  track=20.495284 ms
-[334/360] frame_00334.png  1280x720  track=23.453814 ms
-[335/360] frame_00335.png  1280x720  track=24.27495 ms
-[336/360] frame_00336.png  1280x720  track=24.052457 ms
-[337/360] frame_00337.png  1280x720  track=23.417434 ms
-[338/360] frame_00338.png  1280x720  track=20.613655 ms
-[339/360] frame_00339.png  1280x720  track=22.961531 ms
-[340/360] frame_00340.png  1280x720  track=23.144112 ms
-[341/360] frame_00341.png  1280x720  track=21.579292 ms
-[342/360] frame_00342.png  1280x720  track=23.723066 ms
-[343/360] frame_00343.png  1280x720  track=22.485017 ms
-[344/360] frame_00344.png  1280x720  track=22.501508 ms
-[345/360] frame_00345.png  1280x720  track=24.43444 ms
-[346/360] frame_00346.png  1280x720  track=22.174485 ms
-[347/360] frame_00347.png  1280x720  track=23.427744 ms
-[348/360] frame_00348.png  1280x720  track=20.505455 ms
-[349/360] frame_00349.png  1280x720  track=22.526877 ms
-[350/360] frame_00350.png  1280x720  track=26.310252 ms
-[351/360] frame_00351.png  1280x720  track=20.874297 ms
-[352/360] frame_00352.png  1280x720  track=22.664918 ms
-[353/360] frame_00353.png  1280x720  track=24.225589 ms
-[354/360] frame_00354.png  1280x720  track=23.916447 ms
-[355/360] frame_00355.png  1280x720  track=20.818296 ms
-[356/360] frame_00356.png  1280x720  track=22.345037 ms
-[357/360] frame_00357.png  1280x720  track=19.709549 ms
-[358/360] frame_00358.png  1280x720  track=22.741969 ms
-[359/360] frame_00359.png  1280x720  track=23.490774 ms
-[360/360] frame_00360.png  1280x720  track=21.976304 ms
+[28/360] frame_00028.png  1280x720  track=75.615186 ms
+[29/360] frame_00029.png  1280x720  track=52.249764 ms
+[30/360] frame_00030.png  1280x720  track=39.254951 ms
+[31/360] frame_00031.png  1280x720  track=36.337785 ms
+[32/360] frame_00032.png  1280x720  track=37.087928 ms
+[33/360] frame_00033.png  1280x720  track=26.180457 ms
+[34/360] frame_00034.png  1280x720  track=26.051177 ms
+[35/360] frame_00035.png  1280x720  track=27.202023 ms
+[36/360] frame_00036.png  1280x720  track=24.970411 ms
+[37/360] frame_00037.png  1280x720  track=23.624563 ms
+[38/360] frame_00038.png  1280x720  track=23.02804 ms
+[39/360] frame_00039.png  1280x720  track=21.095789 ms
+[40/360] frame_00040.png  1280x720  track=22.138954 ms
+[41/360] frame_00041.png  1280x720  track=22.635967 ms
+[42/360] frame_00042.png  1280x720  track=21.771073 ms
+[43/360] frame_00043.png  1280x720  track=22.860999 ms
+[44/360] frame_00044.png  1280x720  track=22.047714 ms
+[45/360] frame_00045.png  1280x720  track=24.028796 ms
+[46/360] frame_00046.png  1280x720  track=23.042099 ms
+[47/360] frame_00047.png  1280x720  track=21.880154 ms
+[48/360] frame_00048.png  1280x720  track=23.349231 ms
+[49/360] frame_00049.png  1280x720  track=19.950402 ms
+[50/360] frame_00050.png  1280x720  track=20.477955 ms
+[51/360] frame_00051.png  1280x720  track=21.597212 ms
+[52/360] frame_00052.png  1280x720  track=20.722337 ms
+[53/360] frame_00053.png  1280x720  track=20.544936 ms
+[54/360] frame_00054.png  1280x720  track=20.862637 ms
+[55/360] frame_00055.png  1280x720  track=25.540624 ms
+[56/360] frame_00056.png  1280x720  track=26.513449 ms
+[57/360] frame_00057.png  1280x720  track=25.828265 ms
+[58/360] frame_00058.png  1280x720  track=27.252083 ms
+[59/360] frame_00059.png  1280x720  track=23.872685 ms
+[60/360] frame_00060.png  1280x720  track=23.277141 ms
+[61/360] frame_00061.png  1280x720  track=23.503832 ms
+[62/360] frame_00062.png  1280x720  track=24.204236 ms
+[63/360] frame_00063.png  1280x720  track=24.167616 ms
+[64/360] frame_00064.png  1280x720  track=24.056685 ms
+[65/360] frame_00065.png  1280x720  track=24.683589 ms
+[66/360] frame_00066.png  1280x720  track=23.430122 ms
+[67/360] frame_00067.png  1280x720  track=24.135146 ms
+[68/360] frame_00068.png  1280x720  track=23.451842 ms
+[69/360] frame_00069.png  1280x720  track=21.960234 ms
+[70/360] frame_00070.png  1280x720  track=23.072769 ms
+[71/360] frame_00071.png  1280x720  track=22.013394 ms
+[72/360] frame_00072.png  1280x720  track=22.916829 ms
+[73/360] frame_00073.png  1280x720  track=21.458481 ms
+[74/360] frame_00074.png  1280x720  track=22.731228 ms
+[75/360] frame_00075.png  1280x720  track=21.497701 ms
+[76/360] frame_00076.png  1280x720  track=22.459086 ms
+[77/360] frame_00077.png  1280x720  track=24.648259 ms
+[78/360] frame_00078.png  1280x720  track=27.494935 ms
+[79/360] frame_00079.png  1280x720  track=23.04913 ms
+[80/360] frame_00080.png  1280x720  track=21.503971 ms
+[81/360] frame_00081.png  1280x720  track=25.480323 ms
+[82/360] frame_00082.png  1280x720  track=21.617992 ms
+[83/360] frame_00083.png  1280x720  track=22.840899 ms
+[84/360] frame_00084.png  1280x720  track=24.142656 ms
+[85/360] frame_00085.png  1280x720  track=24.632558 ms
+[86/360] frame_00086.png  1280x720  track=23.680893 ms
+[87/360] frame_00087.png  1280x720  track=23.194881 ms
+[88/360] frame_00088.png  1280x720  track=22.405736 ms
+[89/360] frame_00089.png  1280x720  track=23.781663 ms
+[90/360] frame_00090.png  1280x720  track=24.724099 ms
+[91/360] frame_00091.png  1280x720  track=22.688258 ms
+[92/360] frame_00092.png  1280x720  track=23.294711 ms
+[93/360] frame_00093.png  1280x720  track=23.360662 ms
+[94/360] frame_00094.png  1280x720  track=24.512608 ms
+[95/360] frame_00095.png  1280x720  track=22.395726 ms
+[96/360] frame_00096.png  1280x720  track=25.119691 ms
+[97/360] frame_00097.png  1280x720  track=23.906505 ms
+[98/360] frame_00098.png  1280x720  track=22.312756 ms
+[99/360] frame_00099.png  1280x720  track=22.736518 ms
+[100/360] frame_00100.png  1280x720  track=22.847899 ms
+[101/360] frame_00101.png  1280x720  track=24.048385 ms
+[102/360] frame_00102.png  1280x720  track=23.253751 ms
+[103/360] frame_00103.png  1280x720  track=24.698699 ms
+[104/360] frame_00104.png  1280x720  track=23.845525 ms
+[105/360] frame_00105.png  1280x720  track=24.81866 ms
+[106/360] frame_00106.png  1280x720  track=26.428519 ms
+[107/360] frame_00107.png  1280x720  track=23.593302 ms
+[108/360] frame_00108.png  1280x720  track=24.207917 ms
+[109/360] frame_00109.png  1280x720  track=25.727775 ms
+[110/360] frame_00110.png  1280x720  track=22.538837 ms
+[111/360] frame_00111.png  1280x720  track=22.431386 ms
+[112/360] frame_00112.png  1280x720  track=21.531442 ms
+[113/360] frame_00113.png  1280x720  track=22.392606 ms
+[114/360] frame_00114.png  1280x720  track=24.365507 ms
+[115/360] frame_00115.png  1280x720  track=22.301096 ms
+[116/360] frame_00116.png  1280x720  track=24.86611 ms
+[117/360] frame_00117.png  1280x720  track=24.633469 ms
+[118/360] frame_00118.png  1280x720  track=24.334017 ms
+[119/360] frame_00119.png  1280x720  track=22.438537 ms
+[120/360] frame_00120.png  1280x720  track=22.235356 ms
+[121/360] frame_00121.png  1280x720  track=26.453059 ms
+[122/360] frame_00122.png  1280x720  track=23.18782 ms
+[123/360] frame_00123.png  1280x720  track=21.521701 ms
+[124/360] frame_00124.png  1280x720  track=23.579763 ms
+[125/360] frame_00125.png  1280x720  track=24.159946 ms
+[126/360] frame_00126.png  1280x720  track=22.851599 ms
+[127/360] frame_00127.png  1280x720  track=25.026871 ms
+[128/360] frame_00128.png  1280x720  track=25.322463 ms
+[129/360] frame_00129.png  1280x720  track=21.906713 ms
+[130/360] frame_00130.png  1280x720  track=23.652773 ms
+[131/360] frame_00131.png  1280x720  track=24.77229 ms
+[132/360] frame_00132.png  1280x720  track=21.430871 ms
+[133/360] frame_00133.png  1280x720  track=23.507063 ms
+[134/360] frame_00134.png  1280x720  track=21.961254 ms
+[135/360] frame_00135.png  1280x720  track=22.906069 ms
+[136/360] frame_00136.png  1280x720  track=21.3708 ms
+[137/360] frame_00137.png  1280x720  track=22.432126 ms
+[138/360] frame_00138.png  1280x720  track=20.642356 ms
+[139/360] frame_00139.png  1280x720  track=25.717975 ms
+[140/360] frame_00140.png  1280x720  track=27.900587 ms
+[141/360] frame_00141.png  1280x720  track=22.545527 ms
+[142/360] frame_00142.png  1280x720  track=22.077514 ms
+[143/360] frame_00143.png  1280x720  track=25.217922 ms
+[144/360] frame_00144.png  1280x720  track=26.323878 ms
+[145/360] frame_00145.png  1280x720  track=23.888344 ms
+[146/360] frame_00146.png  1280x720  track=23.733763 ms
+[147/360] frame_00147.png  1280x720  track=25.799235 ms
+[148/360] frame_00148.png  1280x720  track=21.717492 ms
+[149/360] frame_00149.png  1280x720  track=22.540357 ms
+[150/360] frame_00150.png  1280x720  track=23.810174 ms
+[151/360] frame_00151.png  1280x720  track=22.886519 ms
+[152/360] frame_00152.png  1280x720  track=21.885463 ms
+[153/360] frame_00153.png  1280x720  track=22.210235 ms
+[154/360] frame_00154.png  1280x720  track=22.378316 ms
+[155/360] frame_00155.png  1280x720  track=23.007449 ms
+[156/360] frame_00156.png  1280x720  track=23.997965 ms
+[157/360] frame_00157.png  1280x720  track=23.263511 ms
+[158/360] frame_00158.png  1280x720  track=22.199005 ms
+[159/360] frame_00159.png  1280x720  track=24.476828 ms
+[160/360] frame_00160.png  1280x720  track=22.520357 ms
+[161/360] frame_00161.png  1280x720  track=23.709653 ms
+[162/360] frame_00162.png  1280x720  track=27.313054 ms
+[163/360] frame_00163.png  1280x720  track=23.688624 ms
+[164/360] frame_00164.png  1280x720  track=23.293551 ms
+[165/360] frame_00165.png  1280x720  track=24.368507 ms
+[166/360] frame_00166.png  1280x720  track=19.894532 ms
+[167/360] frame_00167.png  1280x720  track=22.835499 ms
+[168/360] frame_00168.png  1280x720  track=23.554202 ms
+[169/360] frame_00169.png  1280x720  track=21.105009 ms
+[170/360] frame_00170.png  1280x720  track=22.239975 ms
+[171/360] frame_00171.png  1280x720  track=23.414462 ms
+[172/360] frame_00172.png  1280x720  track=21.829612 ms
+[173/360] frame_00173.png  1280x720  track=23.842184 ms
+[174/360] frame_00174.png  1280x720  track=21.977754 ms
+[175/360] frame_00175.png  1280x720  track=22.370896 ms
+[176/360] frame_00176.png  1280x720  track=23.165671 ms
+[177/360] frame_00177.png  1280x720  track=21.273489 ms
+[178/360] frame_00178.png  1280x720  track=22.936669 ms
+[179/360] frame_00179.png  1280x720  track=23.0727 ms
+[180/360] frame_00180.png  1280x720  track=22.665868 ms
+[181/360] frame_00181.png  1280x720  track=21.36885 ms
+[182/360] frame_00182.png  1280x720  track=22.114344 ms
+[183/360] frame_00183.png  1280x720  track=21.905283 ms
+[184/360] frame_00184.png  1280x720  track=23.366692 ms
+[185/360] frame_00185.png  1280x720  track=20.628166 ms
+[186/360] frame_00186.png  1280x720  track=21.499021 ms
+[187/360] frame_00187.png  1280x720  track=22.431266 ms
+[188/360] frame_00188.png  1280x720  track=22.009374 ms
+[189/360] frame_00189.png  1280x720  track=23.651463 ms
+[190/360] frame_00190.png  1280x720  track=23.841075 ms
+[191/360] frame_00191.png  1280x720  track=26.240548 ms
+[192/360] frame_00192.png  1280x720  track=22.464176 ms
+[193/360] frame_00193.png  1280x720  track=23.721963 ms
+[194/360] frame_00194.png  1280x720  track=23.1449 ms
+[195/360] frame_00195.png  1280x720  track=22.999549 ms
+[196/360] frame_00196.png  1280x720  track=24.578158 ms
+[197/360] frame_00197.png  1280x720  track=22.455166 ms
+[198/360] frame_00198.png  1280x720  track=23.292121 ms
+[199/360] frame_00199.png  1280x720  track=23.09651 ms
+[200/360] frame_00200.png  1280x720  track=22.661318 ms
+[201/360] frame_00201.png  1280x720  track=24.85399 ms
+[202/360] frame_00202.png  1280x720  track=23.09333 ms
+[203/360] frame_00203.png  1280x720  track=21.694532 ms
+[204/360] frame_00204.png  1280x720  track=23.616273 ms
+[205/360] frame_00205.png  1280x720  track=21.892173 ms
+[206/360] frame_00206.png  1280x720  track=23.517892 ms
+[207/360] frame_00207.png  1280x720  track=23.08692 ms
+[208/360] frame_00208.png  1280x720  track=22.695157 ms
+[209/360] frame_00209.png  1280x720  track=20.697386 ms
+[210/360] frame_00210.png  1280x720  track=22.650338 ms
+[211/360] frame_00211.png  1280x720  track=22.304136 ms
+[212/360] frame_00212.png  1280x720  track=22.169935 ms
+[213/360] frame_00213.png  1280x720  track=23.285921 ms
+[214/360] frame_00214.png  1280x720  track=22.789328 ms
+[215/360] frame_00215.png  1280x720  track=21.750383 ms
+[216/360] frame_00216.png  1280x720  track=23.648643 ms
+[217/360] frame_00217.png  1280x720  track=22.071434 ms
+[218/360] frame_00218.png  1280x720  track=21.26805 ms
+[219/360] frame_00219.png  1280x720  track=21.880733 ms
+[220/360] frame_00220.png  1280x720  track=21.3653 ms
+[221/360] frame_00221.png  1280x720  track=22.219695 ms
+[222/360] frame_00222.png  1280x720  track=20.786648 ms
+[223/360] frame_00223.png  1280x720  track=23.656163 ms
+[224/360] frame_00224.png  1280x720  track=22.557267 ms
+[225/360] frame_00225.png  1280x720  track=22.733897 ms
+[226/360] frame_00226.png  1280x720  track=26.797551 ms
+[227/360] frame_00227.png  1280x720  track=23.822944 ms
+[228/360] frame_00228.png  1280x720  track=22.434736 ms
+[229/360] frame_00229.png  1280x720  track=23.290981 ms
+[230/360] frame_00230.png  1280x720  track=22.444166 ms
+[231/360] frame_00231.png  1280x720  track=20.512375 ms
+[232/360] frame_00232.png  1280x720  track=21.845173 ms
+[233/360] frame_00233.png  1280x720  track=21.229559 ms
+[234/360] frame_00234.png  1280x720  track=22.653517 ms
+[235/360] frame_00235.png  1280x720  track=24.081856 ms
+[236/360] frame_00236.png  1280x720  track=23.03868 ms
+[237/360] frame_00237.png  1280x720  track=21.005618 ms
+[238/360] frame_00238.png  1280x720  track=25.457713 ms
+[239/360] frame_00239.png  1280x720  track=21.140069 ms
+[240/360] frame_00240.png  1280x720  track=22.898649 ms
+[241/360] frame_00241.png  1280x720  track=21.569762 ms
+[242/360] frame_00242.png  1280x720  track=24.922331 ms
+[243/360] frame_00243.png  1280x720  track=21.46104 ms
+[244/360] frame_00244.png  1280x720  track=23.502472 ms
+[245/360] frame_00245.png  1280x720  track=22.603357 ms
+[246/360] frame_00246.png  1280x720  track=21.640402 ms
+[247/360] frame_00247.png  1280x720  track=23.237901 ms
+[248/360] frame_00248.png  1280x720  track=24.91391 ms
+[249/360] frame_00249.png  1280x720  track=23.622562 ms
+[250/360] frame_00250.png  1280x720  track=22.798389 ms
+[251/360] frame_00251.png  1280x720  track=21.489961 ms
+[252/360] frame_00252.png  1280x720  track=22.508887 ms
+[253/360] frame_00253.png  1280x720  track=20.996628 ms
+[254/360] frame_00254.png  1280x720  track=22.903419 ms
+[255/360] frame_00255.png  1280x720  track=22.641958 ms
+[256/360] frame_00256.png  1280x720  track=21.523951 ms
+[257/360] frame_00257.png  1280x720  track=22.725977 ms
+[258/360] frame_00258.png  1280x720  track=21.265359 ms
+[259/360] frame_00259.png  1280x720  track=23.675693 ms
+[260/360] frame_00260.png  1280x720  track=22.535647 ms
+[261/360] frame_00261.png  1280x720  track=22.229746 ms
+[262/360] frame_00262.png  1280x720  track=24.174376 ms
+[263/360] frame_00263.png  1280x720  track=20.485575 ms
+[264/360] frame_00264.png  1280x720  track=22.125785 ms
+[265/360] frame_00265.png  1280x720  track=20.965767 ms
+[266/360] frame_00266.png  1280x720  track=21.994114 ms
+[267/360] frame_00267.png  1280x720  track=20.958327 ms
+[268/360] frame_00268.png  1280x720  track=22.762318 ms
+[269/360] frame_00269.png  1280x720  track=21.21307 ms
+[270/360] frame_00270.png  1280x720  track=22.738977 ms
+[271/360] frame_00271.png  1280x720  track=21.158639 ms
+[272/360] frame_00272.png  1280x720  track=22.777618 ms
+[273/360] frame_00273.png  1280x720  track=20.930978 ms
+[274/360] frame_00274.png  1280x720  track=23.821774 ms
+[275/360] frame_00275.png  1280x720  track=21.169649 ms
+[276/360] frame_00276.png  1280x720  track=22.818168 ms
+[277/360] frame_00277.png  1280x720  track=24.87687 ms
+[278/360] frame_00278.png  1280x720  track=23.257681 ms
+[279/360] frame_00279.png  1280x720  track=21.881543 ms
+[280/360] frame_00280.png  1280x720  track=22.577547 ms
+[281/360] frame_00281.png  1280x720  track=21.436951 ms
+[282/360] frame_00282.png  1280x720  track=22.392976 ms
+[283/360] frame_00283.png  1280x720  track=20.531426 ms
+[284/360] frame_00284.png  1280x720  track=22.105795 ms
+[285/360] frame_00285.png  1280x720  track=19.782481 ms
+[286/360] frame_00286.png  1280x720  track=19.093658 ms
+[287/360] frame_00287.png  1280x720  track=20.317374 ms
+[288/360] frame_00288.png  1280x720  track=21.730432 ms
+[289/360] frame_00289.png  1280x720  track=23.12075 ms
+[290/360] frame_00290.png  1280x720  track=22.883629 ms
+[291/360] frame_00291.png  1280x720  track=22.897308 ms
+[292/360] frame_00292.png  1280x720  track=23.660143 ms
+[293/360] frame_00293.png  1280x720  track=23.508792 ms
+[294/360] frame_00294.png  1280x720  track=20.187674 ms
+[295/360] frame_00295.png  1280x720  track=21.701772 ms
+[296/360] frame_00296.png  1280x720  track=22.142484 ms
+[297/360] frame_00297.png  1280x720  track=21.587011 ms
+[298/360] frame_00298.png  1280x720  track=21.130369 ms
+[299/360] frame_00299.png  1280x720  track=21.172469 ms
+[300/360] frame_00300.png  1280x720  track=23.14975 ms
+[301/360] frame_00301.png  1280x720  track=21.962173 ms
+[302/360] frame_00302.png  1280x720  track=20.803437 ms
+[303/360] frame_00303.png  1280x720  track=23.06587 ms
+[304/360] frame_00304.png  1280x720  track=21.3129 ms
+[305/360] frame_00305.png  1280x720  track=24.124956 ms
+[306/360] frame_00306.png  1280x720  track=23.311142 ms
+[307/360] frame_00307.png  1280x720  track=20.448195 ms
+[308/360] frame_00308.png  1280x720  track=20.799347 ms
+[309/360] frame_00309.png  1280x720  track=21.914113 ms
+[310/360] frame_00310.png  1280x720  track=20.955268 ms
+[311/360] frame_00311.png  1280x720  track=21.132388 ms
+[312/360] frame_00312.png  1280x720  track=23.859924 ms
+[313/360] frame_00313.png  1280x720  track=20.409485 ms
+[314/360] frame_00314.png  1280x720  track=22.124895 ms
+[315/360] frame_00315.png  1280x720  track=20.648586 ms
+[316/360] frame_00316.png  1280x720  track=24.596428 ms
+[317/360] frame_00317.png  1280x720  track=22.457656 ms
+[318/360] frame_00318.png  1280x720  track=22.314576 ms
+[319/360] frame_00319.png  1280x720  track=21.592691 ms
+[320/360] frame_00320.png  1280x720  track=21.148519 ms
+[321/360] frame_00321.png  1280x720  track=21.029718 ms
+[322/360] frame_00322.png  1280x720  track=21.010488 ms
+[323/360] frame_00323.png  1280x720  track=21.407431 ms
+[324/360] frame_00324.png  1280x720  track=20.949917 ms
+[325/360] frame_00325.png  1280x720  track=20.689236 ms
+[326/360] frame_00326.png  1280x720  track=21.819683 ms
+[327/360] frame_00327.png  1280x720  track=20.902728 ms
+[328/360] frame_00328.png  1280x720  track=20.708956 ms
+[329/360] frame_00329.png  1280x720  track=20.544105 ms
+[330/360] frame_00330.png  1280x720  track=21.505021 ms
+[331/360] frame_00331.png  1280x720  track=21.638242 ms
+[332/360] frame_00332.png  1280x720  track=21.38416 ms
+[333/360] frame_00333.png  1280x720  track=21.815202 ms
+[334/360] frame_00334.png  1280x720  track=24.447777 ms
+[335/360] frame_00335.png  1280x720  track=21.144729 ms
+[336/360] frame_00336.png  1280x720  track=21.659181 ms
+[337/360] frame_00337.png  1280x720  track=21.373041 ms
+[338/360] frame_00338.png  1280x720  track=20.953398 ms
+[339/360] frame_00339.png  1280x720  track=21.003988 ms
+[340/360] frame_00340.png  1280x720  track=22.040064 ms
+[341/360] frame_00341.png  1280x720  track=21.942333 ms
+[342/360] frame_00342.png  1280x720  track=22.308485 ms
+[343/360] frame_00343.png  1280x720  track=20.331345 ms
+[344/360] frame_00344.png  1280x720  track=19.57557 ms
+[345/360] frame_00345.png  1280x720  track=20.380464 ms
+[346/360] frame_00346.png  1280x720  track=22.198765 ms
+[347/360] frame_00347.png  1280x720  track=21.699092 ms
+[348/360] frame_00348.png  1280x720  track=20.488165 ms
+[349/360] frame_00349.png  1280x720  track=20.445185 ms
+[350/360] frame_00350.png  1280x720  track=23.385992 ms
+[351/360] frame_00351.png  1280x720  track=21.128088 ms
+[352/360] frame_00352.png  1280x720  track=24.88416 ms
+[353/360] frame_00353.png  1280x720  track=20.528296 ms
+[354/360] frame_00354.png  1280x720  track=21.093699 ms
+[355/360] frame_00355.png  1280x720  track=21.254469 ms
+[356/360] frame_00356.png  1280x720  track=20.559316 ms
+[357/360] frame_00357.png  1280x720  track=20.694176 ms
+[358/360] frame_00358.png  1280x720  track=20.395064 ms
+[359/360] frame_00359.png  1280x720  track=20.488755 ms
+[360/360] frame_00360.png  1280x720  track=21.467411 ms
 Shutdown
-SLAM Finished at System Time: 1777437030.48814
+SLAM Finished at System Time: 1778602285.29241
 
  TIME STATS in ms (mean$\pm$std)
 OpenCV version: 4.5.4
 ---------------------------
 Tracking
 
-ORB Extraction: 18.593$\pm$2.566
-Pose Prediction: 0.95514$\pm$1.0629
-LM Track: 1.58$\pm$0.29551
-New KF decision: 0.037048$\pm$0.046853
+ORB Extraction: 18.122$\pm$2.4537
+Pose Prediction: 0.90443$\pm$1.0323
+LM Track: 1.5072$\pm$0.22471
+New KF decision: 0.036088$\pm$0.047196
 Total Tracking: -nan$\pm$-nan
 
 
 
 Local Mapping
 
-KF Insertion: 4.4987$\pm$1.5881
-MP Culling: 0.020835$\pm$0.036424
-MP Creation: 11.689$\pm$5.7619
-LBA: 18.781$\pm$4.8728
-KF Culling: 1.6799$\pm$0.5684
-Total Local Mapping: 36.174$\pm$9.4094
+KF Insertion: 4.6241$\pm$1.7991
+MP Culling: 0.022477$\pm$0.038134
+MP Creation: 12.314$\pm$6.3333
+LBA: 19.496$\pm$4.9475
+KF Culling: 1.7529$\pm$0.60015
+Total Local Mapping: 37.688$\pm$9.2445
 ---------------------------
 
 LBA complexity (mean$\pm$std)
-LBA Edges: 5207.7$\pm$588.68
-LBA KF optimized: 11.364$\pm$2.1315
+LBA Edges: 5369.2$\pm$664.08
+LBA KF optimized: 11.605$\pm$2.3624
 LBA KF fixed: 1$\pm$0
 LBA MP: -nan$\pm$-nan
 
-LBA executions: 77
+LBA executions: 76
 LBA aborts: 0
 ---------------------------
 
 Map complexity
 KFs in map: 11
-MPs in map: 1222
+MPs in map: 1197
 ---------------------------
 
 Place Recognition (mean$\pm$std)
-Database Query: 0.30578$\pm$0.11218
-SE3 estimation: 0.0001925$\pm$5.9319e-05
-Total Place Recognition: 0.26839$\pm$0.15779
+Database Query: 0.3278$\pm$0.092055
+SE3 estimation: 0.0001837$\pm$8.8909e-05
+Total Place Recognition: 0.30969$\pm$0.18213
 
 
 Loop Closing (mean$\pm$std)
@@ -490,7 +490,7 @@ Number of MPs: -nan$\pm$-nan
 Saving keyframe trajectory to KeyFrameTrajectory.txt ...
 
 Saving map to Map.ply ...
-  PLY: 1222 points, 11 keyframes (1277 verts, 88 edges) -> Map.ply
+  PLY: 1197 points, 11 keyframes (1252 verts, 88 edges) -> Map.ply
 
 --- Summary ---
 Frames fed:    360
