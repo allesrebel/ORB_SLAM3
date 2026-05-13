@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
     score_log << "frame,score_curr\n";
 
     std::ofstream kp_stats(out_dir + "/keypoint_stats.csv");
-    kp_stats << "frame,count,min_x,max_x,min_y,max_y,var_x,var_y\n";
+    kp_stats << "frame,count,min_x,max_x,min_y,max_y,var_x,var_y,min_th\n";
 
     auto t0 = std::chrono::steady_clock::now();
 
@@ -266,7 +266,7 @@ int main(int argc, char** argv) {
 
         if (desc.empty()) {
             score_log << i << ",0\n";
-            kp_stats << i << ",0,0,0,0,0,0,0\n";
+            kp_stats << i << ",0,0,0,0,0,0,0," << current_minTh << "\n";
             ++leaving_counter;
             continue;
         }
@@ -298,11 +298,10 @@ int main(int argc, char** argv) {
         var_x /= kps.size();
         var_y /= kps.size();
 
-        kp_stats << i << "," << kps.size() << "," 
-                 << min_x << "," << max_x << "," 
-                 << min_y << "," << max_y << "," 
-                 << var_x << "," << var_y << "\n";
-        // -----------------------------
+        kp_stats << i << "," << kps.size() << ","
+                 << min_x << "," << max_x << ","
+                 << min_y << "," << max_y << ","
+                 << var_x << "," << var_y << "," << current_minTh << "\n";        // -----------------------------
 
         DBoW2::BowVector  bow_t;
         DBoW2::FeatureVector fv_t;
