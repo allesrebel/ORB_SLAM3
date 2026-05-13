@@ -1,52 +1,90 @@
 import optuna
 import os
 import sys
+import subprocess
+import json
+import time
+import glob
+
+# Target a specific task for the sweep
+TASK = "GrassGIS/46646"
+FRAMES_DIR = f"/root/orbslam3_runs/research_eval/{TASK}/frames"
+GT_PATH = f"/root/orbslam3_runs/research_eval/{TASK}/ground_truth.json"
+ORB_VOCAB = "/root/clean/ORB_SLAM3/Vocabulary/ORBvoc.txt"
+YAML_PATH = "/root/clean/ORB_SLAM3/Examples/Monocular/VideoCUA_1080p.yaml"
+BIN_PATH = "/root/clean/ORB_SLAM3/Examples/Monocular/mono_topological_screencast"
+OUT_DIR = f"/tmp/sweep_output_{TASK.split('/')[0]}"
+
+def get_gt_count():
+    if not os.path.exists(GT_PATH):
+        return 2 # fallback
+    with open(GT_PATH) as f:
+        return len(json.load(f).get('places', []))
+
+GT_COUNT = get_gt_count()
+
+def run_topo_slam(target_kp, hash_th, affine_min):
+    os.makedirs(OUT_DIR, exist_ok=True)
+    
+    cmd = [
+        BIN_PATH,
+        ORB_VOCAB,
+        YAML_PATH,
+        FRAMES_DIR,
+        "15.0",
+        "--out", OUT_DIR,
+        "--target_kp", str(target_kp),
+        "--hash_th", str(hash_th),
+        "--affine_min", str(affine_min)
+    ]
+    
+    start = time.time()
+    try:
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        return None, None
+        
+    duration = time.time() - start
+    
+    pred_path = os.path.join(OUT_DIR, "place_graph.json")
+    if not os.path.exists(pred_path):
+        return None, None
+        
+    with open(pred_path) as f:
+        pred_data = json.load(f)
+        
+    pred_count = len(pred_data.get('places', []))
+    ged = abs(GT_COUNT - pred_count)
+    
+    frame_files = glob.glob(os.path.join(FRAMES_DIR, "frame_*.png"))
+    frames = len(frame_files) if frame_files else 100
+    latency = (duration / max(frames, 1)) * 1000.0
+    
+    return ged, latency
 
 def objective(trial):
-    """
-    Optuna objective function for the Design Space Exploration (DSE).
-    It sweeps through the continuous and discrete parameter space of the 
-    Hybrid VLM-SLAM Controller to find the Pareto optimal configurations.
-    """
-    # 1. Reflex Constraints (Topo-SLAM params)
     target_keypoints = trial.suggest_int('target_keypoints', 500, 2000)
     hash_similarity_threshold = trial.suggest_float('hash_similarity_threshold', 0.75, 0.95)
     affine_min_inliers = trial.suggest_int('affine_min_inliers', 5, 30)
     
-    # 2. Chaos Metrics (Controller params)
-    motion_variance_threshold = trial.suggest_float('motion_variance_threshold', 0.001, 0.05, log=True)
-    vlm_cooldown_frames = trial.suggest_int('vlm_cooldown_frames', 1, 15)
-
-    # In a full execution, this function would:
-    # 1. Inject these parameters into the C++ SLAM backend (e.g., via ZeroMQ IPC).
-    # 2. Run the pipeline (Controller -> SLAM -> VLM) over the VideoCUA tasks.
-    # 3. Call `eval_harness.py` to calculate real GED and Latency.
+    ged, latency = run_topo_slam(target_keypoints, hash_similarity_threshold, affine_min_inliers)
     
-    # --- MOCK COST FUNCTION FOR DEMONSTRATION ---
-    # Example logic: Higher hash threshold reduces GED errors but might fail if too strict.
-    # Higher keypoints increases latency but stabilizes the affine check.
-    
-    # Objective 1: Minimize Graph Edit Distance (GED)
-    mock_ged = abs(1.33 - (hash_similarity_threshold - 0.85) * 5) + (30 - affine_min_inliers) * 0.05
-    
-    # Objective 2: Minimize Latency (ms/frame)
-    mock_latency_ms = 40.0 + (target_keypoints - 1000) * 0.02 + (15 - vlm_cooldown_frames) * 2.0
-    
-    return mock_ged, mock_latency_ms
+    if ged is None:
+        raise optuna.TrialPruned()
+        
+    return ged, latency
 
 if __name__ == "__main__":
-    # Multi-objective optimization: We want to minimize both GED and Latency
     study = optuna.create_study(directions=["minimize", "minimize"])
     
-    print("Starting Design Space Exploration (DSE) Sweep...")
-    # Run a quick sweep of 50 trials
-    study.optimize(objective, n_trials=50)
+    print(f"Starting HARDWARE-IN-THE-LOOP Design Space Exploration (DSE) Sweep on {TASK}...")
+    # Running 10 trials for demonstration speed (in real research it'd be 50+)
+    study.optimize(objective, n_trials=10)
     
     print("\n" + "="*50)
     print("--- DSE Sweep Complete ---")
-    print(f"Number of finished trials: {len(study.trials)}")
     
-    print("\nPareto Optimal Configurations (Best Trade-offs between Accuracy & Latency):")
+    print("\nPareto Optimal Configurations:")
     for trial in study.best_trials:
         print(f"  Trial {trial.number}: GED={trial.values[0]:.2f}, Latency={trial.values[1]:.2f} ms/frame")
         for k, v in trial.params.items():
@@ -60,8 +98,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from optuna.visualization.matplotlib import plot_pareto_front
     
-    # Plot Pareto Front
     fig = plot_pareto_front(study, target_names=["GED", "Latency (ms/frame)"])
     plt.tight_layout()
-    plt.savefig("pareto_front.png")
-    print("Saved Pareto Front plot to pareto_front.png")
+    plt.savefig("pareto_front_real.png")
+    print("Saved Real Pareto Front plot to pareto_front_real.png")

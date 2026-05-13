@@ -3,20 +3,14 @@ import glob
 import json
 import time
 import argparse
-from PIL import Image
-import torch
-from transformers import BlipProcessor, BlipForConditionalGeneration
+import cv2
+from skimage.metrics import structural_similarity as ssim
 
-def build_graph(frames_dir, fps):
+def build_graph(frames_dir, threshold, fps):
     frame_files = sorted(glob.glob(os.path.join(frames_dir, "frame_*.png")))
     if not frame_files:
         return {"fps": fps, "n_frames": 0, "places": [], "edges": [], "latency_stats": {}}
         
-    print("Loading local VLM (BLIP) for semantic state analysis...")
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-    model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
-    
     places = []
     edges = []
     
@@ -29,23 +23,18 @@ def build_graph(frames_dir, fps):
         "frame_range": [0, 0]
     })
     
-    print(f"Querying VLM for {len(frame_files)} frames...")
+    print(f"Computing SSIM for {len(frame_files)} frames...")
     start_time = time.time()
     
-    rep_img = Image.open(frame_files[0]).convert("RGB")
-    inputs = processor(rep_img, return_tensors="pt").to(device)
-    out = model.generate(**inputs)
-    rep_caption = processor.decode(out[0], skip_special_tokens=True)
+    prev_img = cv2.imread(frame_files[0], cv2.IMREAD_GRAYSCALE)
     
     for i in range(1, len(frame_files)):
-        curr_img = Image.open(frame_files[i]).convert("RGB")
-        inputs = processor(curr_img, return_tensors="pt").to(device)
-        out = model.generate(**inputs)
-        curr_caption = processor.decode(out[0], skip_special_tokens=True)
+        curr_img = cv2.imread(frame_files[i], cv2.IMREAD_GRAYSCALE)
         
-        changed = (curr_caption != rep_caption)
+        rep_img = cv2.imread(frame_files[representative_frame], cv2.IMREAD_GRAYSCALE)
+        score, _ = ssim(rep_img, curr_img, full=True)
         
-        if not changed:
+        if score >= threshold:
             places[current_place_id]["frame_range"][1] = i
         else:
             new_id = current_place_id + 1
@@ -62,10 +51,9 @@ def build_graph(frames_dir, fps):
             })
             current_place_id = new_id
             representative_frame = i
-            rep_caption = curr_caption
             
     duration = time.time() - start_time
-    print(f"Real VLM baseline finished in {duration:.2f}s")
+    print(f"SSIM baseline finished in {duration:.2f}s")
     
     graph = {
         "fps": fps, 
@@ -84,12 +72,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--frames-dir", required=True)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--threshold", type=float, default=0.95)
     parser.add_argument("--fps", type=float, default=15.0)
     args = parser.parse_args()
     
-    graph = build_graph(args.frames_dir, args.fps)
+    graph = build_graph(args.frames_dir, args.threshold, args.fps)
     
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, 'w') as f:
         json.dump(graph, f, indent=2)
-    print(f"Wrote VLM baseline graph with {len(graph['places'])} places to {args.out}")
+    print(f"Wrote SSIM baseline graph with {len(graph['places'])} places to {args.out}")

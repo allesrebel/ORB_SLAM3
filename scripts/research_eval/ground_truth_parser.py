@@ -11,13 +11,19 @@ def parse_ground_truth(action_log_path, fps=30):
     # We consider significant actions as triggering a new state.
     # Significant: CLICK, DBLCLICK, KEY_PRESS, SCROLL
     state_frames = [0] # Frame 0 is State 0
-    current_frame = 0
     
     for action in actions:
         atype = action.get('action_type', '')
+        
         if atype in ['CLICK', 'DBLCLICK', 'KEY_PRESS', 'SCROLL']:
+            params = action.get('action_params', {})
+            # Stricter filtering: Ensure CLICK has a semantic target (text) or a known UI component (groundcua_id)
+            if atype in ['CLICK', 'DBLCLICK'] and not params.get('text') and not action.get('groundcua_id'):
+                continue
+                
             ts = action.get('timestamp', 0.0)
             frame_idx = int(ts * fps)
+            
             # Debounce rapid actions
             if len(state_frames) == 0 or frame_idx > state_frames[-1] + int(fps * 0.5):
                 state_frames.append(frame_idx)
