@@ -56,3 +56,12 @@ if __name__ == "__main__":
                 print(f"    {k}: {v}")
         print()
     print("="*50)
+    
+    import matplotlib.pyplot as plt
+    from optuna.visualization.matplotlib import plot_pareto_front
+    
+    # Plot Pareto Front
+    fig = plot_pareto_front(study, target_names=["GED", "Latency (ms/frame)"])
+    plt.tight_layout()
+    plt.savefig("pareto_front.png")
+    print("Saved Pareto Front plot to pareto_front.png")
