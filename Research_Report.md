@@ -8,25 +8,26 @@ The baseline geometric SLAM (ORB-SLAM3) fails to track flat UI screens because i
 
 However, pure BoW struggles with sparse features on flat UI panels and cannot distinguish between spatial re-arrangements of identical elements. We introduced three critical enhancements to make Topological SLAM robust for UI mapping:
 
-1. **Pixel Hashing:** Introduced a 16x16 Block Mean Hash as a fast pre-filter to enforce gross layout similarity before considering BoW matches.
-2. **Spatial Verification (Affine RANSAC):** Implemented a rigorous spatial verification step. Even if DBoW2 suggests a match, we use RANSAC to estimate a 2D affine transform between the current frame's ORB features and the proposed state. If the UI layout is structurally different (e.g., icons rearranged), the match is rejected.
-3. **Grid Enforcement:** Lowered the `ORBextractor.minThFAST` threshold to 2. This forces the feature extractor to find faint contrast gradients in visually flat regions (like empty documents or sidebars), guaranteeing robust spatial anchors across the entire screen.
+1. **Perceptual Hashing (DCT pHash):** Replaced simplistic mean hashing with a Discrete Cosine Transform (DCT) based Perceptual Hash. This creates a resilient global descriptor that successfully ignores minor pixel shifts caused by scrolling, drastically reducing layout-invariant false positives without breaking on slight vertical translations.
+2. **Spatial Verification (Affine RANSAC) with Degeneracy Fallback:** We estimate a 2D affine transform using RANSAC between ORB features. If the UI layout is structurally different, the match is rejected. Crucially, if the screen is highly sparse (e.g., a blank page) and yields fewer than 15 features (where RANSAC becomes degenerate), the system safely falls back to trusting the robust pHash rather than erroneously breaking the state.
+3. **EMA-Damped Grid Enforcement (PID):** We implemented a dynamic PID controller that targets a fixed rate of 1000 keypoints per frame by continuously adjusting the `minThFAST` threshold. An Exponential Moving Average (EMA) filter dampens incoming feature counts, and derivative adjustments are clamped to prevent oscillation, ensuring consistent spatial anchors across both sparse and dense UIs.
 
 ## 3. Baselines for Comparison
-To validate the enhanced Topo-SLAM pipeline, we evaluated it alongside two other distinct methodological classes:
-* **The Deep Feature / Embedding Baseline:** Utilizes pre-trained vision encoders (e.g., CLIP) + Cosine Similarity Thresholding to segment states. Robust to noise but relies on heavy GPU computation and risks losing fine spatial details due to global pooling.
-* **The Vision-Language Model (VLM) Baseline:** Prompting frontier AI models to detect state changes. While offering peak semantic accuracy, VLMs suffer from prohibitive latency and cost, rendering them unviable for real-time, on-device tracking.
+To validate the enhanced Topo-SLAM pipeline, we evaluated it alongside three distinct methodological classes:
+* **Structural Similarity (SSIM) Baseline:** A naive, purely CPU-bound classical computer vision baseline that segments states based on thresholded pixel-level changes.
+* **The Deep Feature / Embedding Baseline:** Utilizes pre-trained vision encoders (CLIP) + Cosine Similarity Thresholding to segment states. 
+* **The Vision-Language Model (VLM) Baseline:** A local BLIP-based semantic captioning model evaluating state changes by identifying literal semantic deviations in UI layout or text. While offering high semantic accuracy, it establishes the latency/compute upper bound.
 
 *Note: The traditional geometric SLAM baseline was excluded from formal quantitative analysis because it consistently fails to initialize or track across textureless 2D UI screencasts.*
 
 ## 4. Experimental Design
-The evaluation utilized the **ServiceNow/VideoCUA dataset**, which features real-world human-computer interactions.
-* **Ground Truth:** We parsed the human-annotated `action_log.json` to define "true" temporal state boundaries based on significant actions (clicks, key presses, scrolls).
-* **Execution:** All baselines processed the exact same held-out video tasks (`OnlyOffice_Forms`, `Conky`, and `GrassGIS`), sampled at a normalized 15 FPS to ensure a fair latency and graph construction comparison.
+The evaluation utilized **50 distinct tasks** from the **ServiceNow/VideoCUA dataset**.
+* **Ground Truth Sanitization:** We parsed the human-annotated `action_log.json` to define temporal state boundaries based on significant actions, explicitly filtering out dead clicks or pure hover actions to establish a highly reliable visual state graph.
+* **Execution:** All baselines processed the exact same 50 video tasks, sampled at a normalized 15 FPS.
 * **Metrics:** 
-  * **Graph Edit Distance (GED):** Structural difference between predicted states and ground-truth states.
-  * **Ratio:** Predicted states vs. Ground Truth states (ideal is 1.0).
-  * **Latency:** Milliseconds per frame and overall FPS.
+  * **Temporal Intersection over Union (tIoU):** Predicted state intervals are aligned to Ground Truth intervals using Hungarian Bipartite Matching to maximize tIoU.
+  * **Graph Edit Distance (GED):** Calculated using the true sequence alignment, penalizing node substitutions by `1 - tIoU`, and accounting for unmatched false splits and misses.
+  * **Latency:** Empirical wall-clock tracking time directly parsed from execution logs.
 
 ## 5. Results & Analysis
 

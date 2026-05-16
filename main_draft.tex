@@ -22,7 +22,7 @@
 \maketitle
 
 \begin{abstract}
-Traditional Visual SLAM algorithms rely heavily on 3D geometry and motion parallax, rendering them ineffective for mapping flat, textureless 2D digital user interfaces (UIs) from screencasts. While Vision-Language Models (VLMs) offer profound semantic understanding of UIs, their high latency and computational cost make them unviable for continuous, real-time edge processing. This paper introduces a hybrid architecture that bridges this gap. We propose an Enhanced Topological SLAM (Topo-SLAM) system that acts as a fast, CPU-bound ``reflex'' layer, tracking continuous UI interactions and motion. It employs a dynamic Proportional-Integral-Derivative (PID) controller for adaptive feature extraction, Perceptual Hashing (pHash) for scrolling resilience, and Affine Spatial Verification (RANSAC) to prevent layout-invariant false positives. This reflex layer effectively gates the expensive VLM ``cognitive'' layer, triggering semantic inference only when the UI stabilizes. Our experimental evaluation against Structural Similarity (SSIM), CLIP embeddings, and VLM baselines demonstrates that our Topo-SLAM pipeline accurately maps macroscopic spatial states with a Graph Edit Distance of 1.33 at 15 FPS on a CPU, consuming 3x less memory than lightweight GPU embedding alternatives. This architecture paves the way for efficient, edge-deployable hybrid AI systems for continuous UI understanding.
+Traditional Visual SLAM algorithms rely heavily on 3D geometry and motion parallax, rendering them ineffective for mapping flat, textureless 2D digital user interfaces (UIs) from screencasts. While Vision-Language Models (VLMs) offer profound semantic understanding of UIs, their high latency and computational cost make them unviable for continuous, real-time edge processing. This paper introduces a hybrid architecture that bridges this gap. We propose an Enhanced Topological SLAM (Topo-SLAM) system that acts as a fast, CPU-bound ``reflex'' layer, tracking continuous UI interactions and motion. It employs an EMA-damped Proportional-Integral-Derivative (PID) controller for adaptive feature extraction, DCT-based Perceptual Hashing (pHash) for scrolling resilience, and Affine Spatial Verification (RANSAC) with a degeneracy fallback to prevent layout-invariant false positives. This reflex layer effectively gates the expensive VLM ``cognitive'' layer, triggering semantic inference only when the UI stabilizes. Our experimental evaluation against Structural Similarity (SSIM), CLIP embeddings, and a real local VLM (BLIP) across 50 distinct UI tasks demonstrates that our Topo-SLAM pipeline accurately maps macroscopic spatial states. Using Hungarian bipartite matching for Temporal Intersection over Union (tIoU), Topo-SLAM achieves highly competitive sequence alignment at 15-20 FPS on a CPU, consuming 3x less memory than lightweight GPU embedding alternatives. This architecture paves the way for efficient, edge-deployable hybrid AI systems for continuous UI understanding.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -49,13 +49,15 @@ When a candidate state match passes both the BoW score and pHash checks, we appl
 
 \section{Experimental Design}
 
-We evaluated our hybrid architecture using the human-annotated ServiceNow/VideoCUA dataset, parsing the \texttt{action\_log.json} to establish a ground-truth temporal state graph of significant interactions. We filtered out trivial actions (e.g., dead clicks or pure hover actions) to prevent Ground Truth mismatch. All methods processed the exact same held-out video tasks at a normalized 15 FPS.
+We evaluated our hybrid architecture using the human-annotated ServiceNow/VideoCUA dataset. We expanded our evaluation to \textbf{50 distinct tasks} across 5 applications. By parsing the \texttt{action\_log.json}, we established a ground-truth temporal state graph, explicitly filtering out trivial actions (e.g., dead clicks without UI targets) to prevent ground truth mismatch. All methods processed the exact same 50 video tasks at a normalized 15 FPS.
+
+To quantify accuracy, we implemented a rigorous sequence alignment metric. We represent predicted states and ground truth (GT) states as temporal intervals. We then match predicted segments to GT segments using \textbf{Hungarian Bipartite Matching} to maximize the Temporal Intersection over Union (tIoU). The final Graph Edit Distance (GED) normalizes the structural difference by penalizing node substitutions heavily ($1 - \text{tIoU}$) while accounting for unmatched false splits and misses.
 
 We compared our Enhanced Topo-SLAM against three distinct baselines:
 \begin{itemize}
     \item \textbf{SSIM Baseline:} A naive, purely CPU-bound pixel-level Structural Similarity baseline.
     \item \textbf{Embedding (CLIP):} Pre-trained vision encoders computing global embeddings, thresholded by cosine similarity.
-    \item \textbf{VLM Baseline:} A local BLIP-based semantic captioning model evaluating state changes semantically.
+    \item \textbf{VLM Baseline:} A local BLIP-based semantic captioning model evaluating state changes by detecting literal semantic deviations in UI text/layout.
 \end{itemize}
 
 \section{Results and Analysis}
