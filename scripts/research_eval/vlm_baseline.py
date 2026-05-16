@@ -29,19 +29,24 @@ def build_graph(frames_dir, fps):
         "frame_range": [0, 0]
     })
     
-    print(f"Querying VLM for {len(frame_files)} frames...")
+    print(f"Querying VLM for {len(frame_files)} frames (Batched)...")
     start_time = time.time()
     
-    rep_img = Image.open(frame_files[0]).convert("RGB")
-    inputs = processor(rep_img, return_tensors="pt").to(device)
-    out = model.generate(**inputs)
-    rep_caption = processor.decode(out[0], skip_special_tokens=True)
+    batch_size = 16
+    all_captions = []
+    
+    for i in range(0, len(frame_files), batch_size):
+        batch_files = frame_files[i:i+batch_size]
+        images = [Image.open(f).convert("RGB") for f in batch_files]
+        inputs = processor(images=images, return_tensors="pt", padding=True).to(device)
+        out = model.generate(**inputs)
+        captions = processor.batch_decode(out, skip_special_tokens=True)
+        all_captions.extend(captions)
+        
+    rep_caption = all_captions[0]
     
     for i in range(1, len(frame_files)):
-        curr_img = Image.open(frame_files[i]).convert("RGB")
-        inputs = processor(curr_img, return_tensors="pt").to(device)
-        out = model.generate(**inputs)
-        curr_caption = processor.decode(out[0], skip_special_tokens=True)
+        curr_caption = all_captions[i]
         
         changed = (curr_caption != rep_caption)
         

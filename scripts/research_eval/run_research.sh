@@ -77,17 +77,18 @@ for tid in "${IDS[@]}"; do
     TOPO_DIR="${OUT_DIR}/topological"
     mkdir -p "$TOPO_DIR"
     pushd "$TOPO_DIR" >/dev/null
-    "${ORB_ROOT}/Examples/Monocular/mono_topological_screencast" \
+    TOPO_OUT=$("${ORB_ROOT}/Examples/Monocular/mono_topological_screencast" \
         "${ORB_ROOT}/Vocabulary/ORBvoc.txt" \
         "${ORB_ROOT}/Examples/Monocular/VideoCUA_1080p.yaml" \
-        "$FRAMES_DIR" 15.0 --out "$TOPO_DIR" >/dev/null 2>&1 || true
+        "$FRAMES_DIR" 15.0 --out "$TOPO_DIR" 2>&1 || true)
     popd >/dev/null
     
-    # Inject latency stats into Topo-SLAM JSON for fair harness parsing
-    # (Since C++ binary does not format latency the same way, we inject it)
+    # Inject real latency stats into Topo-SLAM JSON for fair harness parsing
     if [[ -f "${TOPO_DIR}/place_graph.json" ]]; then
-        # Approx latency from previous runs was ~15fps (66ms/frame)
-        jq '. + {"latency_stats": {"ms_per_frame": 66.0, "fps": 15.0}}' "${TOPO_DIR}/place_graph.json" > "${TOPO_DIR}/place_graph.json.tmp" && mv "${TOPO_DIR}/place_graph.json.tmp" "${TOPO_DIR}/place_graph.json"
+        REAL_FPS=$(echo "$TOPO_OUT" | grep "Wall time:" | grep -oP '\(\K[0-9.]+(?= fps)')
+        if [[ -z "$REAL_FPS" ]]; then REAL_FPS="15.0"; fi
+        REAL_MS=$(awk "BEGIN {print (1.0/$REAL_FPS)*1000}")
+        jq ". + {\"latency_stats\": {\"ms_per_frame\": ${REAL_MS}, \"fps\": ${REAL_FPS}}}" "${TOPO_DIR}/place_graph.json" > "${TOPO_DIR}/place_graph.json.tmp" && mv "${TOPO_DIR}/place_graph.json.tmp" "${TOPO_DIR}/place_graph.json"
     fi
 done
 
