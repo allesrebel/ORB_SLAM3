@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # The exact commit used for the research report
-ORB_COMMIT="2b70a53b88f55d6d9e329db98969093b21d4273b"
+ORB_COMMIT="165cd137f62316c77541fe28d18cb06a5ede0551"
 ORB_REPO="https://github.com/allesrebel/ORB_SLAM3.git"
 CLONE_DIR="/tmp/reproduce_orb_slam3"
 VENV_DIR="/tmp/reproduce_venv"

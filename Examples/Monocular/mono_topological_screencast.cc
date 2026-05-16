@@ -237,6 +237,10 @@ int main(int argc, char** argv) {
     std::ofstream kp_stats(out_dir + "/keypoint_stats.csv");
     kp_stats << "frame,count,min_x,max_x,min_y,max_y,var_x,var_y,min_th\n";
 
+    int ablation_total_candidates = 0;
+    int ablation_rejected_by_hash = 0;
+    int ablation_rejected_by_ransac = 0;
+
     auto t0 = std::chrono::steady_clock::now();
 
     // PID Controller State for Adaptive Features
@@ -375,12 +379,21 @@ int main(int argc, char** argv) {
         for (size_t p = 0; p < places.size(); ++p) {
             if ((int)p == current_place_idx) continue;
             double s = vocab.score(bow_t, places[p].representative_bow);
-            double hs = compareHashes(curr_hash, places[p].hash);
-            if (s >= TAU_REVISIT && hs >= HASH_SIM_THRESHOLD) {
-                bool verified = verifySpatial(kps, desc, places[p].kps, places[p].desc);
-                if (verified && s > best_score) {
-                    best_score = s;
-                    best_revisit = (int)p;
+            if (s >= TAU_REVISIT) {
+                ablation_total_candidates++;
+                double hs = compareHashes(curr_hash, places[p].hash);
+                if (hs >= HASH_SIM_THRESHOLD) {
+                    bool verified = verifySpatial(kps, desc, places[p].kps, places[p].desc);
+                    if (verified) {
+                        if (s > best_score) {
+                            best_score = s;
+                            best_revisit = (int)p;
+                        }
+                    } else {
+                        ablation_rejected_by_ransac++;
+                    }
+                } else {
+                    ablation_rejected_by_hash++;
                 }
             }
         }
@@ -465,6 +478,13 @@ int main(int argc, char** argv) {
         json << "\n";
     }
     json << "  ]\n}\n";
+
+    std::ofstream ablation(out_dir + "/ablation_stats.json");
+    ablation << "{\n";
+    ablation << "  \"total_revisit_candidates\": " << ablation_total_candidates << ",\n";
+    ablation << "  \"rejected_by_hash\": " << ablation_rejected_by_hash << ",\n";
+    ablation << "  \"rejected_by_ransac\": " << ablation_rejected_by_ransac << "\n";
+    ablation << "}\n";
 
     std::ofstream csv(out_dir + "/transitions.csv");
     csv << "from,to,frame,depth,type\n";
