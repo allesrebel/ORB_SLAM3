@@ -27,7 +27,7 @@ if [ ! -d "$VENV_DIR" ]; then
     python3 -m venv "$VENV_DIR"
 fi
 export PYTHON_BIN="${VENV_DIR}/bin/python"
-"$PYTHON_BIN" -m pip install -q pandas torch torchvision transformers Pillow opencv-python optuna
+"$PYTHON_BIN" -m pip install -q pandas torch torchvision transformers Pillow opencv-python optuna scipy scikit-image
 
 # 2. Clone ORB_SLAM3
 if [ ! -d "$CLONE_DIR" ]; then

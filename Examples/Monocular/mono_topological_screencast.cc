@@ -55,6 +55,7 @@ static constexpr double SCORE_NORM_DENOM = 1.0;  // DBoW2 score is already in [0
 static double HASH_SIM_THRESHOLD = 0.85;
 static int AFFINE_MIN_INLIERS = 10;
 static int TARGET_KEYPOINTS = 1000;
+static int STATIC_TH = -1; // If > 0, disables PID
 
 static double normalize_score(double s) {
     double n = s / SCORE_NORM_DENOM;
@@ -182,6 +183,7 @@ int main(int argc, char** argv) {
         if (std::string(argv[i]) == "--target_kp") TARGET_KEYPOINTS = std::stoi(argv[i+1]);
         if (std::string(argv[i]) == "--hash_th") HASH_SIM_THRESHOLD = std::stod(argv[i+1]);
         if (std::string(argv[i]) == "--affine_min") AFFINE_MIN_INLIERS = std::stoi(argv[i+1]);
+        if (std::string(argv[i]) == "--static_th") STATIC_TH = std::stoi(argv[i+1]);
     }
     fs::create_directories(out_dir);
     fs::create_directories(out_dir + "/place_keyframes");
@@ -263,28 +265,34 @@ int main(int argc, char** argv) {
         
         extractor(img, cv::Mat(), kps, desc, lapping_area);
 
-        // PID update with EMA Damping
-        int kp_count = kps.size();
-        smoothed_kp = 0.8f * smoothed_kp + 0.2f * kp_count;
-        
-        float error = target_keypoints - smoothed_kp;
-        integral_error += error;
-        float derivative = error - prev_error;
-        float adjustment = Kp * error + Ki * integral_error + Kd * derivative;
-        prev_error = error;
-        
-        // Clamp adjustment derivative to prevent wild oscillations
-        if (adjustment > 2.0f) adjustment = 2.0f;
-        if (adjustment < -2.0f) adjustment = -2.0f;
-        
         int current_minTh = extractor.getMinThFAST();
-        // If we have too few features (error > 0), adjustment is positive, we want to DECREASE threshold.
-        // So we subtract the adjustment from the threshold.
-        int new_minTh = current_minTh - std::round(adjustment);
+        int new_minTh = current_minTh;
         
-        // Bound the threshold to sane limits [1, 20]
-        if (new_minTh < 1) new_minTh = 1;
-        if (new_minTh > 20) new_minTh = 20;
+        if (STATIC_TH > 0) {
+            new_minTh = STATIC_TH;
+        } else {
+            // PID update with EMA Damping
+            int kp_count = kps.size();
+            smoothed_kp = 0.8f * smoothed_kp + 0.2f * kp_count;
+            
+            float error = target_keypoints - smoothed_kp;
+            integral_error += error;
+            float derivative = error - prev_error;
+            float adjustment = Kp * error + Ki * integral_error + Kd * derivative;
+            prev_error = error;
+            
+            // Clamp adjustment derivative to prevent wild oscillations
+            if (adjustment > 2.0f) adjustment = 2.0f;
+            if (adjustment < -2.0f) adjustment = -2.0f;
+            
+            // If we have too few features (error > 0), adjustment is positive, we want to DECREASE threshold.
+            // So we subtract the adjustment from the threshold.
+            new_minTh = current_minTh - std::round(adjustment);
+            
+            // Bound the threshold to sane limits [1, 20]
+            if (new_minTh < 1) new_minTh = 1;
+            if (new_minTh > 20) new_minTh = 20;
+        }
         
         extractor.setMinThFAST(new_minTh);
 
