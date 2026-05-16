@@ -10,11 +10,11 @@ def compute_iou(range1, range2):
     start_max = max(range1[0], range2[0])
     end_min = min(range1[1], range2[1])
     
-    if start_max >= end_min:
+    if start_max > end_min:
         return 0.0
         
-    intersection = end_min - start_max
-    union = max(range1[1], range2[1]) - min(range1[0], range2[0])
+    intersection = end_min - start_max + 1
+    union = max(range1[1], range2[1]) - min(range1[0], range2[0]) + 1
     
     if union == 0:
         return 0.0
@@ -87,11 +87,20 @@ def evaluate_graph(gt_path, pred_path):
     pred_boundaries = [p.get("frame_range")[0] for p in pred_places[1:]]
     
     boundary_matches = 0
+    matched_preds = set()
     for gt_b in gt_boundaries:
-        for p_b in pred_boundaries:
-            if abs(gt_b - p_b) <= boundary_tolerance:
-                boundary_matches += 1
-                break
+        best_p_b = -1
+        best_dist = float('inf')
+        for i, p_b in enumerate(pred_boundaries):
+            if i in matched_preds:
+                continue
+            dist = abs(gt_b - p_b)
+            if dist <= boundary_tolerance and dist < best_dist:
+                best_dist = dist
+                best_p_b = i
+        if best_p_b != -1:
+            boundary_matches += 1
+            matched_preds.add(best_p_b)
                 
     bp = boundary_matches / len(pred_boundaries) if pred_boundaries else 0.0
     br = boundary_matches / len(gt_boundaries) if gt_boundaries else 0.0
@@ -107,7 +116,7 @@ def evaluate_graph(gt_path, pred_path):
     edge_diff_cost = abs(len(gt_edges) - len(pred_edges))
     
     raw_ged = sub_cost + ins_del_cost + edge_diff_cost
-    normalized_ged = raw_ged / max(1, (gt_count + len(gt_edges)))
+    temporal_edit_cost = raw_ged / max(1, (gt_count + len(gt_edges)))
 
     latency = pred_data.get('latency_stats', {})
     
@@ -121,12 +130,32 @@ def evaluate_graph(gt_path, pred_path):
         "boundary_f1": bf1,
         "misses": unmatched_gt,
         "false_splits": unmatched_pred,
-        "ged_normalized": normalized_ged,
+        "temporal_edit_cost": temporal_edit_cost,
         "ms_per_frame": latency.get("ms_per_frame", 0),
         "fps": latency.get("fps", 0)
     }
 
+def test_compute_iou():
+    # 1. Identical one-frame intervals
+    assert compute_iou([0, 0], [0, 0]) == 1.0, "Failed: Identical one-frame"
+    # 2. Identical multi-frame intervals
+    assert compute_iou([10, 20], [10, 20]) == 1.0, "Failed: Identical multi-frame"
+    # 3. Disjoint intervals
+    assert compute_iou([0, 5], [10, 15]) == 0.0, "Failed: Disjoint"
+    assert compute_iou([10, 15], [0, 5]) == 0.0, "Failed: Disjoint (reversed)"
+    # 4. Partially overlapping intervals
+    assert compute_iou([0, 10], [5, 15]) == 6/16, "Failed: Partially overlapping"
+    assert compute_iou([5, 15], [0, 10]) == 6/16, "Failed: Partially overlapping (reversed)"
+    # 5. Adjacent intervals
+    assert compute_iou([0, 5], [6, 10]) == 0.0, "Failed: Adjacent"
+    # 6. One fully inside the other
+    assert compute_iou([0, 20], [5, 10]) == 6/21, "Failed: Fully inside"
+    
+    print("All compute_iou unit tests passed.")
+
 if __name__ == "__main__":
+    test_compute_iou()
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("--runs-dir", required=True)
     parser.add_argument("--out", required=True)
@@ -138,6 +167,11 @@ if __name__ == "__main__":
     
     for gt_path in gt_files:
         task_dir = os.path.dirname(gt_path)
+        
+        # Check for gold GT
+        gold_path = os.path.join(task_dir, "gold_ground_truth.json")
+        active_gt_path = gold_path if os.path.exists(gold_path) else gt_path
+        
         task_id = os.path.basename(os.path.dirname(task_dir)) + "/" + os.path.basename(task_dir)
         
         baselines = {
@@ -148,18 +182,27 @@ if __name__ == "__main__":
         }
         
         for baseline_name, pred_path in baselines.items():
-            metrics = evaluate_graph(gt_path, pred_path)
+            metrics = evaluate_graph(active_gt_path, pred_path)
             if metrics:
                 metrics["task"] = task_id
                 metrics["method"] = baseline_name
+                metrics["is_gold_gt"] = os.path.exists(gold_path)
                 results.append(metrics)
                 
     if results:
         df = pd.DataFrame(results)
         df.to_csv(args.out, index=False)
         print(f"Aggregated evaluation results to {args.out}")
-        print("\nSummary by method:")
-        summary = df.groupby('method')[['state_count_error', 'mean_tiou', 'f1_50', 'boundary_f1', 'ged_normalized', 'ms_per_frame']].mean()
+        print("\nSummary by method (All Tasks):")
+        summary = df.groupby('method')[['state_count_error', 'mean_tiou', 'f1_50', 'boundary_f1', 'temporal_edit_cost', 'ms_per_frame']].mean()
         print(summary.to_string())
+        
+        print("\nSummary by method (GOLD GT Subset Only):")
+        gold_df = df[df['is_gold_gt'] == True]
+        if not gold_df.empty:
+            gold_summary = gold_df.groupby('method')[['state_count_error', 'mean_tiou', 'f1_50', 'boundary_f1', 'temporal_edit_cost', 'ms_per_frame']].mean()
+            print(gold_summary.to_string())
+        else:
+            print("No gold tasks found.")
     else:
         print("No evaluation results found.")

@@ -5,34 +5,28 @@ import subprocess
 import json
 import time
 import glob
+import numpy as np
+from eval_harness import evaluate_graph
 
-# Target a specific task for the sweep
-TASK = "GrassGIS/46646"
-FRAMES_DIR = f"/root/orbslam3_runs/research_eval/{TASK}/frames"
-GT_PATH = f"/root/orbslam3_runs/research_eval/{TASK}/ground_truth.json"
+# Target tasks for the sweep
+TASKS = ["GrassGIS/46646", "OnlyOffice_Forms/41765", "Conky/106644"]
 ORB_VOCAB = "/root/clean/ORB_SLAM3/Vocabulary/ORBvoc.txt"
 YAML_PATH = "/root/clean/ORB_SLAM3/Examples/Monocular/VideoCUA_1080p.yaml"
 BIN_PATH = "/root/clean/ORB_SLAM3/Examples/Monocular/mono_topological_screencast"
-OUT_DIR = f"/tmp/sweep_output_{TASK.split('/')[0]}"
 
-def get_gt_count():
-    if not os.path.exists(GT_PATH):
-        return 2 # fallback
-    with open(GT_PATH) as f:
-        return len(json.load(f).get('places', []))
-
-GT_COUNT = get_gt_count()
-
-def run_topo_slam(target_kp, hash_th, affine_min):
-    os.makedirs(OUT_DIR, exist_ok=True)
+def run_topo_slam(task, target_kp, hash_th, affine_min):
+    frames_dir = f"/root/orbslam3_runs/research_eval/{task}/frames"
+    gt_path = f"/root/orbslam3_runs/research_eval/{task}/ground_truth.json"
+    out_dir = f"/tmp/sweep_output_{task.replace('/', '_')}"
+    os.makedirs(out_dir, exist_ok=True)
     
     cmd = [
         BIN_PATH,
         ORB_VOCAB,
         YAML_PATH,
-        FRAMES_DIR,
+        frames_dir,
         "15.0",
-        "--out", OUT_DIR,
+        "--out", out_dir,
         "--target_kp", str(target_kp),
         "--hash_th", str(hash_th),
         "--affine_min", str(affine_min)
@@ -46,47 +40,56 @@ def run_topo_slam(target_kp, hash_th, affine_min):
         
     duration = time.time() - start
     
-    pred_path = os.path.join(OUT_DIR, "place_graph.json")
+    pred_path = os.path.join(out_dir, "place_graph.json")
     if not os.path.exists(pred_path):
         return None, None
         
-    with open(pred_path) as f:
-        pred_data = json.load(f)
+    metrics = evaluate_graph(gt_path, pred_path)
+    if not metrics:
+        return None, None
         
-    pred_count = len(pred_data.get('places', []))
-    ged = abs(GT_COUNT - pred_count)
+    temporal_edit_cost = metrics["temporal_edit_cost"]
     
-    frame_files = glob.glob(os.path.join(FRAMES_DIR, "frame_*.png"))
+    frame_files = glob.glob(os.path.join(frames_dir, "frame_*.png"))
     frames = len(frame_files) if frame_files else 100
     latency = (duration / max(frames, 1)) * 1000.0
     
-    return ged, latency
+    return temporal_edit_cost, latency
 
 def objective(trial):
     target_keypoints = trial.suggest_int('target_keypoints', 500, 2000)
     hash_similarity_threshold = trial.suggest_float('hash_similarity_threshold', 0.75, 0.95)
     affine_min_inliers = trial.suggest_int('affine_min_inliers', 5, 30)
     
-    ged, latency = run_topo_slam(target_keypoints, hash_similarity_threshold, affine_min_inliers)
+    total_cost = 0
+    total_latency = 0
+    valid_tasks = 0
     
-    if ged is None:
+    for task in TASKS:
+        cost, latency = run_topo_slam(task, target_keypoints, hash_similarity_threshold, affine_min_inliers)
+        if cost is not None:
+            total_cost += cost
+            total_latency += latency
+            valid_tasks += 1
+            
+    if valid_tasks == 0:
         raise optuna.TrialPruned()
         
-    return ged, latency
+    return total_cost / valid_tasks, total_latency / valid_tasks
 
 if __name__ == "__main__":
     study = optuna.create_study(directions=["minimize", "minimize"])
     
-    print(f"Starting HARDWARE-IN-THE-LOOP Design Space Exploration (DSE) Sweep on {TASK}...")
-    # Running 10 trials for demonstration speed (in real research it'd be 50+)
-    study.optimize(objective, n_trials=10)
+    print(f"Starting HARDWARE-IN-THE-LOOP Design Space Exploration (DSE) Sweep on {len(TASKS)} tasks...")
+    # Run full 50 trials
+    study.optimize(objective, n_trials=50)
     
     print("\n" + "="*50)
     print("--- DSE Sweep Complete ---")
     
     print("\nPareto Optimal Configurations:")
     for trial in study.best_trials:
-        print(f"  Trial {trial.number}: GED={trial.values[0]:.2f}, Latency={trial.values[1]:.2f} ms/frame")
+        print(f"  Trial {trial.number}: Temporal Edit Cost={trial.values[0]:.4f}, Latency={trial.values[1]:.2f} ms/frame")
         for k, v in trial.params.items():
             if isinstance(v, float):
                 print(f"    {k}: {v:.4f}")
@@ -98,7 +101,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from optuna.visualization.matplotlib import plot_pareto_front
     
-    fig = plot_pareto_front(study, target_names=["GED", "Latency (ms/frame)"])
+    fig = plot_pareto_front(study, target_names=["Temporal Edit Cost", "Latency (ms/frame)"])
     plt.tight_layout()
     plt.savefig("pareto_front_real.png")
     print("Saved Real Pareto Front plot to pareto_front_real.png")
