@@ -182,17 +182,24 @@ if __name__ == "__main__":
         }
         
         for baseline_name, pred_path in baselines.items():
+            if not os.path.exists(pred_path):
+                print(f"WARNING: missing {baseline_name} output for {task_id}: {pred_path}")
+                continue
             metrics = evaluate_graph(active_gt_path, pred_path)
             if metrics:
                 metrics["task"] = task_id
                 metrics["method"] = baseline_name
                 metrics["is_gold_gt"] = os.path.exists(gold_path)
                 results.append(metrics)
+            else:
+                print(f"WARNING: could not evaluate {baseline_name} output for {task_id}: {pred_path}")
                 
     if results:
         df = pd.DataFrame(results)
         df.to_csv(args.out, index=False)
         print(f"Aggregated evaluation results to {args.out}")
+        print("\nResult counts by method:")
+        print(df.groupby('method').size().to_string())
         print("\nSummary by method (All Tasks):")
         summary = df.groupby('method')[['state_count_error', 'mean_tiou', 'f1_50', 'boundary_f1', 'temporal_edit_cost', 'ms_per_frame']].mean()
         print(summary.to_string())
