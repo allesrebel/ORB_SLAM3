@@ -178,6 +178,7 @@ if __name__ == "__main__":
             "embedding": os.path.join(task_dir, "embedding_graph.json"),
             "vlm": os.path.join(task_dir, "vlm_graph.json"),
             "ssim": os.path.join(task_dir, "ssim_graph.json"),
+            "pixeldiff": os.path.join(task_dir, "pixeldiff_graph.json"),
             "topo_slam": os.path.join(task_dir, "topological", "place_graph.json")
         }
         

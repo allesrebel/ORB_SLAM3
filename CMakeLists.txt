@@ -179,20 +179,9 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 # Check for OS type and request user to install libopencv-dev if not installed
 if(UNIX AND NOT APPLE)
-    # Check for libopencv-dev or opencv-dev
-    execute_process(
-        COMMAND dpkg -s libopencv-dev
-        RESULT_VARIABLE libopencv_installed
-        OUTPUT_QUIET
-        ERROR_QUIET
-    )
-
-    execute_process(
-        COMMAND dpkg -s opencv-dev
-        RESULT_VARIABLE opencv_dev_installed
-        OUTPUT_QUIET
-        ERROR_QUIET
-    )
+    # Packages provided via conda env; skip system package checks
+    set(libopencv_installed 0)
+    set(opencv_dev_installed 0)
     # If neither is installed
     if(NOT libopencv_installed EQUAL 0 AND NOT opencv_dev_installed EQUAL 0)
         message(STATUS "libopencv-dev is not installed. Installing libopencv-dev...")
@@ -231,12 +220,7 @@ endif()
 
 # Check for OS type and request user to install libeigen3-dev if not installed
 if(UNIX AND NOT APPLE)
-    execute_process(
-        COMMAND dpkg -s libeigen3-dev
-        RESULT_VARIABLE eigen_installed
-        OUTPUT_QUIET
-        ERROR_QUIET
-    )
+    set(eigen_installed 0)
     if(NOT eigen_installed EQUAL 0)
         message(STATUS "libeigen3-dev is not installed. Installing libeigen3-dev...")
         
@@ -269,12 +253,7 @@ endif()
 
 # Check for OS type and request user to install libgl-dev if not installed
 if(UNIX AND NOT APPLE)
-    execute_process(
-        COMMAND dpkg -s libgl-dev
-        RESULT_VARIABLE libgl_installed
-        OUTPUT_QUIET
-        ERROR_QUIET
-    )
+    set(libgl_installed 0)
     if(NOT libgl_installed EQUAL 0)
         message(STATUS "libgl-dev is not installed. Installing libgl-dev...")
         
@@ -307,12 +286,7 @@ endif()
 
 # Check for OS type and request user to install libssl-dev if not installed
 if(UNIX AND NOT APPLE)
-    execute_process(
-        COMMAND dpkg -s libssl-dev
-        RESULT_VARIABLE libssl_installed
-        OUTPUT_QUIET
-        ERROR_QUIET
-    )
+    set(libssl_installed 0)
     if(NOT libssl_installed EQUAL 0)
         message(STATUS "libssl-dev is not installed. Installing libssl-dev...")
         
@@ -354,12 +328,7 @@ endif()
 
 # Check for OS type and request user to install boost libraries if not installed
 if(UNIX AND NOT APPLE)
-    execute_process(
-        COMMAND dpkg -s libboost-all-dev
-        RESULT_VARIABLE boost_installed
-        OUTPUT_QUIET
-        ERROR_QUIET
-    )
+    set(boost_installed 0)
     if(NOT boost_installed EQUAL 0)
         message(STATUS "libboost-all-dev is not installed. Installing libboost-all-dev...")
         
@@ -637,6 +606,12 @@ add_executable(mono_topological_screencast
         Examples/Monocular/mono_topological_screencast.cc)
 target_link_libraries(mono_topological_screencast ${PROJECT_NAME})
 target_compile_features(mono_topological_screencast PRIVATE cxx_std_17)
+
+# UI vocabulary trainer — trains a DBoW2 ORB vocabulary on screencast frames
+add_executable(train_uivoc
+        /opt/rebel/topo_research_artifacts/code/w7/train_uivoc.cc)
+target_link_libraries(train_uivoc ${PROJECT_NAME})
+target_compile_features(train_uivoc PRIVATE cxx_std_17)
 
 # Synthetic screencast generator — produces a parallax-rich test video
 # (3D-projected windows, moving cursor, window navigation) so SLAM can

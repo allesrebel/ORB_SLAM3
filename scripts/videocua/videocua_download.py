@@ -32,8 +32,8 @@ from pathlib import Path
 
 REPO_ID = "ServiceNow/VideoCUA"
 REPO_TYPE = "dataset"
-DEFAULT_LOCAL_DIR = Path("/root/VideoCUA")
-ZIP_CACHE_DIR = Path("/root/VideoCUA_zips")  # persistent cache for ZIPs
+DEFAULT_LOCAL_DIR = Path("/opt/rebel/topo_research_artifacts/dataset")
+ZIP_CACHE_DIR = Path("/opt/rebel/topo_research_artifacts/.hf_cache/videocua_zips")  # persistent cache for ZIPs
 
 
 def _sanitize_app(name: str) -> str:
