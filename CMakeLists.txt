@@ -370,7 +370,9 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/Sophus
 ${EIGEN3_INCLUDE_DIR}
 )
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+# W0c: Output directories point into CMAKE_BINARY_DIR (not the source tree) so
+# two independent build trees never clobber each other's binaries.
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # Retrieve the latest commit hash
 execute_process(
@@ -501,7 +503,7 @@ add_definitions(-DOASIS)
 # Build examples
 
 # RGB-D examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples/RGB-D)
 
 add_executable(rgbd_tum
         Examples/RGB-D/rgbd_tum.cc)
@@ -515,7 +517,7 @@ endif()
 
 
 # RGB-D inertial examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D-Inertial)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples/RGB-D-Inertial)
 
 if(realsense2_FOUND)
     add_executable(rgbd_inertial_realsense_D435i
@@ -524,7 +526,7 @@ if(realsense2_FOUND)
 endif()
 
 #Stereo examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples/Stereo)
 
 add_executable(stereo_kitti
         Examples/Stereo/stereo_kitti.cc)
@@ -549,7 +551,7 @@ if(realsense2_FOUND)
 endif()
 
 #Monocular examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples/Monocular)
 
 add_executable(mono_tum
         Examples/Monocular/mono_tum.cc)
@@ -607,9 +609,20 @@ add_executable(mono_topological_screencast
 target_link_libraries(mono_topological_screencast ${PROJECT_NAME})
 target_compile_features(mono_topological_screencast PRIVATE cxx_std_17)
 
-# UI vocabulary trainer — trains a DBoW2 ORB vocabulary on screencast frames
-add_executable(train_uivoc
-        /opt/rebel/topo_research_artifacts/code/w7/train_uivoc.cc)
+# UI vocabulary trainer — trains a DBoW2 ORB vocabulary on screencast frames.
+# Source lives in the artifact root (outside the ORB_SLAM3 source tree); the
+# canonical copy is $TOPO_ARTIFACTS_ROOT/code/w7/train_uivoc.cc.
+# We use a PROJECT_SOURCE_DIR-relative symlink path so the build stays
+# relocatable: code/w7 is expected at $ORB_ROOT/../.. (the artifact root).
+# For portability we resolve via the TOPO_ARTIFACTS_ROOT environment variable
+# (passed in by build.sh), falling back to a sibling-directory heuristic.
+if(DEFINED ENV{TOPO_ARTIFACTS_ROOT})
+    set(TRAIN_UIVOC_SRC "$ENV{TOPO_ARTIFACTS_ROOT}/code/w7/train_uivoc.cc")
+else()
+    # Heuristic: artifact root is two levels above ORB_SLAM3 checkout
+    set(TRAIN_UIVOC_SRC "${PROJECT_SOURCE_DIR}/../../code/w7/train_uivoc.cc")
+endif()
+add_executable(train_uivoc ${TRAIN_UIVOC_SRC})
 target_link_libraries(train_uivoc ${PROJECT_NAME})
 target_compile_features(train_uivoc PRIVATE cxx_std_17)
 
@@ -629,7 +642,7 @@ target_link_libraries(mono_screencast_stream ${PROJECT_NAME})
 target_compile_features(mono_screencast_stream PRIVATE cxx_std_17)
 
 #Monocular inertial examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Inertial)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples/Monocular-Inertial)
 
 add_executable(mono_inertial_euroc
         Examples/Monocular-Inertial/mono_inertial_euroc.cc)
@@ -650,7 +663,7 @@ if(realsense2_FOUND)
 endif()
 
 #Stereo Inertial examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo-Inertial)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples/Stereo-Inertial)
 
 add_executable(stereo_inertial_euroc
         Examples/Stereo-Inertial/stereo_inertial_euroc.cc)
@@ -670,7 +683,7 @@ if(realsense2_FOUND)
     target_link_libraries(stereo_inertial_realsense_D435i ${PROJECT_NAME})
 endif()
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Calibration)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples/Calibration)
 if(realsense2_FOUND)
     add_executable(recorder_realsense_D435i
             Examples/Calibration/recorder_realsense_D435i.cc)
@@ -684,7 +697,7 @@ endif()
 #Old examples
 
 # RGB-D examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples_old/RGB-D)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples_old/RGB-D)
 
 add_executable(rgbd_tum_old
         Examples_old/RGB-D/rgbd_tum.cc)
@@ -698,7 +711,7 @@ endif()
 
 
 # RGB-D inertial examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples_old/RGB-D-Inertial)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples_old/RGB-D-Inertial)
 
 if(realsense2_FOUND)
     add_executable(rgbd_inertial_realsense_D435i_old
@@ -707,7 +720,7 @@ if(realsense2_FOUND)
 endif()
 
 #Stereo examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples_old/Stereo)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples_old/Stereo)
 
 add_executable(stereo_kitti_old
         Examples_old/Stereo/stereo_kitti.cc)
@@ -732,7 +745,7 @@ if(realsense2_FOUND)
 endif()
 
 #Monocular examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples_old/Monocular)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples_old/Monocular)
 
 add_executable(mono_tum_old
         Examples_old/Monocular/mono_tum.cc)
@@ -761,7 +774,7 @@ if(realsense2_FOUND)
 endif()
 
 #Monocular inertial examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples_old/Monocular-Inertial)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples_old/Monocular-Inertial)
 
 add_executable(mono_inertial_euroc_old
         Examples_old/Monocular-Inertial/mono_inertial_euroc.cc)
@@ -782,7 +795,7 @@ if(realsense2_FOUND)
 endif()
 
 #Stereo Inertial examples
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples_old/Stereo-Inertial)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Examples_old/Stereo-Inertial)
 
 add_executable(stereo_inertial_euroc_old
         Examples_old/Stereo-Inertial/stereo_inertial_euroc.cc)
