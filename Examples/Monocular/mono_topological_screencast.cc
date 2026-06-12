@@ -285,6 +285,13 @@ int main(int argc, char** argv) {
     std::ofstream kp_stats(out_dir + "/keypoint_stats.csv");
     kp_stats << "frame,count,min_x,max_x,min_y,max_y,var_x,var_y,min_th\n";
 
+    // Revisit-candidate log — always-on; cheap CSV.
+    // Records every candidate considered during the revisit scan, including
+    // those rejected by hash/RANSAC/rotation, so downstream tools can plot
+    // PR curves over different acceptance thresholds.
+    std::ofstream rc_log(out_dir + "/revisit_candidates.csv");
+    rc_log << "frame,query_place,ref_place,bow_score,hash_sim,ransac_inliers,accepted\n";
+
     int ablation_total_candidates = 0;
     int ablation_rejected_by_hash = 0;
     int ablation_rejected_by_ransac = 0;
@@ -437,12 +444,16 @@ int main(int argc, char** argv) {
             if (s >= TAU_REVISIT) {
                 ablation_total_candidates++;
                 double hs = compareHashes(curr_hash, places[p].hash);
+                int inliers = 0;
+                bool accepted = false;
                 if (hs >= HASH_SIM_THRESHOLD) {
-                    int inliers = verifySpatialInliers(kps, desc, places[p].kps, places[p].desc);
+                    inliers = verifySpatialInliers(kps, desc, places[p].kps, places[p].desc);
                     if (inliers < 0) {
                         // rejected by rotation constraint
                         ablation_rejected_by_rotation++;
+                        inliers = -1; // keep the sentinel for the CSV
                     } else if (inliers >= AFFINE_MIN_INLIERS) {
+                        accepted = true;
                         if (s > best_score) {
                             best_score = s;
                             best_revisit = (int)p;
@@ -453,6 +464,12 @@ int main(int argc, char** argv) {
                 } else {
                     ablation_rejected_by_hash++;
                 }
+                // Emit this candidate to the revisit log regardless of outcome
+                rc_log << i << "," << current_place_idx << "," << p << ","
+                       << std::fixed << std::setprecision(6) << s << ","
+                       << std::fixed << std::setprecision(6) << hs << ","
+                       << inliers << ","
+                       << (accepted ? "1" : "0") << "\n";
             }
         }
 
