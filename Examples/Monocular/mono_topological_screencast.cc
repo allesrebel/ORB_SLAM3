@@ -285,6 +285,21 @@ int main(int argc, char** argv) {
     std::ofstream kp_stats(out_dir + "/keypoint_stats.csv");
     kp_stats << "frame,count,min_x,max_x,min_y,max_y,var_x,var_y,min_th\n";
 
+    // Per-frame timing (enables p50/p99 tail-latency + WCET analysis).
+    // track_ms excludes PNG decode; the RAII guard fires on every loop exit
+    // path including the various `continue`s.
+    std::ofstream ft_log(out_dir + "/frame_times.csv");
+    ft_log << "frame,decode_ms,track_ms\n";
+    struct FrameTimer {
+        std::ofstream& log; size_t idx; double decode_ms;
+        std::chrono::steady_clock::time_point start;
+        ~FrameTimer() {
+            double ms = std::chrono::duration<double, std::milli>(
+                std::chrono::steady_clock::now() - start).count();
+            log << idx << "," << decode_ms << "," << ms << "\n";
+        }
+    };
+
     // Revisit-candidate log — always-on; cheap CSV.
     // Records every candidate considered during the revisit scan, including
     // those rejected by hash/RANSAC/rotation, so downstream tools can plot
@@ -307,11 +322,15 @@ int main(int argc, char** argv) {
     float Kp = 0.005f, Ki = 0.001f, Kd = 0.001f;
 
     for (size_t i = 0; i < frame_paths.size(); ++i) {
+        auto _tdec0 = std::chrono::steady_clock::now();
         cv::Mat img = cv::imread(frame_paths[i], cv::IMREAD_GRAYSCALE);
+        auto _tdec1 = std::chrono::steady_clock::now();
+        double _decode_ms = std::chrono::duration<double, std::milli>(_tdec1 - _tdec0).count();
         if (img.empty()) {
             std::cerr << "Skip unreadable frame: " << frame_paths[i] << std::endl;
             continue;
         }
+        FrameTimer _ft{ft_log, i, _decode_ms, _tdec1};  // logs track_ms on scope exit
 
         std::vector<cv::KeyPoint> kps;
         cv::Mat desc;
