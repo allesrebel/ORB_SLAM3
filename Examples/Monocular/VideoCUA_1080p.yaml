@@ -39,7 +39,7 @@ Camera.RGB: 0
 # ORB Parameters — same as ScreenCapture.yaml; UI features are sparse so iniThFAST
 # stays low to encourage initialization.
 #--------------------------------------------------------------------------------------------
-ORBextractor.nFeatures: 1500
+ORBextractor.nFeatures: 1000
 ORBextractor.scaleFactor: 1.2
 ORBextractor.nLevels: 8
 ORBextractor.iniThFAST: 12

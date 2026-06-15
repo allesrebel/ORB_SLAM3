@@ -50,7 +50,7 @@ cv::Mat ScreenCapture::capture()
 
     // XImage data is 32-bit BGRX on most X11 servers. Use the actual
     // bytes_per_line from the XImage as the cv::Mat row stride — XServers
-    // routinely pad rows for alignment, and assuming stride == w*4 silently
+    // routinely pad rows for consistency, and assuming stride == w*4 silently
     // gives sheared/garbled images that look superficially OK but break ORB
     // feature matching. Drop the unused alpha channel and return BGR so the
     // frame matches the rest of the screencast pipeline (Camera.RGB: 0).

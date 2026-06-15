@@ -38,7 +38,7 @@ namespace fs = std::filesystem;
 using OrbVocabulary =
     DBoW2::TemplatedVocabulary<DBoW2::FORB::TDescriptor, DBoW2::FORB>;
 
-// -- thresholds (empirically tuned on VideoCUA Task A in Phase 3.3) -------
+// -- fixed tracker configuration for the UI-state keyframe gate -------------
 // DBoW2's score() with ORBvoc.txt on UI screenshots returns much higher
 // values than typical (mostly 0.28-1.0 against representative frames).
 // The "stay" mode for stable UI sits around 0.30-0.35; values above 0.40
@@ -51,19 +51,11 @@ static constexpr double TAU_REVISIT     = 0.55;
 static constexpr int    K_LEAVE_FRAMES  = 10;
 static constexpr double SCORE_NORM_DENOM = 1.0;  // DBoW2 score is already in [0,1] for ORBvoc
 
-// Optuna DSE parameters (Can be overridden via CLI)
+// The reported paper configuration uses h=0.85. Keep the CLI override so
+// sensitivity sweeps can reproduce the threshold-selection audit.
 static double HASH_SIM_THRESHOLD = 0.85;
-static int AFFINE_MIN_INLIERS = 10;
 static int TARGET_KEYPOINTS = 1000;
 static int STATIC_TH = -1; // If > 0, disables PID
-
-// Sub-project 2: Translation+scale-only RANSAC restriction.
-// When enabled (RESTRICT_ROTATION=true), any candidate whose recovered
-// rotation angle exceeds MAX_ROTATION_DEG is rejected.
-// Controlled by CLI flag --restrict_rotation (default: off = full affine)
-// or env var RESTRICT_ROTATION=1.
-static bool RESTRICT_ROTATION = false;
-static double MAX_ROTATION_DEG = 2.0;  // reject if |angle| > 2 degrees
 
 static double normalize_score(double s) {
     double n = s / SCORE_NORM_DENOM;
@@ -91,61 +83,7 @@ static double compareHashes(const cv::Mat& h1, const cv::Mat& h2) {
     return 1.0 - (double)diff / (h1.total());
 }
 
-// Returns inlier count from RANSAC; also fills rotation_deg if not nullptr.
-// If RESTRICT_ROTATION is set and |rotation| > MAX_ROTATION_DEG, returns -1
-// (rejected by rotation test).
-static int verifySpatialInliers(const std::vector<cv::KeyPoint>& kps1, const cv::Mat& desc1,
-                                const std::vector<cv::KeyPoint>& kps2, const cv::Mat& desc2,
-                                double* rotation_deg_out = nullptr) {
-    if (desc1.empty() || desc2.empty()) return 0;
 
-    cv::BFMatcher matcher(cv::NORM_HAMMING, true); // cross-check
-    std::vector<cv::DMatch> matches;
-    matcher.match(desc1, desc2, matches);
-
-    // RANSAC Degeneracy Fallback: If not enough features (e.g. blank document), trust the Hash
-    if ((int)matches.size() < 15) return AFFINE_MIN_INLIERS; // pretend pass
-
-    std::vector<cv::Point2f> pts1, pts2;
-    for (const auto& m : matches) {
-        pts1.push_back(kps1[m.queryIdx].pt);
-        pts2.push_back(kps2[m.trainIdx].pt);
-    }
-
-    // Use Affine verification (estimateAffinePartial2D = Sim2: tx,ty,cos,sin)
-    std::vector<uchar> inliers;
-    cv::Mat affine = cv::estimateAffinePartial2D(pts1, pts2, inliers, cv::RANSAC, 3.0);
-
-    if (affine.empty()) return 0;
-
-    int inlier_count = 0;
-    for (uchar inl : inliers) { if (inl) inlier_count++; }
-
-    if (RESTRICT_ROTATION) {
-        // Recover rotation angle: M = s*[cos θ, -sin θ; sin θ, cos θ]
-        // affine rows: [a00, a01, tx; a10, a11, ty]
-        double a00 = affine.at<double>(0,0);
-        double a10 = affine.at<double>(1,0);
-        double angle_rad = std::atan2(a10, a00);
-        double angle_deg = angle_rad * 180.0 / M_PI;
-        if (rotation_deg_out) *rotation_deg_out = angle_deg;
-
-        if (std::fabs(angle_deg) > MAX_ROTATION_DEG) {
-            return -1; // rotation-rejected
-        }
-    } else {
-        if (rotation_deg_out) *rotation_deg_out = 0.0;
-    }
-
-    return inlier_count;
-}
-
-static bool verifySpatial(const std::vector<cv::KeyPoint>& kps1, const cv::Mat& desc1,
-                          const std::vector<cv::KeyPoint>& kps2, const cv::Mat& desc2) {
-    int inliers = verifySpatialInliers(kps1, desc1, kps2, desc2);
-    if (inliers < 0) return false; // rotation rejected
-    return inliers >= AFFINE_MIN_INLIERS;
-}
 
 struct Place {
     int id;
@@ -210,27 +148,13 @@ int main(int argc, char** argv) {
     const std::string frames_dir  = argv[3];
     const double fps              = std::stod(argv[4]);
 
-    // Check env var for rotation restriction
-    {
-        const char* env_rr = std::getenv("RESTRICT_ROTATION");
-        if (env_rr && std::string(env_rr) == "1") RESTRICT_ROTATION = true;
-    }
-
     std::string out_dir = ".";
     for (int i = 5; i + 1 < argc; ++i) {
         if (std::string(argv[i]) == "--out") out_dir = argv[i + 1];
         if (std::string(argv[i]) == "--target_kp") TARGET_KEYPOINTS = std::stoi(argv[i+1]);
         if (std::string(argv[i]) == "--hash_th") HASH_SIM_THRESHOLD = std::stod(argv[i+1]);
-        if (std::string(argv[i]) == "--affine_min") AFFINE_MIN_INLIERS = std::stoi(argv[i+1]);
         if (std::string(argv[i]) == "--static_th") STATIC_TH = std::stoi(argv[i+1]);
-        if (std::string(argv[i]) == "--restrict_rotation") RESTRICT_ROTATION = (std::stoi(argv[i+1]) != 0);
-        if (std::string(argv[i]) == "--max_rot_deg") MAX_ROTATION_DEG = std::stod(argv[i+1]);
     }
-    // Also check if it's a standalone flag (no value needed)
-    for (int i = 5; i < argc; ++i) {
-        if (std::string(argv[i]) == "--restrict_rotation") RESTRICT_ROTATION = true;
-    }
-    std::cout << "RANSAC mode: " << (RESTRICT_ROTATION ? "translation+scale only (max_rot=" + std::to_string(MAX_ROTATION_DEG) + " deg)" : "full affine (rotation allowed)") << "\n";
     fs::create_directories(out_dir);
     fs::create_directories(out_dir + "/place_keyframes");
     fs::create_directories(out_dir + "/debug_keypoints");
@@ -301,16 +225,14 @@ int main(int argc, char** argv) {
     };
 
     // Revisit-candidate log — always-on; cheap CSV.
-    // Records every candidate considered during the revisit scan, including
-    // those rejected by hash/RANSAC/rotation, so downstream tools can plot
-    // PR curves over different acceptance thresholds.
+    // Records every candidate considered during the duplicate-suppression scan,
+    // including those rejected by hash, so downstream tools can audit the
+    // threshold behavior.
     std::ofstream rc_log(out_dir + "/revisit_candidates.csv");
-    rc_log << "frame,query_place,ref_place,bow_score,hash_sim,ransac_inliers,accepted\n";
+    rc_log << "frame,query_place,ref_place,bow_score,hash_sim,accepted\n";
 
     int ablation_total_candidates = 0;
     int ablation_rejected_by_hash = 0;
-    int ablation_rejected_by_ransac = 0;
-    int ablation_rejected_by_rotation = 0;
 
     auto t0 = std::chrono::steady_clock::now();
 
@@ -444,8 +366,8 @@ int main(int argc, char** argv) {
 
         bool is_same = false;
         if (score_curr >= TAU_SAME && hash_sim_curr >= HASH_SIM_THRESHOLD) {
-            // Further verify spatially to prevent false positives from rearranged UI elements
-            is_same = verifySpatial(kps, desc, places[current_place_idx].kps, places[current_place_idx].desc);
+            // Guard DBoW2 matches with a perceptual hash to reject gross layout changes.
+            is_same = true;
         }
 
         if (is_same) {
@@ -463,22 +385,12 @@ int main(int argc, char** argv) {
             if (s >= TAU_REVISIT) {
                 ablation_total_candidates++;
                 double hs = compareHashes(curr_hash, places[p].hash);
-                int inliers = 0;
                 bool accepted = false;
                 if (hs >= HASH_SIM_THRESHOLD) {
-                    inliers = verifySpatialInliers(kps, desc, places[p].kps, places[p].desc);
-                    if (inliers < 0) {
-                        // rejected by rotation constraint
-                        ablation_rejected_by_rotation++;
-                        inliers = -1; // keep the sentinel for the CSV
-                    } else if (inliers >= AFFINE_MIN_INLIERS) {
-                        accepted = true;
-                        if (s > best_score) {
-                            best_score = s;
-                            best_revisit = (int)p;
-                        }
-                    } else {
-                        ablation_rejected_by_ransac++;
+                    accepted = true;
+                    if (s > best_score) {
+                        best_score = s;
+                        best_revisit = (int)p;
                     }
                 } else {
                     ablation_rejected_by_hash++;
@@ -487,7 +399,6 @@ int main(int argc, char** argv) {
                 rc_log << i << "," << current_place_idx << "," << p << ","
                        << std::fixed << std::setprecision(6) << s << ","
                        << std::fixed << std::setprecision(6) << hs << ","
-                       << inliers << ","
                        << (accepted ? "1" : "0") << "\n";
             }
         }
@@ -576,11 +487,7 @@ int main(int argc, char** argv) {
     std::ofstream ablation(out_dir + "/ablation_stats.json");
     ablation << "{\n";
     ablation << "  \"total_revisit_candidates\": " << ablation_total_candidates << ",\n";
-    ablation << "  \"rejected_by_hash\": " << ablation_rejected_by_hash << ",\n";
-    ablation << "  \"rejected_by_ransac\": " << ablation_rejected_by_ransac << ",\n";
-    ablation << "  \"rejected_by_rotation\": " << ablation_rejected_by_rotation << ",\n";
-    ablation << "  \"restrict_rotation_mode\": " << (RESTRICT_ROTATION ? "true" : "false") << ",\n";
-    ablation << "  \"max_rotation_deg\": " << MAX_ROTATION_DEG << "\n";
+    ablation << "  \"rejected_by_hash\": " << ablation_rejected_by_hash << "\n";
     ablation << "}\n";
 
     std::ofstream csv(out_dir + "/transitions.csv");

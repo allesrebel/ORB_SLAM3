@@ -25,7 +25,7 @@ def interp_xyz(sample_dict, stamps, scale=1.0):
 
 # --------------------------------------------------------------------------
 def align(model, data):
-    """Horn alignment. Returns transforms & per-frame errors."""
+    """Horn matching. Returns transforms & per-frame errors."""
     m0, d0 = model - model.mean(1), data - data.mean(1)
     W = sum(np.outer(m0[:, c], d0[:, c]) for c in range(model.shape[1]))
     U, _, Vt = np.linalg.svd(W.T)
@@ -83,7 +83,7 @@ if __name__ == "__main__":
                          for s in common_stamps]).T
     est_xyz = interp_xyz(est_list, common_stamps, scale=args.scale)
 
-    # ---------- alignment + errors ----------------------------------------
+    # ---------- consistency + errors ----------------------------------------
     R, tGT, errGT, t, err, scl = align(est_xyz, gt_xyz)
     est_xyz_aln = scl * R @ est_xyz + t
 

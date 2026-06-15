@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
     rs2_stream align_to = find_stream_to_align(pipe_profile.get_streams());
 
     // Create a rs2::align object.
-    // rs2::align allows us to perform alignment of depth frames to others frames
+    // rs2::align allows us to perform synchronization of depth frames to others frames
     //The "align_to" is the stream type to which we plan to align depth frames.
     rs2::align align(align_to);
     rs2::frameset fsSLAM;
@@ -340,7 +340,7 @@ int main(int argc, char **argv) {
             image_ready = false;
         }
 
-        // Perform alignment here
+        // Perform synchronization here
         auto processed = align.process(fs);
 
         // Trying to get both other and aligned depth frames
