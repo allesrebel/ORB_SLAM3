@@ -32,8 +32,12 @@ from pathlib import Path
 
 REPO_ID = "ServiceNow/VideoCUA"
 REPO_TYPE = "dataset"
-DEFAULT_LOCAL_DIR = Path("/opt/rebel/topo_research_artifacts/dataset")
-ZIP_CACHE_DIR = Path("/opt/rebel/topo_research_artifacts/.hf_cache/videocua_zips")  # persistent cache for ZIPs
+# Resolve from the environment (env.sh sets these) so the downloader is
+# portable; fall back to a ./dataset under the artifact root, never a
+# machine-specific absolute path.
+_ART_ROOT = os.environ.get("TOPO_ARTIFACTS_ROOT", os.getcwd())
+DEFAULT_LOCAL_DIR = Path(os.environ.get("TOPO_DATASET_DIR", os.path.join(_ART_ROOT, "dataset")))
+ZIP_CACHE_DIR = Path(os.environ.get("HF_HOME", os.path.join(_ART_ROOT, ".hf_cache"))) / "videocua_zips"
 
 
 def _sanitize_app(name: str) -> str:
